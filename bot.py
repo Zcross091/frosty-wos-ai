@@ -13,8 +13,8 @@ load_dotenv()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
-# 2. Setup AI with Correct 2026 Retry Logic
-# Configured to automatically retry transient errors (429, 5xx) up to 3 times.
+# 2. Setup AI with Correct 2026 Syntax
+# Configured for standard transient error codes
 retry_config = types.HttpRetryOptions(
     attempts=3,
     initial_delay=1.0,
@@ -49,13 +49,13 @@ def get_ai_response(user_question):
         Tone: Professional, expert Chief.
         """
 
-        # Generate response using the retry-enabled client
+        # Generate response using the corrected client
         response = client.models.generate_content(
             model=MODEL_ID,
             contents=prompt
         )
 
-        # Enhanced Parsing: Safely extracts text and filters out 'thought' blocks
+        # Enhanced Parsing to avoid 'brain freeze'
         if response.candidates and response.candidates[0].content.parts:
             full_text = "".join([part.text for part in response.candidates[0].content.parts if part.text])
             if full_text.strip():
@@ -69,6 +69,7 @@ def get_ai_response(user_question):
 
 @bot.event
 async def on_ready():
+    # Final confirmation on boot
     print(f'❄️ Frosty is active and using the brain built from {collection.count()} pages!')
     await bot.change_presence(activity=discord.Game(name="Whiteout Survival | !wos"))
 
@@ -77,7 +78,7 @@ async def wos(ctx, *, question):
     async with ctx.typing():
         answer = get_ai_response(question)
         
-        # Split message if it exceeds Discord's 2000 character limit
+        # Split message for Discord limits
         if len(answer) > 2000:
             for i in range(0, len(answer), 2000):
                 await ctx.send(answer[i:i+2000])
