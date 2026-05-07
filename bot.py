@@ -14,10 +14,10 @@ DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 # 2. Setup AI with Correct 2026 Syntax & Retry Logic
-# This handles the "429 Resource Exhausted" errors by waiting and retrying.
+# HttpRetryOptions is the required syntax for the 2026 SDK.
 retry_config = types.HttpRetryOptions(
-    attempts=3,              # Try up to 3 times
-    initial_delay=2.0,       # Wait 2 seconds before first retry
+    attempts=3,
+    initial_delay=2.0,
     http_status_codes=[408, 429, 500, 502, 503, 504]
 )
 
@@ -25,9 +25,11 @@ client = genai.Client(
     api_key=GEMINI_API_KEY,
     http_options=types.HttpOptions(retry_options=retry_config)
 )
-MODEL_ID = 'gemini-3-flash-preview'
 
-# Connect to the local vector database
+# CHANGED: Moving to 3.1 Flash-Lite for the highest FREE quota available in 2026.
+MODEL_ID = 'gemini-3.1-flash-lite-preview'
+
+# Connect to your 3,391-page vector database
 chroma_client = chromadb.PersistentClient(path="./frosty_brain")
 collection = chroma_client.get_or_create_collection(name="wos_knowledge")
 
@@ -38,7 +40,7 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 def get_ai_response(user_question):
     try:
-        # Search the brain for relevant facts
+        # Search the database for relevant Whiteout Survival strategy
         results = collection.query(query_texts=[user_question], n_results=3)
         context = "\n\n".join(results['documents'][0])
         
@@ -49,13 +51,13 @@ def get_ai_response(user_question):
         Tone: Professional, expert Chief.
         """
 
-        # Generate response using the retry-enabled client
+        # Generate response using the high-volume Lite model
         response = client.models.generate_content(
             model=MODEL_ID,
             contents=prompt
         )
 
-        # Enhanced Parsing: Safely extracts text and filters out AI 'thought' blocks
+        # Enhanced Parsing: Filters out AI 'thought' blocks
         if response.candidates and response.candidates[0].content.parts:
             full_text = "".join([part.text for part in response.candidates[0].content.parts if part.text])
             if full_text.strip():
@@ -65,19 +67,17 @@ def get_ai_response(user_question):
 
     except Exception as e:
         logging.error(f"Error in get_ai_response: {e}")
-        return "I'm having a bit of a brain freeze right now. Please try again in a second!"
+        return "I'm having a bit of a brain freeze (Quota Limit). Please try again in a moment!"
 
 @bot.event
 async def on_ready():
-    print(f'❄️ Frosty is active and using the brain built from {collection.count()} pages!')
+    print(f'❄️ Frosty is active on {MODEL_ID}!')
     await bot.change_presence(activity=discord.Game(name="Whiteout Survival | !wos"))
 
 @bot.command(name='wos')
 async def wos(ctx, *, question):
     async with ctx.typing():
         answer = get_ai_response(question)
-        
-        # Handle Discord's 2000 character limit
         if len(answer) > 2000:
             for i in range(0, len(answer), 2000):
                 await ctx.send(answer[i:i+2000])
@@ -88,7 +88,7 @@ async def wos(ctx, *, question):
 async def status(ctx):
     process = psutil.Process(os.getpid())
     ram = process.memory_info().rss / 1024 / 1024
-    await ctx.send(f"📊 **Frosty Stats:**\n• Status: Online\n• RAM Usage: {ram:.2f} MB\n• Database: {collection.count()} pages indexed")
+    await ctx.send(f"📊 **Frosty Stats:**\n• Model: {MODEL_ID}\n• Status: Online\n• RAM Usage: {ram:.2f} MB\n• Database: {collection.count()} pages indexed")
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
