@@ -13,11 +13,11 @@ load_dotenv()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
-# 2. Setup AI with Correct 2026 Syntax
-# Configured for standard transient error codes
+# 2. Setup AI with Correct 2026 Syntax & Retry Logic
+# This handles the "429 Resource Exhausted" errors by waiting and retrying.
 retry_config = types.HttpRetryOptions(
-    attempts=3,
-    initial_delay=1.0,
+    attempts=3,              # Try up to 3 times
+    initial_delay=2.0,       # Wait 2 seconds before first retry
     http_status_codes=[408, 429, 500, 502, 503, 504]
 )
 
@@ -49,13 +49,13 @@ def get_ai_response(user_question):
         Tone: Professional, expert Chief.
         """
 
-        # Generate response using the corrected client
+        # Generate response using the retry-enabled client
         response = client.models.generate_content(
             model=MODEL_ID,
             contents=prompt
         )
 
-        # Enhanced Parsing to avoid 'brain freeze'
+        # Enhanced Parsing: Safely extracts text and filters out AI 'thought' blocks
         if response.candidates and response.candidates[0].content.parts:
             full_text = "".join([part.text for part in response.candidates[0].content.parts if part.text])
             if full_text.strip():
@@ -69,7 +69,6 @@ def get_ai_response(user_question):
 
 @bot.event
 async def on_ready():
-    # Final confirmation on boot
     print(f'❄️ Frosty is active and using the brain built from {collection.count()} pages!')
     await bot.change_presence(activity=discord.Game(name="Whiteout Survival | !wos"))
 
@@ -78,7 +77,7 @@ async def wos(ctx, *, question):
     async with ctx.typing():
         answer = get_ai_response(question)
         
-        # Split message for Discord limits
+        # Handle Discord's 2000 character limit
         if len(answer) > 2000:
             for i in range(0, len(answer), 2000):
                 await ctx.send(answer[i:i+2000])
