@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 import chromadb
-from groq import Groq # Import the Groq library
+from groq import Groq
 from dotenv import load_dotenv
 import os
 import psutil
@@ -11,9 +11,9 @@ load_dotenv()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 
-# 2. Setup Groq (The High-Traffic Engine)
+# 2. Setup Groq
 client = Groq(api_key=GROQ_API_KEY)
-MODEL_ID = "llama-4-8b-instant"
+MODEL_ID = "llama-3.1-8b-instant"
 
 # Connect to the local vector database
 chroma_client = chromadb.PersistentClient(path="./frosty_brain")
@@ -26,32 +26,30 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 def get_ai_response(user_question):
     try:
-        # Search the brain for relevant facts
+        # Searching 3 results as requested
         results = collection.query(query_texts=[user_question], n_results=3)
         context = "\n\n".join(results['documents'][0])
         
-        # System instructions to keep Frosty in character
+        # Updated System Prompt with your specific constraints
         system_prompt = f"""
-        You are 'Frosty', a Whiteout Survival expert AI. 
-        Context from manual: {context}
-        Tone: Professional, expert Chief.
+        You are 'Frosty', a Whiteout Survival expert. 
+        Data: {context}
+        Constraint: Be extremely concise. Use bullet points. Do not exceed 150 words.
         """
 
-        # Generate response using Groq (Fast & High Quota)
         completion = client.chat.completions.create(
             model=MODEL_ID,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_question}
             ],
-            temperature=0.7,
-            max_tokens=1024
+            temperature=0.7
         )
 
         return completion.choices[0].message.content
 
     except Exception as e:
-        return f"I'm having a bit of a brain freeze. Error: {str(e)}"
+        return f"⚠️ Engine Error: {str(e)}"
 
 @bot.event
 async def on_ready():
@@ -72,7 +70,7 @@ async def wos(ctx, *, question):
 async def status(ctx):
     process = psutil.Process(os.getpid())
     ram = process.memory_info().rss / 1024 / 1024
-    await ctx.send(f"📊 **Frosty Stats:**\n• Engine: Groq ({MODEL_ID})\n• RAM Usage: {ram:.2f} MB\n• Database: {collection.count()} pages indexed")
+    await ctx.send(f"📊 **Frosty Stats:**\n• Engine: {MODEL_ID}\n• RAM Usage: {ram:.2f} MB\n• Database: {collection.count()} pages indexed")
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
