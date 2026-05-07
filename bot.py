@@ -1,35 +1,21 @@
 import discord
 from discord.ext import commands
 import chromadb
-from google import genai
-from google.genai import types 
+from groq import Groq # Import the Groq library
 from dotenv import load_dotenv
 import os
 import psutil
-import logging
 
 # 1. Load Secrets
 load_dotenv()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 
-# 2. Setup AI with Correct 2026 Syntax & Retry Logic
-# HttpRetryOptions is the required syntax for the 2026 SDK.
-retry_config = types.HttpRetryOptions(
-    attempts=3,
-    initial_delay=2.0,
-    http_status_codes=[408, 429, 500, 502, 503, 504]
-)
+# 2. Setup Groq (The High-Traffic Engine)
+client = Groq(api_key=GROQ_API_KEY)
+MODEL_ID = "llama-4-8b-instant"
 
-client = genai.Client(
-    api_key=GEMINI_API_KEY,
-    http_options=types.HttpOptions(retry_options=retry_config)
-)
-
-# CHANGED: Moving to 3.1 Flash-Lite for the highest FREE quota available in 2026.
-MODEL_ID = 'gemini-3.1-flash-lite-preview'
-
-# Connect to your 3,391-page vector database
+# Connect to the local vector database
 chroma_client = chromadb.PersistentClient(path="./frosty_brain")
 collection = chroma_client.get_or_create_collection(name="wos_knowledge")
 
@@ -40,34 +26,32 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 def get_ai_response(user_question):
     try:
-        # Search the database for relevant Whiteout Survival strategy
+        # Search the brain for relevant facts
         results = collection.query(query_texts=[user_question], n_results=3)
         context = "\n\n".join(results['documents'][0])
         
-        prompt = f"""
+        # System instructions to keep Frosty in character
+        system_prompt = f"""
         You are 'Frosty', a Whiteout Survival expert AI. 
-        Using this data: {context}
-        Answer this question: {user_question}
+        Context from manual: {context}
         Tone: Professional, expert Chief.
         """
 
-        # Generate response using the high-volume Lite model
-        response = client.models.generate_content(
+        # Generate response using Groq (Fast & High Quota)
+        completion = client.chat.completions.create(
             model=MODEL_ID,
-            contents=prompt
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_question}
+            ],
+            temperature=0.7,
+            max_tokens=1024
         )
 
-        # Enhanced Parsing: Filters out AI 'thought' blocks
-        if response.candidates and response.candidates[0].content.parts:
-            full_text = "".join([part.text for part in response.candidates[0].content.parts if part.text])
-            if full_text.strip():
-                return full_text
-        
-        return "I processed the data, but the response was empty. Please try again!"
+        return completion.choices[0].message.content
 
     except Exception as e:
-        logging.error(f"Error in get_ai_response: {e}")
-        return "I'm having a bit of a brain freeze (Quota Limit). Please try again in a moment!"
+        return f"I'm having a bit of a brain freeze. Error: {str(e)}"
 
 @bot.event
 async def on_ready():
@@ -88,7 +72,7 @@ async def wos(ctx, *, question):
 async def status(ctx):
     process = psutil.Process(os.getpid())
     ram = process.memory_info().rss / 1024 / 1024
-    await ctx.send(f"📊 **Frosty Stats:**\n• Model: {MODEL_ID}\n• Status: Online\n• RAM Usage: {ram:.2f} MB\n• Database: {collection.count()} pages indexed")
+    await ctx.send(f"📊 **Frosty Stats:**\n• Engine: Groq ({MODEL_ID})\n• RAM Usage: {ram:.2f} MB\n• Database: {collection.count()} pages indexed")
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
