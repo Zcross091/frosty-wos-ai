@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import chromadb
 from google import genai
-from google.genai import types  # Added for retry options
+from google.genai import types 
 from dotenv import load_dotenv
 import os
 import psutil
@@ -13,17 +13,21 @@ load_dotenv()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
-# 2. Setup AI with Auto-Retry Logic
-# This configuration will automatically retry up to 3 times if the API fails
+# 2. Setup AI with Correct 2026 Retry Logic
+# Configured to automatically retry transient errors (429, 5xx) up to 3 times.
+retry_config = types.HttpRetryOptions(
+    attempts=3,
+    initial_delay=1.0,
+    http_status_codes=[408, 429, 500, 502, 503, 504]
+)
+
 client = genai.Client(
     api_key=GEMINI_API_KEY,
-    http_options=types.HttpOptions(
-        retry_options=types.RetryOptions(max_attempts=3)
-    )
+    http_options=types.HttpOptions(retry_options=retry_config)
 )
 MODEL_ID = 'gemini-3-flash-preview'
 
-# Connect to the brain you already built
+# Connect to the local vector database
 chroma_client = chromadb.PersistentClient(path="./frosty_brain")
 collection = chroma_client.get_or_create_collection(name="wos_knowledge")
 
@@ -51,9 +55,8 @@ def get_ai_response(user_question):
             contents=prompt
         )
 
-        # Enhanced Parsing: Handle Gemini 3's multi-part responses
+        # Enhanced Parsing: Safely extracts text and filters out 'thought' blocks
         if response.candidates and response.candidates[0].content.parts:
-            # Filter for text parts and join them (skips internal "thinking" blocks)
             full_text = "".join([part.text for part in response.candidates[0].content.parts if part.text])
             if full_text.strip():
                 return full_text
@@ -74,7 +77,7 @@ async def wos(ctx, *, question):
     async with ctx.typing():
         answer = get_ai_response(question)
         
-        # Handle Discord's 2000 character limit
+        # Split message if it exceeds Discord's 2000 character limit
         if len(answer) > 2000:
             for i in range(0, len(answer), 2000):
                 await ctx.send(answer[i:i+2000])
