@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import chromadb
 from google import genai
+from google.genai import types  # Added for retry options
 from dotenv import load_dotenv
 import os
 import psutil
@@ -12,9 +13,14 @@ load_dotenv()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
-# 2. Setup AI & Database
-# Using the 2026 Recommended SDK
-client = genai.Client(api_key=GEMINI_API_KEY)
+# 2. Setup AI with Auto-Retry Logic
+# This configuration will automatically retry up to 3 times if the API fails
+client = genai.Client(
+    api_key=GEMINI_API_KEY,
+    http_options=types.HttpOptions(
+        retry_options=types.RetryOptions(max_attempts=3)
+    )
+)
 MODEL_ID = 'gemini-3-flash-preview'
 
 # Connect to the brain you already built
@@ -39,15 +45,20 @@ def get_ai_response(user_question):
         Tone: Professional, expert Chief.
         """
 
-        # Generate response using the new 2026 client
+        # Generate response using the retry-enabled client
         response = client.models.generate_content(
             model=MODEL_ID,
             contents=prompt
         )
 
-        if response.text:
-            return response.text
-        return "I processed the data, but couldn't generate a clear answer. Try rephrasing!"
+        # Enhanced Parsing: Handle Gemini 3's multi-part responses
+        if response.candidates and response.candidates[0].content.parts:
+            # Filter for text parts and join them (skips internal "thinking" blocks)
+            full_text = "".join([part.text for part in response.candidates[0].content.parts if part.text])
+            if full_text.strip():
+                return full_text
+        
+        return "I processed the data, but the response was empty. Please try again!"
 
     except Exception as e:
         logging.error(f"Error in get_ai_response: {e}")
@@ -61,10 +72,9 @@ async def on_ready():
 @bot.command(name='wos')
 async def wos(ctx, *, question):
     async with ctx.typing():
-        # Running the AI query
         answer = get_ai_response(question)
         
-        # Split message if it exceeds Discord's 2000 char limit
+        # Handle Discord's 2000 character limit
         if len(answer) > 2000:
             for i in range(0, len(answer), 2000):
                 await ctx.send(answer[i:i+2000])
@@ -75,8 +85,7 @@ async def wos(ctx, *, question):
 async def status(ctx):
     process = psutil.Process(os.getpid())
     ram = process.memory_info().rss / 1024 / 1024
-    uptime = "Online" # You can add a proper timer here if needed
-    await ctx.send(f"📊 **Frosty Stats:**\n• Status: {uptime}\n• RAM Usage: {ram:.2f} MB\n• Database: {collection.count()} pages")
+    await ctx.send(f"📊 **Frosty Stats:**\n• Status: Online\n• RAM Usage: {ram:.2f} MB\n• Database: {collection.count()} pages indexed")
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
