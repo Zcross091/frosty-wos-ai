@@ -5,12 +5,24 @@ import chromadb
 import os
 import time
 
-# 1. Setup ChromaDB (The persistent library for your bot)
+# 1. Connect to Frosty's persistent database folder
 chroma_client = chromadb.PersistentClient(path="./frosty_brain")
+
+# 2. Wipe old internal data so we don't duplicate answers
+try:
+    chroma_client.delete_collection(name="wos_knowledge")
+    print("🗑️ Wiped old internal database data cleanly.")
+except Exception:
+    pass
+
 collection = chroma_client.get_or_create_collection(name="wos_knowledge")
 
+def chunk_text(text, chunk_size=2000):
+    """Splits text content into character blocks under 2000 characters."""
+    return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
+
 def get_all_urls(source):
-    """Recursively finds all guide URLs from a local file or a live URL."""
+    """Finds all links inside a local sitemap file or live URL."""
     urls = []
     try:
         if os.path.exists(source):
@@ -23,88 +35,84 @@ def get_all_urls(source):
         root = ET.fromstring(content)
         namespace = {'ns': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
 
-        # Case 1: Sitemap Index (Points to other XML files)
+        # Sub-sitemaps loop
         sitemaps = root.findall('.//ns:sitemap/ns:loc', namespace)
         if sitemaps:
             for s in sitemaps:
-                print(f"📂 Diving into sub-sitemap: {s.text}")
                 urls.extend(get_all_urls(s.text))
         
-        # Case 2: Standard Sitemap (Points to actual web pages)
+        # Standard page locations loop
         locations = root.findall('.//ns:url/ns:loc', namespace)
         for loc in locations:
             urls.append(loc.text)
-
     except Exception as e:
-        print(f"⚠️ Error parsing {source}: {e}")
-    
-    return list(set(urls)) # Remove duplicates
+        print(f"⚠️ Error parsing sitemap layout ({source}): {e}")
+    return list(set(urls))
 
-def run_ingestion(source, site_label):
+def run_web_ingestion(source, site_label):
+    """Scrapes, cleans, chunks, and inputs web content into ChromaDB."""
     all_links = get_all_urls(source)
-    
-    # Filter for quality: We want guides, heroes, buildings, and events
     target_keywords = ['/hero', '/event', '/building', '/expert', '/pet', '/gear', '/guide']
     target_urls = [u for u in all_links if any(k in u.lower() for k in target_keywords)]
     
-    print(f"🚀 Found {len(target_urls)} relevant pages for {site_label}. Starting scrape...")
-    
+    print(f"🚀 Found {len(target_urls)} pages for {site_label}. Scraping text...")
     for i, url in enumerate(target_urls):
         try:
             res = requests.get(url, timeout=10, headers={'User-Agent': 'Mozilla/5.0'})
             soup = BeautifulSoup(res.text, 'html.parser')
             
-            # ✅ FIXED NOISE REMOVAL (Copilot's optimized fix)
-            # This removes tags (nav, footer) AND classes (.sidebar) correctly
-            noise_selectors = ['nav', 'footer', 'script', 'style', 'aside', '.sidebar', '.ad-container', 'header', '.menu']
-            for selector in noise_selectors:
-                for junk in soup.select(selector):
-                    junk.decompose()
+            # Remove layout junk text
+            for junk in soup.select('nav, footer, script, style, aside, .sidebar, .ad-container, header, .menu'):
+                junk.decompose()
             
-            # Get only the main content text
             clean_text = soup.get_text(separator=' ', strip=True)
+            page_chunks = chunk_text(clean_text, chunk_size=2000)
             
-            # Store in the "Brain"
-            collection.add(
-                documents=[clean_text],
-                ids=[f"{site_label}_{i}"],
-                metadatas=[{"source": url, "site": site_label}]
-            )
-            
-            if i % 10 == 0:
-                print(f"✅ Progress: {i}/{len(target_urls)} pages learned.")
-            
-            time.sleep(0.3)
-        except Exception as e:
-            print(f"❌ Failed to scrape {url}: {e}")
-
-def ingest_local_files(folder_path):
-    """Option A: Ingest your personal strategies from wos_data folder."""
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-        print(f"📂 Created {folder_path} folder. Drop your .txt files there!")
-        return
-
-    for filename in os.listdir(folder_path):
-        if filename.endswith(".txt") or filename.endswith(".md"):
-            with open(os.path.join(folder_path, filename), 'r', encoding='utf-8') as f:
+            for chunk_idx, chunk in enumerate(page_chunks):
                 collection.add(
-                    documents=[f.read()],
-                    ids=[f"personal_{filename}"],
-                    metadatas=[{"source": filename, "type": "personal_strategy"}]
+                    documents=[chunk],
+                    ids=[f"{site_label}_{i}_chunk_{chunk_idx}"],
+                    metadatas=[{"source": url, "site": site_label}]
                 )
-                print(f"📒 Ingested personal strategy: {filename}")
+        except Exception:
+            pass
 
-# --- EXECUTION ---
+def ingest_local_markdown_folder(folder_path):
+    """Processes your local sub-folder containing updated strategy notes."""
+    if not os.path.exists(folder_path):
+        print(f"❌ Subfolder {folder_path} does not exist.")
+        return
+    for filename in os.listdir(folder_path):
+        if filename.endswith(".md") or filename.endswith(".txt"):
+            file_path = os.path.join(folder_path, filename)
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                
+                text_chunks = chunk_text(content, chunk_size=2000)
+                for chunk_idx, chunk in enumerate(text_chunks):
+                    collection.add(
+                        documents=[chunk],
+                        ids=[f"local_{filename}_chunk_{chunk_idx}"],
+                        metadatas=[{"source": filename}]
+                    )
+            print(f"✅ Processed Local Folder Document: {filename}")
+
+# --- Master Execution Plan ---
 if __name__ == "__main__":
-    # 1. Scrape wos-guide.com (using your local sitemap.xml)
+    # Part 1: Handle your subfolder markdown documents
+    print("--- Ingesting Local Markdown Strategy Folders ---")
+    ingest_local_markdown_folder('./wos data')
+
+    # Part 2: Handle your root directory sitemap files
+    print("\n--- Processing Root Directory Sitemaps ---")
     if os.path.exists('sitemap.xml'):
-        run_ingestion('sitemap.xml', 'wos_guide')
+        print("🔗 Found sitemap.xml in root directory! Scraping...")
+        run_web_ingestion('sitemap.xml', 'wos_guide')
+    else:
+        print("ℹ️ No local sitemap.xml detected in root folder.")
 
-    # 2. Scrape whiteoutsurvival.wiki (using the live index URL)
-    run_ingestion('https://www.whiteoutsurvival.wiki/sitemap.xml', 'wos_wiki')
+    # Part 3: Handle the second remote live sitemap
+    print("\n--- Processing Live Web Wiki Sitemaps ---")
+    run_web_ingestion('https://www.whiteoutsurvival.wiki/sitemap.xml', 'wos_wiki')
 
-    # 3. Ingest your custom strategies (Option A)
-    ingest_local_files('wos_data')
-
-    print("\n✨ SYSTEM: Frosty's brain is fully synced and ready for Discord!")
+    print(f"\n✨ COMPLETE: Frosty's brain contains {collection.count()} indexed chunks across all sources!")
