@@ -35,13 +35,11 @@ def get_all_urls(source):
         root = ET.fromstring(content)
         namespace = {'ns': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
 
-        # Sub-sitemaps loop
         sitemaps = root.findall('.//ns:sitemap/ns:loc', namespace)
         if sitemaps:
             for s in sitemaps:
                 urls.extend(get_all_urls(s.text))
         
-        # Standard page locations loop
         locations = root.findall('.//ns:url/ns:loc', namespace)
         for loc in locations:
             urls.append(loc.text)
@@ -58,10 +56,12 @@ def run_web_ingestion(source, site_label):
     print(f"🚀 Found {len(target_urls)} pages for {site_label}. Scraping text...")
     for i, url in enumerate(target_urls):
         try:
+            # Live tracking print statement to prevent connection timeout!
+            print(f"📑 [{site_label}] Learning page {i+1}/{len(target_urls)}: {url}")
+            
             res = requests.get(url, timeout=10, headers={'User-Agent': 'Mozilla/5.0'})
             soup = BeautifulSoup(res.text, 'html.parser')
             
-            # Remove layout junk text
             for junk in soup.select('nav, footer, script, style, aside, .sidebar, .ad-container, header, .menu'):
                 junk.decompose()
             
@@ -74,6 +74,7 @@ def run_web_ingestion(source, site_label):
                     ids=[f"{site_label}_{i}_chunk_{chunk_idx}"],
                     metadatas=[{"source": url, "site": site_label}]
                 )
+            time.sleep(0.3)
         except Exception:
             pass
 
@@ -99,19 +100,14 @@ def ingest_local_markdown_folder(folder_path):
 
 # --- Master Execution Plan ---
 if __name__ == "__main__":
-    # Part 1: Handle your subfolder markdown documents
     print("--- Ingesting Local Markdown Strategy Folders ---")
     ingest_local_markdown_folder('./wos data')
 
-    # Part 2: Handle your root directory sitemap files
     print("\n--- Processing Root Directory Sitemaps ---")
     if os.path.exists('sitemap.xml'):
         print("🔗 Found sitemap.xml in root directory! Scraping...")
         run_web_ingestion('sitemap.xml', 'wos_guide')
-    else:
-        print("ℹ️ No local sitemap.xml detected in root folder.")
 
-    # Part 3: Handle the second remote live sitemap
     print("\n--- Processing Live Web Wiki Sitemaps ---")
     run_web_ingestion('https://www.whiteoutsurvival.wiki/sitemap.xml', 'wos_wiki')
 
