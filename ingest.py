@@ -7,14 +7,6 @@ import time
 
 # 1. Connect to Frosty's persistent database folder
 chroma_client = chromadb.PersistentClient(path="./frosty_brain")
-
-# 2. Wipe old internal data so we don't duplicate answers
-try:
-    chroma_client.delete_collection(name="wos_knowledge")
-    print("🗑️ Wiped old internal database data cleanly.")
-except Exception:
-    pass
-
 collection = chroma_client.get_or_create_collection(name="wos_knowledge")
 
 def chunk_text(text, chunk_size=2000):
@@ -47,17 +39,40 @@ def get_all_urls(source):
         print(f"⚠️ Error parsing sitemap layout ({source}): {e}")
     return list(set(urls))
 
+def get_indexed_urls(site_label):
+    """Queries ChromaDB to see which URLs have already been indexed for a site."""
+    try:
+        # Fetch existing metadata entries matching this site source label
+        results = collection.get(where={"site": site_label}, include=["metadatas"])
+        if results and results["metadatas"]:
+            return set(meta["source"] for meta in results["metadatas"] if "source" in meta)
+    except Exception:
+        pass
+    return set()
+
 def run_web_ingestion(source, site_label):
-    """Scrapes, cleans, chunks, and inputs web content into ChromaDB."""
+    """Scrapes, cleans, chunks, and inputs web content with checkpoint skipping."""
     all_links = get_all_urls(source)
     target_keywords = ['/hero', '/event', '/building', '/expert', '/pet', '/gear', '/guide']
     target_urls = [u for u in all_links if any(k in u.lower() for k in target_keywords)]
+    total_targets = len(target_urls)
     
-    print(f"🚀 Found {len(target_urls)} pages for {site_label}. Scraping text...")
+    print(f"🚀 Analyzing {total_targets} pages for {site_label}...")
+    
+    # Check existing data to skip previously completed work
+    indexed_urls = get_indexed_urls(site_label)
+    print(f"ℹ️ Found {len(indexed_urls)} URLs already present in database.")
+    
     for i, url in enumerate(target_urls):
+        if url in indexed_urls:
+            # Checkpoint Skip Logic
+            if (i + 1) % 50 == 0 or i + 1 == total_targets:
+                print(f"⏩ [{site_label}] Fast-forwarding: Checked {i+1}/{total_targets} links...")
+            continue
+            
         try:
-            # Live tracking print statement to prevent connection timeout!
-            print(f"📑 [{site_label}] Learning page {i+1}/{len(target_urls)}: {url}")
+            # Active tracking print statement so SSH connections never idle out!
+            print(f"📑 [{site_label}] Learning page {i+1}/{total_targets}: {url}")
             
             res = requests.get(url, timeout=10, headers={'User-Agent': 'Mozilla/5.0'})
             soup = BeautifulSoup(res.text, 'html.parser')
@@ -75,11 +90,11 @@ def run_web_ingestion(source, site_label):
                     metadatas=[{"source": url, "site": site_label}]
                 )
             time.sleep(0.3)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"❌ Failed to scrape {url}: {e}")
 
 def ingest_local_markdown_folder(folder_path):
-    """Processes your local sub-folder containing updated strategy notes."""
+    """Processes local sub-folder strategy notes with fallback protections."""
     if not os.path.exists(folder_path):
         print(f"❌ Subfolder {folder_path} does not exist.")
         return
@@ -94,21 +109,25 @@ def ingest_local_markdown_folder(folder_path):
                     collection.add(
                         documents=[chunk],
                         ids=[f"local_{filename}_chunk_{chunk_idx}"],
-                        metadatas=[{"source": filename}]
+                        metadatas=[{"source": filename, "site": "local_data"}]
                     )
             print(f"✅ Processed Local Folder Document: {filename}")
 
 # --- Master Execution Plan ---
 if __name__ == "__main__":
+    # Part 1: Handle your markdown documentation folder first
     print("--- Ingesting Local Markdown Strategy Folders ---")
     ingest_local_markdown_folder('./wos data')
 
+    # Part 2: Handle your original root directory sitemap file
     print("\n--- Processing Root Directory Sitemaps ---")
     if os.path.exists('sitemap.xml'):
-        print("🔗 Found sitemap.xml in root directory! Scraping...")
         run_web_ingestion('sitemap.xml', 'wos_guide')
+    else:
+        print("ℹ️ No local sitemap.xml detected in root folder.")
 
+    # Part 3: Handle the remote live sitemap
     print("\n--- Processing Live Web Wiki Sitemaps ---")
     run_web_ingestion('https://www.whiteoutsurvival.wiki/sitemap.xml', 'wos_wiki')
 
-    print(f"\n✨ COMPLETE: Frosty's brain contains {collection.count()} indexed chunks across all sources!")
+    print(f"\n✨ COMPLETE: Frosty's brain currently contains {collection.count()} active indexed chunks!")
