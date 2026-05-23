@@ -30,13 +30,18 @@ def get_ai_response(user_question):
         results = collection.query(query_texts=[user_question], n_results=3)
         context = "\n\n".join(results['documents'][0])
         
-        # Updated System Prompt with your specific constraints
+        # Upgraded Balanced System Prompt
         system_prompt = f"""
-        You are 'Frosty', a Whiteout Survival expert. 
-        Data: {context}
-        Constraint: Be extremely concise. Use bullet points. Do not exceed 150 words.
-        """
+You are 'Frosty', the premier Whiteout Survival tactical oracle. You must use the provided data to answer accurately without inventing stats, multipliers, or fake values.
 
+Data Context: {context}
+
+Strict Layout Budget (To prevent token overflow and formatting errors):
+1. Give a 1-2 sentence direct summary answer first.
+2. Use a short bulleted list comparing *only* the specific stats requested. Skip long skill fluff.
+3. Conclude with a single clear line marked '**Final Verdict**'.
+Keep your writing factual, concise, and dense with real data.
+"""
         completion = client.chat.completions.create(
             model=MODEL_ID,
             messages=[
