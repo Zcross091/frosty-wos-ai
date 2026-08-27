@@ -1,79 +1,109 @@
 # ❄️ Frosty: Whiteout Survival Tactical AI & Grandmaster Advisor
 
-Frosty is an advanced Discord AI bot powered by **Google Gemini** (with **Groq** & **OpenAI** multi-provider fallback) and **ChromaDB Hybrid RAG**, designed to provide instant, tactical, and expert-level guidance for Whiteout Survival Chiefs.
+<p align="center">
+  <img src="https://img.shields.io/badge/Frosty_AI-v2.5_Active-00D2FF?style=for-the-badge&logo=discord&logoColor=white" alt="Frosty AI Version" />
+  <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.10+" />
+  <img src="https://img.shields.io/badge/Google_Gemini-3.6_Flash-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google Gemini" />
+  <img src="https://img.shields.io/badge/Groq-Llama_3.3_70B-F55036?style=for-the-badge&logo=groq&logoColor=white" alt="Groq" />
+  <img src="https://img.shields.io/badge/ChromaDB-Hybrid_RAG-FF6B6B?style=for-the-badge" alt="ChromaDB" />
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="MIT License" />
+</p>
+
+<p align="center">
+  <b>The ultimate Discord AI tactical companion for Whiteout Survival Chiefs, Alliances, and Grandmasters.</b><br />
+  Combines conversational LLM intelligence (Google Gemini 3.6 Flash & Groq) with a dedicated ChromaDB Hybrid RAG engine containing verified archives for <b>Generations 0 through 16+</b>, event walkthroughs, Dawn Academy experts, and formation calculators.
+</p>
 
 <p align="center">
   <a href="https://discord.com/oauth2/authorize?client_id=1501632240466006108&permissions=347200&integration_type=0&scope=bot+applications.commands">
-    <img src="https://img.shields.io/badge/Invite%20Frosty-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" />
+    <img src="https://img.shields.io/badge/❄️_INVITE_FROSTY_TO_DISCORD-5865F2?style=for-the-badge&logo=discord&logoColor=white" height="42" alt="Invite Frosty to Discord" />
   </a>
 </p>
 
 ---
 
-## 🚀 Key Features
+## 🌐 Live Interactive 3D Showcase & Documentation
 
-* 🧠 **Multi-Provider AI Engine:** Powered by **Google Gemini** (`gemini-2.0-flash` / `gemini-1.5-flash`), with automated failover to **Groq** (`llama-3.3-70b-versatile`) and **OpenAI** (`gpt-4o-mini`).
-* 📚 **Semantic Hybrid RAG:** Ingests and cross-references over 5,500+ lines of hero guides (Gen 0 through Gen 16+), wave-by-wave event tactics (Crazy Joe, Bear Trap, Foundry Battle, Frostfire Mine, Sunfire Castle), and Dawn Academy expert roadmaps.
-* ⚡ **Discord Slash Commands & Autocomplete:** Full support for modern `/` Discord slash commands with instant auto-completion for heroes, events, and Dawn Academy experts.
-* 🛡️ **Tactical Formation Engine:** Instant calculations for 3-hero marches (Leader + 2 Deputies) and troop ratios (`50/20/30`, `40/10/50` / `4-1-1`, `10/10/80` Bear Trap).
-* 🔄 **Interactive Discord UI:** Clean icy cyan embeds (`#00D2FF`) with interactive buttons (`⚡ Regenerate`, `🛡️ Lineup Tips`, `❌ Dismiss`).
-* 🧵 **Multi-Turn Thread Memory:** Remembers recent conversation context in Discord threads and DMs for deep coaching sessions.
-* ☁️ **Production Cloud Ready:** Optimized with PM2 ecosystem config for 24/7 uptime on Oracle Cloud Infrastructure (OCI).
+Experience the live 3D web dashboard, interactive command simulator, and tactical lineup calculator hosted on GitHub Pages:
+
+👉 **[Launch 3D Interactive Website](https://zcross091.github.io/frosty-wos-ai/)**
 
 ---
 
-## 🛠️ Commands & Capabilities
+## ⚡ Key Capabilities
 
-Frosty supports both **Slash Commands (`/`)** and **Prefix Commands (`!`)**:
+* 🧠 **Multi-Provider AI Fallback Matrix:** Defaults to ultra-fast **Google Gemini 3.6 Flash** and automatically fails over to **Groq (`openai/gpt-oss-120b`, `llama-3.3-70b-versatile`, `qwen3.8-27b`)**, **Local Ollama**, or the **Offline Zero-Key Tactical Synthesizer**.
+* 📚 **Deep Whiteout Survival Knowledge Base:** Indexed across 5,500+ lines of verified game data covering every generation (**Gen 0 to Gen 16+** like Seigel, Aisling, and Ursar), skill synergies, exclusive gear, and F2P/P2W advice.
+* 🐻 **Bear Trap & Rally Joiner Mastery:** Implements Whiteout Survival's core math—automatically advises the **Top 4 Rally Joiner skill buffs** (Jessie +25% damage, Seo-yoon +20% attack) and high-DPS `10/10/80` or `0/20/80` troop compositions.
+* ⚔️ **Tactical Formation Engine:** Formulates optimal 3-hero squad positioning (1 Leader / Captain + 2 Deputies) with precision troop ratios (`50/20/30`, `60/20/20`, `40/10/50` / `4-1-1`).
+* ⚡ **Zero-Lag Async Worker Threads:** All AI generation executes in dedicated non-blocking asynchronous threads (`asyncio.to_thread`), ensuring Discord gateway heartbeats never freeze.
+* 🎨 **Interactive Discord UI:** Clean icy cyan embeds (`#00D2FF`) featuring action buttons (`⚡ Regenerate`, `🛡️ Lineup Tips`, `❌ Dismiss`) and autocomplete for all heroes and events.
+* 🧵 **Thread Conversation Memory:** Retains multi-turn conversation context in Discord channels and DMs for deep coaching sessions.
+
+---
+
+## 🛠️ Commands Directory
+
+Frosty fully supports both modern **Slash Commands (`/`)** with instant autocomplete and classic **Prefix Commands (`!`)**:
 
 | Slash Command | Prefix Command | Description |
 | :--- | :--- | :--- |
-| `/wos [question]` | `!wos [question]` | Ask any question on Whiteout Survival strategy, hero comparisons, or mechanics. |
-| `/hero [name]` | `!hero [name]` | Complete hero breakdown (Generation, Troop Type, Skills, Best Gear, F2P/P2W verdict) with autocomplete. |
-| `/lineup [mode] [gen]` | `!lineup [mode]` | Recommended 3-hero lineups and troop ratios for Exploration, Bear Trap, Castle Defense, PvP, and Foundry. |
-| `/bear` | `!bear` | Master Bear Trap cheat sheet (10/10/80 ratio, Jessie/Seo-yoon joiner damage buffs, lead setups). |
-| `/event [name]` | `!event [name]` | In-depth walkthroughs for Crazy Joe, Foundry Battle, Frostfire Mine, Sunfire Castle, and SvS. |
-| `/expert [name]` | `!expert [name]` | Dawn Academy expert guide, sigil cost efficiency, and Strategic Pausing breakpoints. |
-| `/status` | `!status` | Real-time diagnostics: active AI engine, RAM usage, ping, and indexed knowledge chunks. |
-| `/reindex` | `!reindex` | *(Admin Only)* Triggers database re-indexing with the latest local guides. |
-| `/help` | `!help` | Displays interactive tactical command directory. |
+| `/wos [question]` | `!wos [question]` | Ask any complex Whiteout Survival question, hero comparison, meta lineup, or battle strategy. |
+| `/hero [name]` | `!hero [name]` | Complete hero dossier (Generation, Troop Type, Skills, Exclusive Gear, F2P vs P2W verdict). |
+| `/lineup [mode] [gen]` | `!lineup [mode]` | Recommended 3-hero lineups and troop ratios for PvP, Bear Trap, Castle Defense, and Foundry. |
+| `/bear` | `!bear` | Master Bear Trap cheat sheet: `10/10/80` troop ratio, rally joiner Jessie/Seo-yoon buffs, and leader setups. |
+| `/event [name]` | `!event [name]` | Walkthroughs and tips for Crazy Joe, Foundry Battle, Frostfire Mine, Sunfire Castle, and SvS. |
+| `/expert [name]` | `!expert [name]` | Dawn Academy expert profiles, sigil optimization, and Strategic Pausing breakpoints. |
+| `/status` | `!status` | Real-time bot diagnostics: active AI engine, RAM consumption, websocket latency, and indexed knowledge chunks. |
+| `/reindex` | `!reindex` | *(Admin Only)* Triggers semantic re-indexing of local guides into ChromaDB. |
+| `/help` | `!help` | Displays the interactive command menu. |
 
 ---
 
-## ⚙️ Environment Setup (`.env`)
+## 🏛️ System Architecture
 
-Copy `.env.example` to `.env` and fill in your credentials:
-
-```bash
-cp .env.example .env
 ```
-
-```env
-# Discord Token
-DISCORD_TOKEN=your_discord_bot_token_here
-
-# AI Provider ("gemini", "groq", or "openai")
-AI_PROVIDER=gemini
-
-# Google Gemini (Recommended)
-GEMINI_API_KEY=your_gemini_api_key_here
-GEMINI_MODEL=gemini-2.0-flash
-
-# Groq (Alternative / Fallback)
-GROQ_API_KEY=your_groq_api_key_here
-GROQ_MODEL=llama-3.3-70b-versatile
-
-# Admin User IDs (comma-separated Discord IDs for /reindex)
-ADMIN_USER_IDS=123456789012345678
+                                  ┌────────────────────────┐
+                                  │   Discord User / Chat  │
+                                  └───────────┬────────────┘
+                                              │ (/wos, !hero, !lineup)
+                                              ▼
+                                  ┌────────────────────────┐
+                                  │   discord.py Gateway   │
+                                  │  (Async Worker Thread) │
+                                  └───────────┬────────────┘
+                                              │
+                      ┌───────────────────────┴───────────────────────┐
+                      ▼                                               ▼
+         ┌─────────────────────────┐                     ┌─────────────────────────┐
+         │ ChromaDB Hybrid RAG     │                     │ Multi-Provider AI Engine│
+         ├─────────────────────────┤                     ├─────────────────────────┤
+         │ • Heroes.md (Gen 0-16)  │ === Context Boost ==>│ 1. Google Gemini 3.6    │
+         │ • Events.md (Crazy Joe) │                     │ 2. Groq LLMs            │
+         │ • Experts.md (Dawn Acad)│                     │ 3. Local Ollama         │
+         │ • Filtered English Wiki │                     │ 4. Zero-Key Synthesizer │
+         └─────────────────────────┘                     └────────────┬────────────┘
+                                                                      │
+                                                                      ▼
+                                                         ┌─────────────────────────┐
+                                                         │ Discord Rich Cyan Embed │
+                                                         │ (Interactive UI Buttons)│
+                                                         └─────────────────────────┘
 ```
 
 ---
 
-## ☁️ Deployment on Oracle Cloud (PM2)
+## ⚙️ Quick Start & Self-Hosting Guide
 
-### 1. Update Code on Oracle Cloud
+### Prerequisites
+- Python 3.10+
+- Free Discord Bot Token from [Discord Developer Portal](https://discord.com/developers/applications)
+- Free Google Gemini API Key from [Google AI Studio](https://aistudio.google.com/) or Groq Key from [Groq Console](https://console.groq.com/)
+
+### 1. Clone the Repository
 ```bash
-git pull origin main
+git clone https://github.com/Zcross091/frosty-wos-ai.git
+cd frosty-wos-ai
 ```
 
 ### 2. Install Dependencies
@@ -81,33 +111,100 @@ git pull origin main
 pip install -r requirements.txt
 ```
 
-### 3. Ingest / Index Game Knowledge
+### 3. Configure Environment (`.env`)
+Create your `.env` configuration file:
 ```bash
-# Ingest local markdown strategy guides (Fast)
-python ingest.py --local-only
-
-# Or run full ingestion with web wikis
-python ingest.py
+cp .env.example .env
 ```
 
-### 4. Start / Restart via PM2
+Edit `.env` with your credentials:
+```env
+# Discord Token
+DISCORD_TOKEN=your_discord_bot_token_here
+
+# Primary AI Provider: "gemini", "groq", "ollama", or "local"
+AI_PROVIDER=gemini
+
+# Google Gemini (Recommended - 100% Free)
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-3.6-flash
+
+# Groq (Fast Cloud Fallback)
+GROQ_API_KEY=your_groq_api_key_here
+GROQ_MODEL=openai/gpt-oss-120b
+
+# Local Knowledge Base & Bot Settings
+CHROMA_PATH=./frosty_brain
+COMMAND_PREFIX=!
+ADMIN_USER_IDS=
+```
+
+### 4. Ingest Tactical Knowledge Base
+Index the local strategy guides into ChromaDB:
 ```bash
-# Start with PM2 ecosystem
-pm2 start ecosystem.config.js
+# Ingest clean local markdown guides (Heroes Gen 0-16, Events, Experts)
+python ingest.py --local-only --clean
+```
 
-# Or if already running:
-pm2 restart frosty-wos-ai
-
-# Save PM2 process list to persist on VM reboot
-pm2 save
+### 5. Launch the Bot
+```bash
+python bot.py
 ```
 
 ---
 
-## 📦 Tech Stack
+## ☁️ 24/7 Production Deployment (Oracle Cloud / PM2)
 
-- **Language:** Python 3.10+
-- **Discord Framework:** `discord.py` (v2.3+) with App Commands
-- **AI Models:** Google Gemini 2.0 Flash (`google-genai` / `google-generativeai`), Groq LLaMA 3.3 70B (`groq`), OpenAI GPT-4o-mini (`openai`)
-- **Vector Database:** ChromaDB
-- **Process Manager:** PM2 on Oracle Cloud Infrastructure (OCI)
+To run Frosty permanently in the background with automatic restart on crashes or reboots:
+
+```bash
+# Install PM2 globally (Node.js required)
+npm install -g pm2
+
+# Start with PM2 Ecosystem
+pm2 start ecosystem.config.js
+
+# Or start directly:
+pm2 start bot.py --name frosty-wos-ai --interpreter python3
+
+# Save PM2 process list across VM reboots
+pm2 save
+pm2 startup
+```
+
+---
+
+## 🛡️ Hero Generation Coverage Matrix
+
+Frosty contains verified statistical dossiers, exploration skills, expedition buffs, and exclusive gear ratings for all generations:
+
+| Generation | Era | Highlight Heroes | Key Meta Roles |
+| :---: | :---: | :---: | :---: |
+| **Gen 0 / Rare & Epic** | Early Game | Jessie, Sergey, Bahiti, Patrick, Gina, Smith | Essential Rally Joiners (+25% Dmg) & Gathering |
+| **Gen 1** | Early Server | Jeronimo, Natalia, Zinman, Molly | Early Rally Lead & Arena Burst |
+| **Gen 2** | ~Day 40 | Flint, Alonso, Philly | Lucky Wheel Tank, AOE Stun, Healer |
+| **Gen 3** | ~Day 120 | Mia, Logan, Greg | High Burst Marksman & SvS Garrison |
+| **Gen 4** | ~Day 180 | Lynn, Hector, Ahmose | Rally Lead Stuns & Lancer Pierce |
+| **Gen 5 – 6** | Mid Game | Gwen, Norah, Wayne, Renee, Hendrik | Defensive Wall & Sniper DPS |
+| **Gen 7** | ~Day 400 | Bradley, Edith, Gordon | Top PvP Frontline & Piercing Marksman |
+| **Gen 8 – 11** | Mid-Late Game | Sonya, Reina, Magnus, Blanche, Xylona, Rufus | Lethality Shred & Multi-Target Debuffs |
+| **Gen 12 – 15** | Late Game | Anson, Eleanor, Lloyd, Freyja, Kai, Alistair | High Scale Defense & Speed Metas |
+| **Gen 16+** | 1160+ Days | **Seigel** (Infantry), **Ursar** (Lancer), **Aisling** (Marksman) | Reflect Shield, Toxic Support & Endgame Burst |
+
+---
+
+## 🤝 Contributing & Community
+
+Contributions, issues, and tactical strategy submissions are warmly welcome!
+- **Submit an Issue:** Report bugs or suggest new game features via [GitHub Issues](https://github.com/Zcross091/frosty-wos-ai/issues).
+- **Pull Requests:** Feel free to submit PRs for new hero guides, event data, or performance optimizations.
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+<p align="center">
+  <b>Built with ❄️ for Whiteout Survival Chiefs worldwide.</b>
+</p>

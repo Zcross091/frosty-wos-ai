@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frosty AI — The Ultimate Whiteout Survival Tactical Discord Bot</title>
+  <meta name="description" content="Frosty is an advanced Whiteout Survival tactical AI Discord bot powered by Google Gemini 3.6 Flash, Groq, and ChromaDB Hybrid RAG covering Gen 0 to Gen 16+ heroes, Bear Trap, and lineup ratios." />
+  <meta property="og:title" content="Frosty AI — Whiteout Survival Grandmaster Tactical Bot" />
+  <meta property="og:description" content="Master Whiteout Survival with real-time AI tactical advice, hero dossiers (Gen 0-16+), Bear Trap rally joiner math, and formation calculators." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20viewBox=%220%200%20100%20100%22><text y=%22.9em%22 font-size=%2290%22>❄️</text></svg>" />
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  
+  <!-- Three.js (3D Graphics) & Lucide Icons -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- 3D Canvas Background -->
+  <canvas id="bg3d"></canvas>
+  
+  <!-- Ambient Glow Orbs -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="#hero" class="nav-brand">
+        <div class="brand-icon">❄️</div>
+        <div class="brand-text">
+          <span class="brand-name">Frosty<span class="highlight">AI</span></span>
+          <span class="brand-sub">WOS Grandmaster</span>
+        </div>
+      </a>
+
+      <div class="nav-links" id="nav-links">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#simulator" class="nav-link">Interactive Demo</a>
+        <a href="#codex" class="nav-link">Hero Codex (Gen 0-16)</a>
+        <a href="#calculator" class="nav-link">Troop Formations</a>
+        <a href="#setup" class="nav-link">Self-Hosting</a>
+      </div>
+
+      <div class="nav-actions">
+        <div class="status-indicator" title="Frosty AI Systems Operational">
+          <span class="pulse-dot"></span>
+          <span class="status-text">Live on Discord</span>
+        </div>
+        <a href="https://discord.com/oauth2/authorize?client_id=1501632240466006108&permissions=347200&integration_type=0&scope=bot+applications.commands" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-nav" id="nav-invite-btn">
+          <i data-lucide="bot"></i>
+          <span>Invite Bot</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero-section" id="hero">
+    <div class="hero-container">
+      <div class="hero-badge">
+        <span class="badge-icon">⚡</span>
+        <span>Powered by Gemini 3.6 Flash & ChromaDB RAG • Generations 0 to 16+</span>
+      </div>
+
+      <h1 class="hero-title">
+        The Ultimate AI Tactical Oracle for <span class="gradient-text">Whiteout Survival</span>
+      </h1>
+
+      <p class="hero-description">
+        Elevate your alliance with instant grandmaster coaching. Query hero builds, rally joiner buffs, Bear Trap compositions, Crazy Joe defense, and troop ratios directly inside your Discord server.
+      </p>
+
+      <div class="hero-cta-group">
+        <a href="https://discord.com/oauth2/authorize?client_id=1501632240466006108&permissions=347200&integration_type=0&scope=bot+applications.commands" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-hero" id="hero-invite-btn">
+          <i data-lucide="sparkles"></i>
+          <span>Invite Frosty to Discord</span>
+          <i data-lucide="arrow-right"></i>
+        </a>
+        <a href="#simulator" class="btn btn-secondary btn-hero" id="hero-demo-btn">
+          <i data-lucide="terminal"></i>
+          <span>Try Interactive Simulator</span>
+        </a>
+        <a href="https://github.com/Zcross091/frosty-wos-ai" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-hero" id="hero-github-btn">
+          <i data-lucide="github"></i>
+          <span>GitHub Repo</span>
+        </a>
+      </div>
+
+      <!-- Live Stats Bar -->
+      <div class="stats-bar">
+        <div class="stat-card">
+          <div class="stat-value">17+</div>
+          <div class="stat-label">Hero Generations (0 to 16)</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-card">
+          <div class="stat-value">5,500+</div>
+          <div class="stat-label">Indexed Strategy Chunks</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-card">
+          <div class="stat-value">&lt; 0.8s</div>
+          <div class="stat-label">Average AI Response Time</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-card">
+          <div class="stat-value">100%</div>
+          <div class="stat-label">Free & Open Source (MIT)</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Interactive Discord Simulator Section -->
+  <section class="simulator-section" id="simulator">
+    <div class="section-container">
+      <div class="section-header">
+        <div class="section-tag">🎮 Live Command Playground</div>
+        <h2 class="section-title">Experience Frosty Inside Discord</h2>
+        <p class="section-sub">Select any tactical query below to see how Frosty's Gemini-powered intelligence structures and delivers answers.</p>
+      </div>
+
+      <!-- Simulator Interactive Controls -->
+      <div class="simulator-controls">
+        <button class="sim-btn active" data-cmd="wos_bear" id="sim-btn-bear">
+          <i data-lucide="crosshair"></i>
+          <span>!wos Bear Trap Lineup</span>
+        </button>
+        <button class="sim-btn" data-cmd="hero_flint" id="sim-btn-flint">
+          <i data-lucide="shield"></i>
+          <span>/hero Flint (Gen 2)</span>
+        </button>
+        <button class="sim-btn" data-cmd="gen_16" id="sim-btn-gen16">
+          <i data-lucide="crown"></i>
+          <span>!wos Generation 16</span>
+        </button>
+        <button class="sim-btn" data-cmd="lineup_pvp" id="sim-btn-pvp">
+          <i data-lucide="swords"></i>
+          <span>/lineup PvP 50/20/30</span>
+        </button>
+        <button class="sim-btn" data-cmd="event_joe" id="sim-btn-joe">
+          <i data-lucide="flame"></i>
+          <span>!event Crazy Joe</span>
+        </button>
+      </div>
+
+      <!-- Discord Chat Box Mockup -->
+      <div class="discord-window">
+        <div class="discord-header">
+          <div class="discord-channel">
+            <span class="hash">#</span>
+            <span class="channel-name">whiteout-tactics</span>
+          </div>
+          <div class="discord-server-badge">AVM Whitewolfs Alliance</div>
+        </div>
+
+        <div class="discord-body">
+          <!-- User Message -->
+          <div class="chat-message user-msg">
+            <div class="avatar user-avatar">👑</div>
+            <div class="msg-content">
+              <div class="msg-author">
+                <span class="username">Alliance Chief</span>
+                <span class="timestamp">Today at 10:04 PM</span>
+              </div>
+              <div class="msg-text" id="sim-user-text">
+                !wos considering there are new generation of heroes now upto gen 16, write me a good lineup to use to join rallies in bear trap
+              </div>
+            </div>
+          </div>
+
+          <!-- Bot Response -->
+          <div class="chat-message bot-msg">
+            <div class="avatar bot-avatar">❄️</div>
+            <div class="msg-content">
+              <div class="msg-author">
+                <span class="username bot-name">Frosty wos AI</span>
+                <span class="bot-badge">APP</span>
+                <span class="timestamp">Today at 10:04 PM</span>
+              </div>
+              
+              <!-- Discord Cyan Embed -->
+              <div class="discord-embed" id="sim-embed-container">
+                <div class="embed-border"></div>
+                <div class="embed-inner">
+                  <div class="embed-title" id="sim-embed-title">
+                    ❄️ Frosty Tactical Advisory • Bear Trap Joiner Strategy
+                  </div>
+                  <div class="embed-description" id="sim-embed-body">
+                    <!-- Dynamic Simulated AI text injected by JS -->
+                  </div>
+                  <div class="embed-footer" id="sim-embed-footer">
+                    Engine: Gemini (gemini-3.6-flash) • Latency: 0.62s • Chief: Alliance Chief
+                  </div>
+                </div>
+              </div>
+
+              <!-- Interactive Buttons -->
+              <div class="discord-action-buttons">
+                <button class="dc-btn dc-btn-secondary" id="sim-regenerate-btn">
+                  <span>⚡</span> <span>Regenerate</span>
+                </button>
+                <button class="dc-btn dc-btn-primary" id="sim-lineup-btn">
+                  <span>🛡️</span> <span>Best Lineup Tips</span>
+                </button>
+                <button class="dc-btn dc-btn-danger" id="sim-dismiss-btn">
+                  <span>❌</span> <span>Dismiss</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Features Grid -->
+  <section class="features-section" id="features">
+    <div class="section-container">
+      <div class="section-header">
+        <div class="section-tag">✨ Engineering Architecture</div>
+        <h2 class="section-title">Built for Speed, Accuracy, & High ELO Strategy</h2>
+        <p class="section-sub">Why top Whiteout Survival state leaders and competitive alliances rely on Frosty.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card glass-card">
+          <div class="feature-icon"><i data-lucide="brain"></i></div>
+          <h3 class="feature-title">Multi-Provider AI Fallback</h3>
+          <p class="feature-desc">Combines Google Gemini 3.6 Flash with automated failover to Groq LLMs and Local Ollama. Zero downtime, zero rate limits.</p>
+        </div>
+
+        <div class="feature-card glass-card">
+          <div class="feature-icon"><i data-lucide="database"></i></div>
+          <h3 class="feature-title">Semantic Hybrid RAG</h3>
+          <p class="feature-desc">Powered by ChromaDB with exact structure-aware parsing over 5,500+ lines of verified Whiteout Survival game files and wikis.</p>
+        </div>
+
+        <div class="feature-card glass-card">
+          <div class="feature-icon"><i data-lucide="swords"></i></div>
+          <h3 class="feature-title">Gen 0 to Gen 16+ Codex</h3>
+          <p class="feature-desc">Comprehensive database covering every hero from early-game epics (Jessie, Sergey) to endgame legends (Seigel, Aisling, Ursar).</p>
+        </div>
+
+        <div class="feature-card glass-card">
+          <div class="feature-icon"><i data-lucide="zap"></i></div>
+          <h3 class="feature-title">Non-Blocking Async Threads</h3>
+          <p class="feature-desc">AI generation runs in background worker threads. Discord gateway heartbeats never freeze, guaranteeing immediate typing feedback.</p>
+        </div>
+
+        <div class="feature-card glass-card">
+          <div class="feature-icon"><i data-lucide="target"></i></div>
+          <h3 class="feature-title">Bear Trap & Rally Joiner Math</h3>
+          <p class="feature-desc">Understands rally mechanics: automatically prioritizes the Top 4 joiner buffs (+25% Jessie, +20% Seo-yoon) and 10/10/80 ratios.</p>
+        </div>
+
+        <div class="feature-card glass-card">
+          <div class="feature-icon"><i data-lucide="layout"></i></div>
+          <h3 class="feature-title">Modern Slash & Prefix UI</h3>
+          <p class="feature-desc">Full support for Discord Slash commands (`/wos`, `/hero`, `/lineup`) with instant autocomplete + prefix commands (`!wos`).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Hero & Generation Codex Section -->
+  <section class="codex-section" id="codex">
+    <div class="section-container">
+      <div class="section-header">
+        <div class="section-tag">📖 Hero Archives</div>
+        <h2 class="section-title">Interactive Generation & Hero Codex</h2>
+        <p class="section-sub">Explore tactical evaluations, troop affinities, and investment ratings across all Whiteout Survival generations.</p>
+      </div>
+
+      <!-- Generation Selector Tabs -->
+      <div class="gen-tabs-wrapper">
+        <div class="gen-tabs" id="gen-tabs-container">
+          <button class="gen-tab active" data-gen="16" id="gen-tab-16">Gen 16 (Endgame)</button>
+          <button class="gen-tab" data-gen="7" id="gen-tab-7">Gen 7 (Bradley/Edith)</button>
+          <button class="gen-tab" data-gen="4" id="gen-tab-4">Gen 4 (Lynn/Hector)</button>
+          <button class="gen-tab" data-gen="2" id="gen-tab-2">Gen 2 (Flint/Alonso)</button>
+          <button class="gen-tab" data-gen="1" id="gen-tab-1">Gen 1 (Jeronimo)</button>
+          <button class="gen-tab" data-gen="0" id="gen-tab-0">Epic / F2P Core</button>
+        </div>
+      </div>
+
+      <!-- Hero Cards Display -->
+      <div class="hero-cards-grid" id="hero-cards-container">
+        <!-- Injected dynamically by app.js based on selected generation -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Troop Ratio Calculator Section -->
+  <section class="calculator-section" id="calculator">
+    <div class="section-container">
+      <div class="section-header">
+        <div class="section-tag">📊 Tactical Formations</div>
+        <h2 class="section-title">Interactive Troop Ratio Visualizer</h2>
+        <p class="section-sub">Select a combat scenario to see the grandmaster troop breakdown and tactical doctrine.</p>
+      </div>
+
+      <div class="calc-grid">
+        <div class="calc-sidebar glass-card">
+          <h3 class="calc-side-title">Combat Preset</h3>
+          <div class="preset-list">
+            <button class="preset-btn active" data-preset="pvp" id="preset-pvp">
+              <span class="p-icon">⚔️</span>
+              <span class="p-info">
+                <strong>Standard PvP / Field</strong>
+                <small>50% Inf / 20% Lancer / 30% Marks</small>
+              </span>
+            </button>
+            <button class="preset-btn" data-preset="bear" id="preset-bear">
+              <span class="p-icon">🐻</span>
+              <span class="p-info">
+                <strong>Bear Trap (Max PvE)</strong>
+                <small>10% Inf / 10% Lancer / 80% Marks</small>
+              </span>
+            </button>
+            <button class="preset-btn" data-preset="defense" id="preset-defense">
+              <span class="p-icon">🛡️</span>
+              <span class="p-info">
+                <strong>Castle Garrison Defense</strong>
+                <small>60% Inf / 20% Lancer / 20% Marks</small>
+              </span>
+            </button>
+            <button class="preset-btn" data-preset="burst" id="preset-burst">
+              <span class="p-icon">🎯</span>
+              <span class="p-info">
+                <strong>High Burst 4-1-1 Attack</strong>
+                <small>40% Inf / 10% Lancer / 50% Marks</small>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div class="calc-display glass-card">
+          <div class="calc-top">
+            <h3 id="calc-scenario-title">Standard PvP Field Battle Formation</h3>
+            <span class="ratio-badge" id="calc-ratio-badge">50 / 20 / 30</span>
+          </div>
+
+          <!-- Visual Distribution Bars -->
+          <div class="ratio-bars-container">
+            <div class="ratio-item">
+              <div class="ratio-meta">
+                <span>🛡️ Infantry (Frontline Tank)</span>
+                <span class="ratio-val" id="val-inf">50%</span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill inf-fill" id="bar-inf" style="width: 50%"></div>
+              </div>
+            </div>
+
+            <div class="ratio-item">
+              <div class="ratio-meta">
+                <span>🐎 Lancers (Midline Burst & Flank)</span>
+                <span class="ratio-val" id="val-lan">20%</span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill lan-fill" id="bar-lan" style="width: 20%"></div>
+              </div>
+            </div>
+
+            <div class="ratio-item">
+              <div class="ratio-meta">
+                <span>🏹 Marksmen (Backline Sustained DPS)</span>
+                <span class="ratio-val" id="val-mar">30%</span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill mar-fill" id="bar-mar" style="width: 30%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tactical Doctrine Box -->
+          <div class="tactical-notes" id="calc-notes">
+            <h4>💡 Grandmaster Tactical Doctrine</h4>
+            <p>Infantry absorbs 100% of enemy front damage. If infantry falls below 40%, your marksmen will be annihilated. 50/20/30 gives your marksmen the protection needed to deal maximum sustained damage over extended fights.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Self-Hosting / Deployment Section -->
+  <section class="setup-section" id="setup">
+    <div class="section-container">
+      <div class="section-header">
+        <div class="section-tag">☁️ Self-Hosting Guide</div>
+        <h2 class="section-title">Deploy on Your Own Server in 60 Seconds</h2>
+        <p class="section-sub">Frosty is 100% open-source and comes ready with PM2 configuration for permanent 24/7 uptime on Oracle Cloud or any Linux VPS.</p>
+      </div>
+
+      <div class="code-terminal glass-card">
+        <div class="term-header">
+          <div class="term-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <div class="term-title">bash — ubuntu@cloud-instance</div>
+          <button class="copy-btn" id="copy-deploy-btn" title="Copy Commands">
+            <i data-lucide="copy"></i>
+            <span>Copy</span>
+          </button>
+        </div>
+        <pre class="term-body"><code><span class="c"># 1. Clone Frosty Repository</span>
+git clone https://github.com/Zcross091/frosty-wos-ai.git
+cd frosty-wos-ai
+
+<span class="c"># 2. Install Python Dependencies</span>
+pip install -r requirements.txt
+
+<span class="c"># 3. Configure .env with your free keys (Discord Token + Gemini/Groq)</span>
+cp .env.example .env
+
+<span class="c"># 4. Clean-Ingest Local Knowledge Base into ChromaDB</span>
+python3 ingest.py --local-only --clean
+
+<span class="c"># 5. Start 24/7 Background Process via PM2</span>
+pm2 start ecosystem.config.js
+pm2 save</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Discord Invitation CTA Banner -->
+  <section class="cta-section">
+    <div class="cta-container glass-card">
+      <div class="cta-glow"></div>
+      <div class="cta-content">
+        <div class="cta-icon">❄️</div>
+        <h2 class="cta-title">Ready to Dominate Whiteout Survival?</h2>
+        <p class="cta-sub">Invite Frosty to your alliance Discord server today. 100% Free, zero setup required for members, and instant tactical supremacy.</p>
+        <div class="cta-buttons">
+          <a href="https://discord.com/oauth2/authorize?client_id=1501632240466006108&permissions=347200&integration_type=0&scope=bot+applications.commands" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-cta" id="cta-invite-btn">
+            <i data-lucide="bot"></i>
+            <span>Add to Discord Now</span>
+          </a>
+          <a href="https://github.com/Zcross091/frosty-wos-ai" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-cta" id="cta-github-btn">
+            <i data-lucide="github"></i>
+            <span>Star on GitHub</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <div class="footer-logo">❄️ Frosty AI</div>
+        <p>The premier tactical companion and AI military advisor for Whiteout Survival Chiefs worldwide.</p>
+      </div>
+      <div class="footer-links">
+        <a href="#features">Architecture</a>
+        <a href="#simulator">Interactive Demo</a>
+        <a href="#codex">Hero Codex</a>
+        <a href="https://github.com/Zcross091/frosty-wos-ai" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://discord.com/oauth2/authorize?client_id=1501632240466006108&permissions=347200&integration_type=0&scope=bot+applications.commands" target="_blank" rel="noopener noreferrer">Invite Bot</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 Frosty AI. Open Source under the MIT License. Whiteout Survival is a registered trademark of Century Games.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+  </script>
+</body>
+</html>
