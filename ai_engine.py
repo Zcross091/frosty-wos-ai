@@ -326,6 +326,24 @@ class AIEngine:
             )
             return output, "Frosty Local Tactical Core"
 
+        # Check if an official generation dossier was extracted
+        if "=== OFFICIAL GENERATION DOSSIER:" in system_prompt:
+            gen_part = system_prompt.split("=== OFFICIAL GENERATION DOSSIER:")[1]
+            gen_title = gen_part.split("===")[0].strip()
+            gen_content = gen_part.split("===")[1] if "===" in gen_part else gen_part
+            if "---" in gen_content:
+                gen_content = gen_content.split("---")[0]
+            
+            clean_gen = gen_content.strip()
+            output = (
+                f"### 👑 Frosty Generation Master Guide: {gen_title}\n\n"
+                f"{clean_gen[:3200]}\n\n"
+                f"---\n"
+                f"💡 **Chief's Tip:** *Extracted directly from Frosty's verified Whiteout Survival master archives.*"
+            )
+            return output, "Frosty Local Tactical Core"
+
+
 
         # 1. Lineup / Formation query
         if any(w in q for w in ["lineup", "formation", "ratio", "troops", "frontline", "deputy", "squad"]):

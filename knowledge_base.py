@@ -92,7 +92,7 @@ KNOWN_HEROES = [
     # Gen 15
     "alistair", "astrid", "cedric",
     # Gen 16
-    "gerald", "maeve", "rowen"
+    "seigel", "aisling", "ursar", "gerald", "maeve", "rowen"
 ]
 
 KNOWN_EVENTS = [
@@ -233,10 +233,45 @@ class KnowledgeBase:
         return None
 
 
+    def get_generation_profile(self, gen_name: str) -> Optional[str]:
+        """Extracts full markdown details for a specific Generation (e.g. Gen 16, Gen 2)."""
+        file_path = "./wos data/Heroes.md"
+        if not os.path.exists(file_path):
+            return None
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                lines = f.readlines()
+            
+            gen_num = re.search(r'\d+', gen_name)
+            if not gen_num:
+                return None
+            gen_target = f"gen {gen_num.group(0)}"
+            
+            found = False
+            extracted = []
+            
+            for line in lines:
+                stripped = line.strip().lower()
+                if not found:
+                    if (stripped.startswith("### gen ") or stripped.startswith("# gen ") or stripped.startswith("## gen ")) and gen_target in stripped:
+                        found = True
+                        extracted.append(line)
+                else:
+                    if (stripped.startswith("### gen ") or stripped.startswith("# gen ") or stripped.startswith("### rare") or stripped.startswith("### epic")) and gen_target not in stripped:
+                        if len(extracted) > 10:
+                            break
+                    extracted.append(line)
+            
+            if extracted:
+                return "".join(extracted).strip()
+        except Exception as e:
+            logger.debug(f"Error reading generation profile: {e}")
+        return None
+
     def search_context(self, query: str, max_chunks: int = 5) -> str:
         """
         Hybrid retrieval combining semantic vector search, metadata boosts,
-        direct hero markdown extractors, and core fallback rules.
+        direct hero and generation markdown extractors, and core fallback rules.
         """
         entities = self.extract_entities(query)
         collected_documents = []
@@ -248,13 +283,20 @@ class KnowledgeBase:
             if profile:
                 collected_documents.append(f"=== OFFICIAL HERO DOSSIER: {hero} ===\n{profile[:3000]}")
 
-        # 2. Direct Event guide if event mentioned
+        # 2. Direct Generation profile if generation mentioned
+        for gen in entities.get("generations", []):
+            gen_prof = self.get_generation_profile(gen)
+            if gen_prof:
+                collected_documents.append(f"=== OFFICIAL GENERATION DOSSIER: {gen} ===\n{gen_prof[:3500]}")
+
+        # 3. Direct Event guide if event mentioned
         for ev in entities.get("events", []):
             profile = self.get_event_profile(ev)
             if profile:
                 collected_documents.append(f"=== OFFICIAL EVENT GUIDE: {ev} ===\n{profile[:3000]}")
 
-        # 3. Semantic Vector Query from ChromaDB
+        # 4. Semantic Vector Query from ChromaDB
+
 
         if self.collection and self.collection.count() > 0:
             try:
