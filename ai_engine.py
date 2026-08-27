@@ -174,13 +174,31 @@ class AIEngine:
         last_ex = None
 
         for model_name in models_to_test:
+            # 1. Try Direct HTTP REST API (Fastest & most reliable across all key formats)
+            try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self.gemini_key}"
+                full_text = f"{system_prompt}\n\nUser Question: {user_message}"
+                payload = {
+                    "contents": [{"parts": [{"text": full_text}]}],
+                    "generationConfig": {"temperature": temperature}
+                }
+                res = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=30)
+                if res.status_code == 200:
+                    data = res.json()
+                    candidates = data.get("candidates", [])
+                    if candidates and "content" in candidates[0]:
+                        parts = candidates[0]["content"].get("parts", [])
+                        if parts:
+                            return parts[0]["text"], f"Gemini ({model_name})"
+                else:
+                    logger.debug(f"Gemini REST returned status {res.status_code}: {res.text}")
+            except Exception as e:
+                logger.debug(f"Gemini REST error ({model_name}): {e}")
+
+            # 2. Try SDKs
             try:
                 if self._gemini_client:
                     full_prompt = f"{system_prompt}\n\nUser Question: {user_message}"
-                    if history:
-                        hist_text = "\n".join([f"{h.get('role', 'user').title()}: {h.get('content', '')}" for h in history[-4:]])
-                        full_prompt = f"{system_prompt}\n\nRecent Conversation:\n{hist_text}\n\nUser Question: {user_message}"
-                    
                     response = self._gemini_client.models.generate_content(
                         model=model_name,
                         contents=full_prompt,
@@ -188,24 +206,17 @@ class AIEngine:
                     return response.text, f"Gemini ({model_name})"
                 
                 elif self._gemini_legacy:
-                    model = self._gemini_legacy.GenerativeModel(
-                        model_name=model_name,
-                        system_instruction=system_prompt
-                    )
-                    response = model.generate_content(user_message)
+                    model = self._gemini_legacy.GenerativeModel(model_name=model_name)
+                    response = model.generate_content(f"{system_prompt}\n\n{user_message}")
                     return response.text, f"Gemini ({model_name})"
             except Exception as e:
                 last_ex = e
 
-        raise last_ex or RuntimeError("Gemini failed")
+        raise last_ex or RuntimeError("Gemini REST and SDK both failed")
 
     def _generate_groq(
         self, system_prompt: str, user_message: str, history: Optional[List[Dict[str, str]]], temperature: float
     ) -> Tuple[str, str]:
-        if not self._groq_client and self.groq_key:
-            from groq import Groq
-            self._groq_client = Groq(api_key=self.groq_key)
-
         models_to_test = [self.groq_model] + [m for m in GROQ_FALLBACKS if m != self.groq_model]
         last_ex = None
 
@@ -216,17 +227,40 @@ class AIEngine:
         messages.append({"role": "user", "content": user_message})
 
         for model_name in models_to_test:
+            # 1. Try Direct REST
             try:
-                completion = self._groq_client.chat.completions.create(
-                    model=model_name,
-                    messages=messages,
-                    temperature=temperature
-                )
-                return completion.choices[0].message.content, f"Groq ({model_name})"
+                url = "https://api.groq.com/openai/v1/chat/completions"
+                headers = {
+                    "Authorization": f"Bearer {self.groq_key}",
+                    "Content-Type": "application/json"
+                }
+                payload = {
+                    "model": model_name,
+                    "messages": messages,
+                    "temperature": temperature
+                }
+                res = requests.post(url, headers=headers, json=payload, timeout=25)
+                if res.status_code == 200:
+                    data = res.json()
+                    return data["choices"][0]["message"]["content"], f"Groq ({model_name})"
+                else:
+                    logger.debug(f"Groq REST returned {res.status_code}: {res.text}")
+            except Exception as e:
+                logger.debug(f"Groq REST error ({model_name}): {e}")
+
+            # 2. Try SDK
+            try:
+                if self._groq_client:
+                    completion = self._groq_client.chat.completions.create(
+                        model=model_name,
+                        messages=messages,
+                        temperature=temperature
+                    )
+                    return completion.choices[0].message.content, f"Groq ({model_name})"
             except Exception as e:
                 last_ex = e
 
-        raise last_ex or RuntimeError("Groq failed")
+        raise last_ex or RuntimeError("Groq failed with all models")
 
     def _generate_ollama(
         self, system_prompt: str, user_message: str, history: Optional[List[Dict[str, str]]]
