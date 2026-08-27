@@ -265,7 +265,7 @@ class AIEngine:
     def _generate_ollama(
         self, system_prompt: str, user_message: str, history: Optional[List[Dict[str, str]]]
     ) -> Tuple[str, str]:
-        """Runs inference against local Ollama instance (0 cost, 0 API key)."""
+        """Runs inference against local Ollama instance with 15s timeout."""
         url = f"{self.ollama_host}/api/chat"
         messages = [{"role": "system", "content": system_prompt}]
         if history:
@@ -276,79 +276,86 @@ class AIEngine:
         payload = {
             "model": self.ollama_model,
             "messages": messages,
-            "stream": False
+            "stream": False,
+            "options": {"num_predict": 300, "temperature": 0.6}
         }
 
-        response = requests.post(url, json=payload, timeout=60)
+        response = requests.post(url, json=payload, timeout=18)
         response.raise_for_status()
         data = response.json()
         return data["message"]["content"], f"Local Ollama ({self.ollama_model})"
 
-    def _generate_openrouter(
-        self, system_prompt: str, user_message: str, history: Optional[List[Dict[str, str]]], temperature: float
-    ) -> Tuple[str, str]:
-        url = "https://openrouter.ai/api/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {self.openrouter_key}",
-            "HTTP-Referer": "https://github.com/Zcross091/frosty-wos-ai",
-            "X-Title": "Frosty WOS AI"
-        }
-        messages = [{"role": "system", "content": system_prompt}]
-        if history:
-            for h in history[-4:]:
-                messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
-        messages.append({"role": "user", "content": user_message})
-
-        payload = {
-            "model": self.openrouter_model,
-            "messages": messages,
-            "temperature": temperature
-        }
-
-        response = requests.post(url, headers=headers, json=payload, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-        return data["choices"][0]["message"]["content"], f"OpenRouter ({self.openrouter_model})"
-
-    def _generate_openai(
-        self, system_prompt: str, user_message: str, history: Optional[List[Dict[str, str]]], temperature: float
-    ) -> Tuple[str, str]:
-        if not self._openai_client and self.openai_key:
-            from openai import OpenAI
-            self._openai_client = OpenAI(api_key=self.openai_key)
-
-        messages = [{"role": "system", "content": system_prompt}]
-        if history:
-            for h in history[-4:]:
-                messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
-        messages.append({"role": "user", "content": user_message})
-
-        completion = self._openai_client.chat.completions.create(
-            model=self.openai_model,
-            messages=messages,
-            temperature=temperature
-        )
-        return completion.choices[0].message.content, f"OpenAI ({self.openai_model})"
-
     def _generate_local_fallback(self, system_prompt: str, user_message: str) -> Tuple[str, str]:
         """
-        Zero-API-Key Direct Knowledge Synthesizer:
-        Extracts and formats relevant strategy from the knowledge base directly.
+        Smart Offline Tactical Synthesizer:
+        Generates beautifully structured Whiteout Survival guidance directly from local archives.
         """
-        # Parse context from system prompt
-        context_split = system_prompt.split("### REFERENCE DATA CONTEXT:")
-        context = context_split[1].strip() if len(context_split) > 1 else system_prompt
+        q = user_message.lower()
 
-        # Clean markers
-        clean_context = context.replace("=== CORE WHITEOUT SURVIVAL MECHANICS & DOCTRINE ===", "")
-        clean_context = clean_context.replace("=== RETRIEVED WOS ARCHIVES & DATA ===", "")
-        clean_context = clean_context.strip()
+        # 1. Lineup / Formation query
+        if any(w in q for w in ["lineup", "formation", "ratio", "troops", "frontline", "deputy", "squad"]):
+            output = (
+                "### ⚔️ Tactical Doctrine: Hero Lineups & Troop Formations\n\n"
+                "In **Whiteout Survival**, every march squad is composed of **3 Hero Slots** and **3 Troop Types**:\n\n"
+                "**1. Hero Squad Structure (1 Leader + 2 Deputies):**\n"
+                "• **Leader (Captain):** Position 1. Determines march capacity, main skill triggers, and rally leadership.\n"
+                "• **Deputies (Left & Right):** Positions 2 & 3. Provide secondary combat stat bonuses and support.\n\n"
+                "**2. The 3 Troop Roles:**\n"
+                "• 🛡️ **Infantry (Frontline Shield):** Absorbs all incoming enemy damage. If your infantry dies, your backline falls immediately.\n"
+                "• 🐎 **Lancers (Flankers / Mid-range):** Target backline marksmen and deal balanced burst DPS.\n"
+                "• 🏹 **Marksmen / Sharpshooters (Backline High DPS):** Deliver massive sustained damage from safety.\n\n"
+                "**3. Standard Tactical Troop Ratios:**\n"
+                "• **Standard PvP / Field Battle:** `50% Infantry / 20% Lancer / 30% Marksman` (`50/20/30`)\n"
+                "• **Heavy Defense / Castle Garrison:** `60% Infantry / 20% Lancer / 20% Marksman` (`60/20/20`)\n"
+                "• **High Burst Attack / 4-1-1:** `40% Infantry / 10% Lancer / 50% Marksman` (`40/10/50`)\n"
+                "• **Bear Trap (Max PvE Damage):** `10% Infantry / 10% Lancer / 80% Marksman` (`10/10/80`)\n\n"
+                "---\n"
+                "💡 **Grandmaster Tip:** *Always ensure your Infantry ratio is at least 40-50% in PvP so your Marksmen survive to deal full damage!*"
+            )
+            return output, "Frosty Local Tactical Core"
 
-        # Format clean markdown output
+        # 2. Bear Trap query
+        elif "bear" in q:
+            output = (
+                "### 🐻 Bear Trap Master Guide\n\n"
+                "**1. Optimal Troop Ratio:**\n"
+                "• Use `10% Infantry / 10% Lancer / 80% Marksman` (or `0/20/80`). The Bear does not kill troops, so maximize Marksmen DPS!\n\n"
+                "**2. Critical Rally Joiner Rule (Top 4 Buffs):**\n"
+                "• When joining alliance rallies, **always send Jessie as your 1st Hero** (gives +25% Damage Dealt buff to the entire rally!).\n"
+                "• Other great joiner leads: **Seo-yoon** (+20% Attack) or **Jeronimo** (+15% Attack/Damage).\n\n"
+                "**3. Rally Leader Setup:**\n"
+                "• Your Rally Leader march should use your strongest Marksman/Lancer damage heroes (e.g. Flint/Alonso/Mia/Lynn/Wayne/Bradley).\n\n"
+                "---\n"
+                "💡 **Chief's Tip:** *Keep march times short (<15s) by gathering around the trap before starting!*"
+            )
+            return output, "Frosty Local Tactical Core"
+
+        # 3. Crazy Joe query
+        elif any(w in q for w in ["joe", "crazy joe"]):
+            output = (
+                "### 🎯 Crazy Joe Defense Strategy\n\n"
+                "**1. Overview & Waves:**\n"
+                "• 20 waves over ~40 minutes. Waves **10 & 20** are massive assaults on the **Alliance Headquarters (HQ)**!\n\n"
+                "**2. Critical Troop Rules:**\n"
+                "• ❌ **NEVER send Marksmen to allies or HQ.** Marksmen must stay home on your own barricade.\n"
+                "• ✅ **Send ONLY Infantry & Lancers** to reinforce teammates and the Alliance HQ.\n\n"
+                "**3. Empty City Scoring Trick:**\n"
+                "• Send your troops out to reinforce online teammates. When Joe attacks your empty city, you still earn defense points while allies protect you.\n\n"
+                "---\n"
+                "💡 **HQ Checklist:** *Recall one march 5 minutes before Wave 10 and Wave 20 to reinforce the HQ with heavy Infantry!*"
+            )
+            return output, "Frosty Local Tactical Core"
+
+        # 4. Extract from context
+        context_split = system_prompt.split("=== CORE WHITEOUT SURVIVAL MECHANICS & DOCTRINE ===")
+        context_body = context_split[1] if len(context_split) > 1 else system_prompt
+        clean_context = context_body.replace("=== RETRIEVED WOS ARCHIVES & DATA ===", "").strip()
+
         output = (
-            f"### 🛡️ Frosty Tactical Advisory\n\n"
-            f"{clean_context[:3000]}\n\n"
+            f"### ❄️ Frosty Tactical Advisory\n\n"
+            f"{clean_context[:2500]}\n\n"
             f"---\n"
-            f"💡 **Chief's Tip:** *This response was served directly from Frosty's local tactical archives.*"
+            f"💡 **Tactical Verdict:** *Synthesized directly from Frosty's Whiteout Survival strategy archives.*"
         )
         return output, "Frosty Local Tactical Core"
+
