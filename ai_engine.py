@@ -182,7 +182,7 @@ class AIEngine:
                     "contents": [{"parts": [{"text": full_text}]}],
                     "generationConfig": {"temperature": temperature}
                 }
-                res = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=3.5)
+                res = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15.0)
                 if res.status_code == 200:
                     data = res.json()
                     candidates = data.get("candidates", [])
@@ -191,9 +191,9 @@ class AIEngine:
                         if parts:
                             return parts[0]["text"], f"Gemini ({model_name})"
                 else:
-                    logger.debug(f"Gemini REST returned status {res.status_code}: {res.text}")
+                    logger.info(f"Gemini REST status {res.status_code} ({model_name}): {res.text[:150]}")
             except Exception as e:
-                logger.debug(f"Gemini REST error ({model_name}): {e}")
+                logger.info(f"Gemini REST notice ({model_name}): {e}")
 
             # 2. Try SDKs
             try:
@@ -239,14 +239,14 @@ class AIEngine:
                     "messages": messages,
                     "temperature": temperature
                 }
-                res = requests.post(url, headers=headers, json=payload, timeout=3.5)
+                res = requests.post(url, headers=headers, json=payload, timeout=15.0)
                 if res.status_code == 200:
                     data = res.json()
                     return data["choices"][0]["message"]["content"], f"Groq ({model_name})"
                 else:
-                    logger.debug(f"Groq REST returned {res.status_code}: {res.text}")
+                    logger.info(f"Groq REST status {res.status_code} ({model_name}): {res.text[:150]}")
             except Exception as e:
-                logger.debug(f"Groq REST error ({model_name}): {e}")
+                logger.info(f"Groq REST notice ({model_name}): {e}")
 
             # 2. Try SDK
             try:
@@ -261,6 +261,7 @@ class AIEngine:
                 last_ex = e
 
         raise last_ex or RuntimeError("Groq failed with all models")
+
 
     def _generate_ollama(
         self, system_prompt: str, user_message: str, history: Optional[List[Dict[str, str]]]
