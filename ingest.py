@@ -360,6 +360,9 @@ def run_web_ingestion(source: str, site_label: str, collection = None) -> int:
 
     for i, url in enumerate(target_urls):
         try:
+            if (i + 1) % 10 == 0 or i == 0 or (i + 1) == total_targets:
+                logger.info(f"📑 [{site_label}] Progress: ({i+1}/{total_targets}) - {url}")
+
             res = requests.get(url, timeout=10, headers={'User-Agent': 'Mozilla/5.0'})
             soup = BeautifulSoup(res.text, 'html.parser')
 
