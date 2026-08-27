@@ -314,8 +314,27 @@ def ingest_local_markdown_folder(folder_path: str = "./wos data", collection = N
     return total_added
 
 
+NON_ENGLISH_PREFIXES = [
+    '/tw/', '/zh/', '/cn/', '/ja/', '/jp/', '/ko/', '/kr/', '/fr/', '/es/',
+    '/pt/', '/de/', '/ru/', '/ar/', '/it/', '/th/', '/vi/', '/id/', '/tr/',
+    '/pl/', '/nl/', '/ro/', '/el/', '/hu/', '/cs/', '/uk/', '/fa/'
+]
+
+
+def is_clean_english_url(url: str) -> bool:
+    """Checks if a URL is an English-only document and not a foreign translation mirror."""
+    u = url.lower()
+    if any(lang in u for lang in NON_ENGLISH_PREFIXES):
+        return False
+    try:
+        url.encode('ascii')
+    except UnicodeEncodeError:
+        return False
+    return True
+
+
 def get_all_urls_from_sitemap(source: str) -> List[str]:
-    """Finds all URLs inside a local sitemap file or live URL."""
+    """Finds all clean English URLs inside a local sitemap file or live URL."""
     urls = []
     try:
         if os.path.exists(source):
@@ -331,31 +350,35 @@ def get_all_urls_from_sitemap(source: str) -> List[str]:
         sitemaps = root.findall('.//ns:sitemap/ns:loc', namespace)
         if sitemaps:
             for s in sitemaps:
-                urls.extend(get_all_urls_from_sitemap(s.text))
+                if is_clean_english_url(s.text):
+                    urls.extend(get_all_urls_from_sitemap(s.text))
 
         locations = root.findall('.//ns:url/ns:loc', namespace)
         for loc in locations:
-            urls.append(loc.text)
+            if is_clean_english_url(loc.text):
+                urls.append(loc.text)
     except Exception as e:
         logger.warning(f"Sitemap parsing notice ({source}): {e}")
     return list(set(urls))
 
 
 def run_web_ingestion(source: str, site_label: str, collection = None) -> int:
-    """Scrapes and chunks web content with checkpointing."""
+    """Scrapes and chunks English web content with checkpointing."""
     if collection is None:
         collection = get_chroma_collection()
 
     all_links = get_all_urls_from_sitemap(source)
     target_keywords = ['/hero', '/event', '/building', '/expert', '/pet', '/gear', '/guide', '/lineup']
-    target_urls = [u for u in all_links if any(k in u.lower() for k in target_keywords)]
+    
+    # Filter target keywords AND ensure clean English URLs
+    target_urls = [u for u in all_links if any(k in u.lower() for k in target_keywords) and is_clean_english_url(u)]
     total_targets = len(target_urls)
 
     if not target_urls:
-        logger.info(f"No matching target URLs found in {source}")
+        logger.info(f"No matching English target URLs found in {source}")
         return 0
 
-    logger.info(f"🌐 Scraping {total_targets} pages for {site_label}...")
+    logger.info(f"🌐 Scraping {total_targets} verified English pages for {site_label}...")
     added = 0
 
     for i, url in enumerate(target_urls):
@@ -380,17 +403,26 @@ def run_web_ingestion(source: str, site_label: str, collection = None) -> int:
                 )
                 added += 1
 
-            time.sleep(0.2)
+            time.sleep(0.15)
         except Exception as e:
             logger.debug(f"Skipped page {url}: {e}")
 
-    logger.info(f"✅ Web ingestion complete for {site_label}: {added} chunks.")
+    logger.info(f"✅ English web ingestion complete for {site_label}: {added} chunks.")
     return added
 
 
-def run_full_reindex(local_only: bool = False) -> int:
+def run_full_reindex(local_only: bool = False, clean: bool = False) -> int:
     """Entry point for both CLI and Discord /reindex command."""
-    collection = get_chroma_collection()
+    client = chromadb.PersistentClient(path=DB_PATH)
+    
+    if clean:
+        try:
+            client.delete_collection(name=COLLECTION_NAME)
+            logger.info("🗑️ Reset existing ChromaDB collection for a clean re-index.")
+        except Exception:
+            pass
+            
+    collection = client.get_or_create_collection(name=COLLECTION_NAME)
     logger.info(f"🚀 Starting ingestion into ChromaDB (Path: {DB_PATH})...")
 
     # Step 1: Ingest local structured guides
@@ -416,6 +448,8 @@ def run_full_reindex(local_only: bool = False) -> int:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Frosty AI Knowledge Ingestion")
     parser.add_argument("--local-only", action="store_true", help="Ingest only local wos data folder without web crawling")
+    parser.add_argument("--clean", action="store_true", help="Wipe database before ingesting for a completely clean index")
     args = parser.parse_args()
 
-    run_full_reindex(local_only=args.local_only)
+    run_full_reindex(local_only=args.local_only, clean=args.clean)
+
