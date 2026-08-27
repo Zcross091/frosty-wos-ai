@@ -166,18 +166,56 @@ class KnowledgeBase:
 
         return entities
 
+    def get_hero_profile(self, hero_name: str) -> Optional[str]:
+        """Directly extracts full, clean markdown profile for a hero from Heroes.md."""
+        file_path = "./wos data/Heroes.md"
+        if not os.path.exists(file_path):
+            return None
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                lines = f.readlines()
+            
+            hero_lower = hero_name.lower()
+            found = False
+            extracted = []
+            
+            for line in lines:
+                # Check for hero header (e.g. Edith, Bradley, Smith)
+                if not found:
+                    if re.search(r'\b' + re.escape(hero_lower) + r'\b', line.lower()) and any(icon in line for icon in ["🛡️", "🏹", "⚔️", "🔨", "🪓", "👑", "🎯", "###"]):
+                        found = True
+                        extracted.append(line)
+                else:
+                    # If we reach another hero header, stop
+                    if (line.startswith("### ") or any(icon in line for icon in ["🛡️", "🏹", "⚔️", "🔨", "🪓", "👑"])) and not any(hero_lower in line.lower() for _ in [1]):
+                        if len(extracted) > 10:
+                            break
+                    extracted.append(line)
+            
+            if extracted:
+                return "".join(extracted).strip()
+        except Exception as e:
+            logger.debug(f"Error reading hero profile: {e}")
+        return None
+
     def search_context(self, query: str, max_chunks: int = 5) -> str:
         """
         Hybrid retrieval combining semantic vector search, metadata boosts,
-        and core fallback rules.
+        direct hero markdown extractors, and core fallback rules.
         """
         entities = self.extract_entities(query)
         collected_documents = []
         seen_ids = set()
 
+        # 1. Direct Hero profile if hero mentioned
+        for hero in entities.get("heroes", []):
+            profile = self.get_hero_profile(hero)
+            if profile:
+                collected_documents.append(f"=== OFFICIAL HERO DOSSIER: {hero} ===\n{profile[:3000]}")
+
+        # 2. Semantic Vector Query from ChromaDB
         if self.collection and self.collection.count() > 0:
             try:
-                # 1. Semantic Vector Query
                 vector_results = self.collection.query(
                     query_texts=[query],
                     n_results=min(max_chunks * 2, max(self.collection.count(), 1))
@@ -187,46 +225,19 @@ class KnowledgeBase:
                     ids = vector_results['ids'][0] if 'ids' in vector_results else []
                     for doc_id, doc in zip(ids, docs):
                         if doc_id not in seen_ids:
-                            collected_documents.append(doc)
-                            seen_ids.add(doc_id)
-
-                # 2. Metadata / Entity-targeted Query
-                for hero in entities.get("heroes", []):
-                    try:
-                        hero_matches = self.collection.get(
-                            where={"hero_name": hero},
-                            limit=2
-                        )
-                        if hero_matches and hero_matches.get("documents"):
-                            for d_id, doc in zip(hero_matches["ids"], hero_matches["documents"]):
-                                if d_id not in seen_ids:
-                                    collected_documents.insert(0, doc)
-                                    seen_ids.add(d_id)
-                    except Exception:
-                        pass
-
-                for ev in entities.get("events", []):
-                    try:
-                        ev_matches = self.collection.get(
-                            where={"event_name": ev},
-                            limit=2
-                        )
-                        if ev_matches and ev_matches.get("documents"):
-                            for d_id, doc in zip(ev_matches["ids"], ev_matches["documents"]):
-                                if d_id not in seen_ids:
-                                    collected_documents.insert(0, doc)
-                                    seen_ids.add(d_id)
-                    except Exception:
-                        pass
+                            # Filter out raw garbage web chunks if present
+                            if "â" not in doc and len(doc.strip()) > 40:
+                                collected_documents.append(doc)
+                                seen_ids.add(doc_id)
 
             except Exception as e:
                 logger.error(f"Vector search failed: {e}")
 
-        # Limit to top max_chunks
+        # Limit to top chunks
         top_chunks = collected_documents[:max_chunks]
-        rag_context = "\n\n---\n\n".join(top_chunks) if top_chunks else "No specific indexed wiki chunk found."
+        rag_context = "\n\n---\n\n".join(top_chunks) if top_chunks else "No specific indexed chunk found."
 
-        # Assemble full context including core game knowledge
+        # Assemble full context
         full_context = f"{CORE_WOS_KNOWLEDGE}\n\n=== RETRIEVED WOS ARCHIVES & DATA ===\n{rag_context}"
         return full_context
 
@@ -251,3 +262,4 @@ You possess deep, comprehensive mastery of Whiteout Survival mechanics, heroes (
 {context}
 """
         return system_prompt
+

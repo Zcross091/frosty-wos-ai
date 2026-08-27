@@ -83,7 +83,9 @@ class FrostyActionView(discord.ui.View):
         await interaction.response.defer(thinking=True)
         context = knowledge_base.search_context(self.question, max_chunks=5)
         system_prompt = knowledge_base.build_system_prompt(self.question, context)
-        answer, model_used, elapsed = ai_engine.generate_response(system_prompt, self.question, temperature=0.8)
+        answer, model_used, elapsed = await asyncio.to_thread(
+            ai_engine.generate_response, system_prompt, self.question, None, 0.8
+        )
 
         embed = discord.Embed(
             title="❄️ Frosty Tactical Advisory (Regenerated)",
@@ -99,7 +101,9 @@ class FrostyActionView(discord.ui.View):
         lineup_query = f"What is the best hero lineup and troop ratio for: {self.question}"
         context = knowledge_base.search_context(lineup_query, max_chunks=4)
         system_prompt = knowledge_base.build_system_prompt(lineup_query, context)
-        answer, model_used, elapsed = ai_engine.generate_response(system_prompt, lineup_query)
+        answer, model_used, elapsed = await asyncio.to_thread(
+            ai_engine.generate_response, system_prompt, lineup_query, None, 0.6
+        )
 
         embed = discord.Embed(
             title="⚔️ Tactical Formation & Lineup Advisory",
@@ -186,12 +190,14 @@ async def generate_frosty_response(
     context = knowledge_base.search_context(question, max_chunks=5)
     system_prompt = knowledge_base.build_system_prompt(question, context)
 
-    answer, model_used, elapsed = ai_engine.generate_response(
-        system_prompt=system_prompt,
-        user_message=question,
-        history=history,
-        temperature=0.6
+    answer, model_used, elapsed = await asyncio.to_thread(
+        ai_engine.generate_response,
+        system_prompt,
+        question,
+        history,
+        0.6
     )
+
 
     append_conversation(channel_id, question, answer)
 

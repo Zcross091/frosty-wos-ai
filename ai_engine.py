@@ -182,7 +182,7 @@ class AIEngine:
                     "contents": [{"parts": [{"text": full_text}]}],
                     "generationConfig": {"temperature": temperature}
                 }
-                res = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=30)
+                res = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=3.5)
                 if res.status_code == 200:
                     data = res.json()
                     candidates = data.get("candidates", [])
@@ -239,7 +239,7 @@ class AIEngine:
                     "messages": messages,
                     "temperature": temperature
                 }
-                res = requests.post(url, headers=headers, json=payload, timeout=25)
+                res = requests.post(url, headers=headers, json=payload, timeout=3.5)
                 if res.status_code == 200:
                     data = res.json()
                     return data["choices"][0]["message"]["content"], f"Groq ({model_name})"
@@ -265,7 +265,7 @@ class AIEngine:
     def _generate_ollama(
         self, system_prompt: str, user_message: str, history: Optional[List[Dict[str, str]]]
     ) -> Tuple[str, str]:
-        """Runs inference against local Ollama instance with 15s timeout."""
+        """Runs inference against local Ollama instance with 4s timeout."""
         url = f"{self.ollama_host}/api/chat"
         messages = [{"role": "system", "content": system_prompt}]
         if history:
@@ -277,10 +277,10 @@ class AIEngine:
             "model": self.ollama_model,
             "messages": messages,
             "stream": False,
-            "options": {"num_predict": 300, "temperature": 0.6}
+            "options": {"num_predict": 250, "temperature": 0.6}
         }
 
-        response = requests.post(url, json=payload, timeout=18)
+        response = requests.post(url, json=payload, timeout=4.0)
         response.raise_for_status()
         data = response.json()
         return data["message"]["content"], f"Local Ollama ({self.ollama_model})"
@@ -291,6 +291,23 @@ class AIEngine:
         Generates beautifully structured Whiteout Survival guidance directly from local archives.
         """
         q = user_message.lower()
+
+        # Check if an official hero dossier was extracted
+        if "=== OFFICIAL HERO DOSSIER:" in system_prompt:
+            dossier_part = system_prompt.split("=== OFFICIAL HERO DOSSIER:")[1]
+            hero_title = dossier_part.split("===")[0].strip()
+            hero_content = dossier_part.split("===")[1] if "===" in dossier_part else dossier_part
+            if "---" in hero_content:
+                hero_content = hero_content.split("---")[0]
+            
+            clean_hero = hero_content.strip()
+            output = (
+                f"### 🛡️ Frosty Tactical Dossier: {hero_title}\n\n"
+                f"{clean_hero[:3000]}\n\n"
+                f"---\n"
+                f"💡 **Chief's Tip:** *Extracted directly from Frosty's verified Whiteout Survival master archives.*"
+            )
+            return output, "Frosty Local Tactical Core"
 
         # 1. Lineup / Formation query
         if any(w in q for w in ["lineup", "formation", "ratio", "troops", "frontline", "deputy", "squad"]):
@@ -358,4 +375,5 @@ class AIEngine:
             f"💡 **Tactical Verdict:** *Synthesized directly from Frosty's Whiteout Survival strategy archives.*"
         )
         return output, "Frosty Local Tactical Core"
+
 
