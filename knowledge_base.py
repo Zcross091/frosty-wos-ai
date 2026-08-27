@@ -180,15 +180,18 @@ class KnowledgeBase:
             extracted = []
             
             for line in lines:
-                # Check for hero header (e.g. Edith, Bradley, Smith)
+                stripped = line.strip()
+                # Check for hero header (e.g. Flint, Edith, Alonso, Jeronimo, Smith)
                 if not found:
-                    if re.search(r'\b' + re.escape(hero_lower) + r'\b', line.lower()) and any(icon in line for icon in ["🛡️", "🏹", "⚔️", "🔨", "🪓", "👑", "🎯", "###"]):
-                        found = True
-                        extracted.append(line)
+                    if re.search(r'\b' + re.escape(hero_lower) + r'\b', stripped.lower()) and ("–" in stripped or "—" in stripped or stripped.startswith("#")):
+                        # Exclude team pairing lines (e.g. "Teams: Flint + Alonso")
+                        if "teams:" not in stripped.lower() and "roadmap:" not in stripped.lower() and "build order:" not in stripped.lower():
+                            found = True
+                            extracted.append(line)
                 else:
                     # If we reach another hero header, stop
-                    if (line.startswith("### ") or any(icon in line for icon in ["🛡️", "🏹", "⚔️", "🔨", "🪓", "👑"])) and not any(hero_lower in line.lower() for _ in [1]):
-                        if len(extracted) > 10:
+                    if ("–" in stripped or "—" in stripped or stripped.startswith("### Gen ") or stripped.startswith("# Gen ")) and not re.search(r'\b' + re.escape(hero_lower) + r'\b', stripped.lower()):
+                        if "teams:" not in stripped.lower() and len(extracted) > 10:
                             break
                     extracted.append(line)
             
@@ -197,6 +200,38 @@ class KnowledgeBase:
         except Exception as e:
             logger.debug(f"Error reading hero profile: {e}")
         return None
+
+    def get_event_profile(self, event_name: str) -> Optional[str]:
+        """Directly extracts full, clean markdown guide for an event from Event Information.md."""
+        file_path = "./wos data/Event Information.md"
+        if not os.path.exists(file_path):
+            return None
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                lines = f.readlines()
+            
+            ev_lower = event_name.lower()
+            found = False
+            extracted = []
+            
+            for line in lines:
+                stripped = line.strip()
+                if not found:
+                    if ev_lower in stripped.lower() and ("#" in stripped or "–" in stripped or "—" in stripped):
+                        found = True
+                        extracted.append(line)
+                else:
+                    if (stripped.startswith("# #") or stripped.startswith("## ")) and ev_lower not in stripped.lower():
+                        if len(extracted) > 10:
+                            break
+                    extracted.append(line)
+            
+            if extracted:
+                return "".join(extracted).strip()
+        except Exception as e:
+            logger.debug(f"Error reading event profile: {e}")
+        return None
+
 
     def search_context(self, query: str, max_chunks: int = 5) -> str:
         """
@@ -213,7 +248,14 @@ class KnowledgeBase:
             if profile:
                 collected_documents.append(f"=== OFFICIAL HERO DOSSIER: {hero} ===\n{profile[:3000]}")
 
-        # 2. Semantic Vector Query from ChromaDB
+        # 2. Direct Event guide if event mentioned
+        for ev in entities.get("events", []):
+            profile = self.get_event_profile(ev)
+            if profile:
+                collected_documents.append(f"=== OFFICIAL EVENT GUIDE: {ev} ===\n{profile[:3000]}")
+
+        # 3. Semantic Vector Query from ChromaDB
+
         if self.collection and self.collection.count() > 0:
             try:
                 vector_results = self.collection.query(

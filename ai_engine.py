@@ -309,6 +309,24 @@ class AIEngine:
             )
             return output, "Frosty Local Tactical Core"
 
+        # Check if an official event guide was extracted
+        if "=== OFFICIAL EVENT GUIDE:" in system_prompt:
+            ev_part = system_prompt.split("=== OFFICIAL EVENT GUIDE:")[1]
+            ev_title = ev_part.split("===")[0].strip()
+            ev_content = ev_part.split("===")[1] if "===" in ev_part else ev_part
+            if "---" in ev_content:
+                ev_content = ev_content.split("---")[0]
+            
+            clean_ev = ev_content.strip()
+            output = (
+                f"### 🎯 Frosty Event Master Guide: {ev_title}\n\n"
+                f"{clean_ev[:3000]}\n\n"
+                f"---\n"
+                f"💡 **Chief's Tip:** *Extracted directly from Frosty's verified Whiteout Survival master archives.*"
+            )
+            return output, "Frosty Local Tactical Core"
+
+
         # 1. Lineup / Formation query
         if any(w in q for w in ["lineup", "formation", "ratio", "troops", "frontline", "deputy", "squad"]):
             output = (
