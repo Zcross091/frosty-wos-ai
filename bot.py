@@ -9,7 +9,7 @@ import time
 import asyncio
 import logging
 import psutil
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Tuple
 
 import discord
 from discord import app_commands
