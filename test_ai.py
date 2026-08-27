@@ -9,31 +9,38 @@ gemini_key = os.getenv("GEMINI_API_KEY")
 groq_key = os.getenv("GROQ_API_KEY")
 
 print("--- Testing Gemini ---")
-url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
-payload = {
-    "contents": [{"parts": [{"text": "Hello, respond with 'Gemini is working'"}]}]
-}
-try:
-    res = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=10)
-    print(f"Gemini HTTP Status: {res.status_code}")
-    print(f"Gemini Response: {res.text[:300]}")
-except Exception as e:
-    print(f"Gemini Error: {e}")
+gemini_models = ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
+for model in gemini_models:
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_key}"
+    payload = {
+        "contents": [{"parts": [{"text": "Hello, respond with 'Gemini is working perfectly!'"}]}]
+    }
+    try:
+        res = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=10)
+        print(f"Gemini ({model}) HTTP Status: {res.status_code}")
+        if res.status_code == 200:
+            print(f"Gemini Success: {res.json()['candidates'][0]['content']['parts'][0]['text']}")
+            break
+        else:
+            print(f"Gemini Response: {res.text[:200]}")
+    except Exception as e:
+        print(f"Gemini Error ({model}): {e}")
 
-print("\n--- Testing Groq ---")
-groq_url = "https://api.groq.com/openai/v1/chat/completions"
-groq_payload = {
-    "model": "llama-3.3-70b-versatile",
-    "messages": [{"role": "user", "content": "Hello, respond with 'Groq is working'"}],
-    "temperature": 0.5
-}
+print("\n--- Testing Groq Models List ---")
+groq_models_url = "https://api.groq.com/openai/v1/models"
 groq_headers = {
     "Authorization": f"Bearer {groq_key}",
     "Content-Type": "application/json"
 }
 try:
-    res = requests.post(groq_url, json=groq_payload, headers=groq_headers, timeout=10)
-    print(f"Groq HTTP Status: {res.status_code}")
-    print(f"Groq Response: {res.text[:300]}")
+    res = requests.get(groq_models_url, headers=groq_headers, timeout=10)
+    print(f"Groq Models HTTP Status: {res.status_code}")
+    if res.status_code == 200:
+        models_data = res.json().get("data", [])
+        active_ids = [m["id"] for m in models_data]
+        print(f"Active Groq Models on this account: {active_ids}")
+    else:
+        print(f"Groq Response: {res.text}")
 except Exception as e:
     print(f"Groq Error: {e}")
+

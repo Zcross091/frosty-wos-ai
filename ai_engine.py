@@ -21,8 +21,9 @@ load_dotenv()
 logger = logging.getLogger("FrostyAI.Engine")
 
 # Supported Models
-DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
-GEMINI_FALLBACKS = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-lite-preview-02-05"]
+DEFAULT_GEMINI_MODEL = "gemini-3.6-flash"
+GEMINI_FALLBACKS = ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"]
+
 
 DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
 GROQ_FALLBACKS = ["llama-3.3-70b-versatile", "llama-3.1-70b-versatile", "llama-3.2-3b-preview", "llama-3.2-1b-preview", "qwen-2.5-32b", "deepseek-r1-distill-llama-70b", "gemma2-9b-it"]
