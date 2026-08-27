@@ -1,20 +1,321 @@
+"""
+Frosty Ingestion Engine
+Performs semantic, structure-aware markdown parsing and web wiki ingestion for ChromaDB.
+"""
+
+import os
+import re
+import time
+import argparse
+import logging
 import xml.etree.ElementTree as ET
+from typing import List, Dict, Tuple, Optional
 import requests
 from bs4 import BeautifulSoup
 import chromadb
-import os
-import time
+from dotenv import load_dotenv
 
-# 1. Connect to Frosty's persistent database folder
-chroma_client = chromadb.PersistentClient(path="./frosty_brain")
-collection = chroma_client.get_or_create_collection(name="wos_knowledge")
+load_dotenv()
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger("FrostyAI.Ingest")
 
-def chunk_text(text, chunk_size=2000):
-    """Splits text content into character blocks under 2000 characters."""
-    return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
+DB_PATH = os.getenv("CHROMA_PATH", "./frosty_brain")
+COLLECTION_NAME = "wos_knowledge"
 
-def get_all_urls(source):
-    """Finds all links inside a local sitemap file or live URL."""
+
+def get_chroma_collection(db_path: str = DB_PATH):
+    client = chromadb.PersistentClient(path=db_path)
+    return client.get_or_create_collection(name=COLLECTION_NAME)
+
+
+def recursive_chunk_text(text: str, max_chars: int = 1200, overlap: int = 150) -> List[str]:
+    """
+    Splits text into chunks respecting paragraph and line breaks with overlap.
+    """
+    text = text.strip()
+    if len(text) <= max_chars:
+        return [text] if text else []
+
+    paragraphs = text.split("\n\n")
+    chunks = []
+    current_chunk = ""
+
+    for p in paragraphs:
+        p = p.strip()
+        if not p:
+            continue
+        if len(current_chunk) + len(p) + 2 <= max_chars:
+            current_chunk = f"{current_chunk}\n\n{p}" if current_chunk else p
+        else:
+            if current_chunk:
+                chunks.append(current_chunk.strip())
+            # If paragraph itself is huge, split by lines or sentences
+            if len(p) > max_chars:
+                lines = p.split("\n")
+                sub_chunk = ""
+                for line in lines:
+                    if len(sub_chunk) + len(line) + 1 <= max_chars:
+                        sub_chunk = f"{sub_chunk}\n{line}" if sub_chunk else line
+                    else:
+                        if sub_chunk:
+                            chunks.append(sub_chunk.strip())
+                        sub_chunk = line
+                if sub_chunk:
+                    current_chunk = sub_chunk
+                else:
+                    current_chunk = ""
+            else:
+                current_chunk = p
+
+    if current_chunk:
+        chunks.append(current_chunk.strip())
+
+    # Add sliding overlap if needed
+    final_chunks = []
+    for i, c in enumerate(chunks):
+        if i > 0 and overlap > 0 and len(chunks[i-1]) > overlap:
+            tail = chunks[i-1][-overlap:]
+            final_chunks.append(f"...{tail}\n{c}")
+        else:
+            final_chunks.append(c)
+
+    return final_chunks
+
+
+def parse_heroes_markdown(content: str) -> List[Dict]:
+    """
+    Parses Heroes.md by section and hero headers.
+    """
+    chunks = []
+    # Split by major generation headers or hero headers
+    lines = content.splitlines()
+    current_gen = "Gen 0"
+    current_hero = ""
+    current_troop = ""
+    current_block = []
+
+    for line in lines:
+        # Detect generation header (e.g. ### Gen 1, ### Rare, # Gen 8)
+        gen_match = re.search(r'#{1,4}\s*(Rare|Epic|Gen\s*\d+)', line, re.IGNORECASE)
+        if gen_match:
+            current_gen = gen_match.group(1).title()
+
+        # Detect hero header (e.g. 🔨 Smith – Rare Heroes, 🪓 Eugene, Jeronimo, etc.)
+        hero_match = re.search(r'([A-Za-z0-9\s]+)\s*–\s*(Rare|Epic|Gen\s*\d+)?\s*(Infantry|Lancer|Marksman)?', line)
+        if hero_match and (line.startswith("#") or any(icon in line for icon in ["🔨", "🪓", "🏹", "⚔️", "🛡️", "👑"])):
+            # Save previous block if it has substance
+            if current_block and len("\n".join(current_block).strip()) > 80:
+                block_text = "\n".join(current_block).strip()
+                sub_chunks = recursive_chunk_text(block_text, max_chars=1400)
+                for sc in sub_chunks:
+                    chunks.append({
+                        "text": sc,
+                        "metadata": {
+                            "category": "hero_guide",
+                            "hero_name": current_hero if current_hero else "General",
+                            "generation": current_gen,
+                            "troop_type": current_troop,
+                            "source": "Heroes.md"
+                        }
+                    })
+                current_block = []
+
+            # Extract hero name
+            name_candidate = line.split("–")[0].strip()
+            # Clean icons
+            clean_name = re.sub(r'[^a-zA-Z0-9\s]', '', name_candidate).strip()
+            if clean_name:
+                current_hero = clean_name.split()[0].title() if clean_name.split() else clean_name.title()
+            
+            if "infantry" in line.lower():
+                current_troop = "Infantry"
+            elif "lancer" in line.lower():
+                current_troop = "Lancer"
+            elif "marksman" in line.lower() or "sharpshooter" in line.lower():
+                current_troop = "Marksman"
+
+        current_block.append(line)
+
+    if current_block:
+        block_text = "\n".join(current_block).strip()
+        sub_chunks = recursive_chunk_text(block_text, max_chars=1400)
+        for sc in sub_chunks:
+            chunks.append({
+                "text": sc,
+                "metadata": {
+                    "category": "hero_guide",
+                    "hero_name": current_hero if current_hero else "General",
+                    "generation": current_gen,
+                    "troop_type": current_troop,
+                    "source": "Heroes.md"
+                }
+            })
+
+    return chunks
+
+
+def parse_events_markdown(content: str) -> List[Dict]:
+    """
+    Parses Event Information.md into structured event cards.
+    """
+    chunks = []
+    lines = content.splitlines()
+    current_event = "General Event"
+    current_block = []
+
+    for line in lines:
+        # Detect event start header like `# \# Crazy Joe`, `# \# Frost Fire Mine`, etc.
+        event_match = re.search(r'#{1,3}\s*\\?#?\s*([A-Za-z0-9\s]+)', line)
+        if event_match and any(keyword in line.lower() for keyword in ["joe", "mine", "foundry", "bear", "castle", "transfer", "svs", "fortress", "event"]):
+            if current_block and len("\n".join(current_block).strip()) > 80:
+                block_text = "\n".join(current_block).strip()
+                sub_chunks = recursive_chunk_text(block_text, max_chars=1400)
+                for sc in sub_chunks:
+                    chunks.append({
+                        "text": sc,
+                        "metadata": {
+                            "category": "event_guide",
+                            "event_name": current_event,
+                            "source": "Event Information.md"
+                        }
+                    })
+                current_block = []
+
+            ev_title = event_match.group(1).strip()
+            clean_ev = re.sub(r'[^a-zA-Z0-9\s]', '', ev_title).strip()
+            if clean_ev:
+                current_event = clean_ev.title()
+
+        current_block.append(line)
+
+    if current_block:
+        block_text = "\n".join(current_block).strip()
+        sub_chunks = recursive_chunk_text(block_text, max_chars=1400)
+        for sc in sub_chunks:
+            chunks.append({
+                "text": sc,
+                "metadata": {
+                    "category": "event_guide",
+                    "event_name": current_event,
+                    "source": "Event Information.md"
+                }
+            })
+
+    return chunks
+
+
+def parse_experts_markdown(content: str) -> List[Dict]:
+    """
+    Parses Experts.md into Dawn Academy expert records.
+    """
+    chunks = []
+    lines = content.splitlines()
+    current_expert = "General Expert"
+    current_block = []
+
+    for line in lines:
+        expert_match = re.search(r'#{1,4}\s*([A-Za-z0-9\s]+)\s*–\s*Gen\s*(\d+)?\s*Expert', line, re.IGNORECASE)
+        if expert_match or any(icon in line for icon in ["👩‍💼", "🐻", "🏟️", "⚔️", "🤝", "🔥", "🏆", "🚚", "⛏️"]):
+            if current_block and len("\n".join(current_block).strip()) > 80:
+                block_text = "\n".join(current_block).strip()
+                sub_chunks = recursive_chunk_text(block_text, max_chars=1400)
+                for sc in sub_chunks:
+                    chunks.append({
+                        "text": sc,
+                        "metadata": {
+                            "category": "expert_guide",
+                            "expert_name": current_expert,
+                            "source": "Experts.md"
+                        }
+                    })
+                current_block = []
+
+            clean_name = re.sub(r'[^a-zA-Z0-9\s]', '', line.split("–")[0]).strip()
+            if clean_name:
+                current_expert = clean_name.split()[0].title() if clean_name.split() else clean_name.title()
+
+        current_block.append(line)
+
+    if current_block:
+        block_text = "\n".join(current_block).strip()
+        sub_chunks = recursive_chunk_text(block_text, max_chars=1400)
+        for sc in sub_chunks:
+            chunks.append({
+                "text": sc,
+                "metadata": {
+                    "category": "expert_guide",
+                    "expert_name": current_expert,
+                    "source": "Experts.md"
+                }
+            })
+
+    return chunks
+
+
+def ingest_local_markdown_folder(folder_path: str = "./wos data", collection = None) -> int:
+    """Processes local markdown strategy guides with semantic metadata tagging."""
+    if collection is None:
+        collection = get_chroma_collection()
+
+    if not os.path.exists(folder_path):
+        logger.warning(f"Local folder {folder_path} does not exist.")
+        return 0
+
+    total_added = 0
+    logger.info(f"📂 Ingesting local markdown files from {folder_path}...")
+
+    for filename in sorted(os.listdir(folder_path)):
+        if not (filename.endswith(".md") or filename.endswith(".txt")):
+            continue
+
+        file_path = os.path.join(folder_path, filename)
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read()
+
+        parsed_chunks = []
+        if "hero" in filename.lower():
+            parsed_chunks = parse_heroes_markdown(content)
+        elif "event" in filename.lower():
+            parsed_chunks = parse_events_markdown(content)
+        elif "expert" in filename.lower():
+            parsed_chunks = parse_experts_markdown(content)
+        else:
+            # General markdown
+            text_blocks = recursive_chunk_text(content, max_chars=1200)
+            for tb in text_blocks:
+                parsed_chunks.append({
+                    "text": tb,
+                    "metadata": {"category": "general_guide", "source": filename}
+                })
+
+        # Add to ChromaDB in batches
+        docs = []
+        ids = []
+        metadatas = []
+        clean_file_prefix = re.sub(r'[^a-zA-Z0-9]', '_', filename)
+
+        for idx, item in enumerate(parsed_chunks):
+            doc_id = f"local_{clean_file_prefix}_{idx}"
+            docs.append(item["text"])
+            ids.append(doc_id)
+            metadatas.append(item["metadata"])
+
+            if len(docs) >= 50:
+                collection.upsert(documents=docs, ids=ids, metadatas=metadatas)
+                total_added += len(docs)
+                docs, ids, metadatas = [], [], []
+
+        if docs:
+            collection.upsert(documents=docs, ids=ids, metadatas=metadatas)
+            total_added += len(docs)
+
+        logger.info(f"✅ Ingested {len(parsed_chunks)} semantic chunks from: {filename}")
+
+    return total_added
+
+
+def get_all_urls_from_sitemap(source: str) -> List[str]:
+    """Finds all URLs inside a local sitemap file or live URL."""
     urls = []
     try:
         if os.path.exists(source):
@@ -30,104 +331,88 @@ def get_all_urls(source):
         sitemaps = root.findall('.//ns:sitemap/ns:loc', namespace)
         if sitemaps:
             for s in sitemaps:
-                urls.extend(get_all_urls(s.text))
-        
+                urls.extend(get_all_urls_from_sitemap(s.text))
+
         locations = root.findall('.//ns:url/ns:loc', namespace)
         for loc in locations:
             urls.append(loc.text)
     except Exception as e:
-        print(f"⚠️ Error parsing sitemap layout ({source}): {e}")
+        logger.warning(f"Sitemap parsing notice ({source}): {e}")
     return list(set(urls))
 
-def get_indexed_urls(site_label):
-    """Queries ChromaDB to see which URLs have already been indexed for a site."""
-    try:
-        # Fetch existing metadata entries matching this site source label
-        results = collection.get(where={"site": site_label}, include=["metadatas"])
-        if results and results["metadatas"]:
-            return set(meta["source"] for meta in results["metadatas"] if "source" in meta)
-    except Exception:
-        pass
-    return set()
 
-def run_web_ingestion(source, site_label):
-    """Scrapes, cleans, chunks, and inputs web content with checkpoint skipping."""
-    all_links = get_all_urls(source)
-    target_keywords = ['/hero', '/event', '/building', '/expert', '/pet', '/gear', '/guide']
+def run_web_ingestion(source: str, site_label: str, collection = None) -> int:
+    """Scrapes and chunks web content with checkpointing."""
+    if collection is None:
+        collection = get_chroma_collection()
+
+    all_links = get_all_urls_from_sitemap(source)
+    target_keywords = ['/hero', '/event', '/building', '/expert', '/pet', '/gear', '/guide', '/lineup']
     target_urls = [u for u in all_links if any(k in u.lower() for k in target_keywords)]
     total_targets = len(target_urls)
-    
-    print(f"🚀 Analyzing {total_targets} pages for {site_label}...")
-    
-    # Check existing data to skip previously completed work
-    indexed_urls = get_indexed_urls(site_label)
-    print(f"ℹ️ Found {len(indexed_urls)} URLs already present in database.")
-    
+
+    if not target_urls:
+        logger.info(f"No matching target URLs found in {source}")
+        return 0
+
+    logger.info(f"🌐 Scraping {total_targets} pages for {site_label}...")
+    added = 0
+
     for i, url in enumerate(target_urls):
-        if url in indexed_urls:
-            # Checkpoint Skip Logic
-            if (i + 1) % 50 == 0 or i + 1 == total_targets:
-                print(f"⏩ [{site_label}] Fast-forwarding: Checked {i+1}/{total_targets} links...")
-            continue
-            
         try:
-            # Active tracking print statement so SSH connections never idle out!
-            print(f"📑 [{site_label}] Learning page {i+1}/{total_targets}: {url}")
-            
             res = requests.get(url, timeout=10, headers={'User-Agent': 'Mozilla/5.0'})
             soup = BeautifulSoup(res.text, 'html.parser')
-            
+
             for junk in soup.select('nav, footer, script, style, aside, .sidebar, .ad-container, header, .menu'):
                 junk.decompose()
-            
+
             clean_text = soup.get_text(separator=' ', strip=True)
-            page_chunks = chunk_text(clean_text, chunk_size=2000)
-            
+            page_chunks = recursive_chunk_text(clean_text, max_chars=1200)
+
             for chunk_idx, chunk in enumerate(page_chunks):
-                collection.add(
+                collection.upsert(
                     documents=[chunk],
                     ids=[f"{site_label}_{i}_chunk_{chunk_idx}"],
-                    metadatas=[{"source": url, "site": site_label}]
+                    metadatas=[{"source": url, "site": site_label, "category": "web_guide"}]
                 )
-            time.sleep(0.3)
+                added += 1
+
+            time.sleep(0.2)
         except Exception as e:
-            print(f"❌ Failed to scrape {url}: {e}")
+            logger.debug(f"Skipped page {url}: {e}")
 
-def ingest_local_markdown_folder(folder_path):
-    """Processes local sub-folder strategy notes with fallback protections."""
-    if not os.path.exists(folder_path):
-        print(f"❌ Subfolder {folder_path} does not exist.")
-        return
-    for filename in os.listdir(folder_path):
-        if filename.endswith(".md") or filename.endswith(".txt"):
-            file_path = os.path.join(folder_path, filename)
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-                
-                text_chunks = chunk_text(content, chunk_size=2000)
-                for chunk_idx, chunk in enumerate(text_chunks):
-                    collection.add(
-                        documents=[chunk],
-                        ids=[f"local_{filename}_chunk_{chunk_idx}"],
-                        metadatas=[{"source": filename, "site": "local_data"}]
-                    )
-            print(f"✅ Processed Local Folder Document: {filename}")
+    logger.info(f"✅ Web ingestion complete for {site_label}: {added} chunks.")
+    return added
 
-# --- Master Execution Plan ---
+
+def run_full_reindex(local_only: bool = False) -> int:
+    """Entry point for both CLI and Discord /reindex command."""
+    collection = get_chroma_collection()
+    logger.info(f"🚀 Starting ingestion into ChromaDB (Path: {DB_PATH})...")
+
+    # Step 1: Ingest local structured guides
+    local_count = ingest_local_markdown_folder("./wos data", collection=collection)
+
+    # Step 2: Ingest root sitemap if exists
+    web_count = 0
+    if not local_only:
+        if os.path.exists("sitemap.xml"):
+            web_count += run_web_ingestion("sitemap.xml", "wos_guide", collection=collection)
+        
+        # Live sitemap
+        try:
+            web_count += run_web_ingestion("https://www.whiteoutsurvival.wiki/sitemap.xml", "wos_wiki", collection=collection)
+        except Exception as e:
+            logger.warning(f"Live wiki ingestion skipped: {e}")
+
+    total_chunks = collection.count()
+    logger.info(f"✨ Ingestion complete! Total chunks in database: {total_chunks}")
+    return total_chunks
+
+
 if __name__ == "__main__":
-    # Part 1: Handle your markdown documentation folder first
-    print("--- Ingesting Local Markdown Strategy Folders ---")
-    ingest_local_markdown_folder('./wos data')
+    parser = argparse.ArgumentParser(description="Frosty AI Knowledge Ingestion")
+    parser.add_argument("--local-only", action="store_true", help="Ingest only local wos data folder without web crawling")
+    args = parser.parse_args()
 
-    # Part 2: Handle your original root directory sitemap file
-    print("\n--- Processing Root Directory Sitemaps ---")
-    if os.path.exists('sitemap.xml'):
-        run_web_ingestion('sitemap.xml', 'wos_guide')
-    else:
-        print("ℹ️ No local sitemap.xml detected in root folder.")
-
-    # Part 3: Handle the remote live sitemap
-    print("\n--- Processing Live Web Wiki Sitemaps ---")
-    run_web_ingestion('https://www.whiteoutsurvival.wiki/sitemap.xml', 'wos_wiki')
-
-    print(f"\n✨ COMPLETE: Frosty's brain currently contains {collection.count()} active indexed chunks!")
+    run_full_reindex(local_only=args.local_only)
