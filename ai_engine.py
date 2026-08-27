@@ -25,8 +25,9 @@ DEFAULT_GEMINI_MODEL = "gemini-3.6-flash"
 GEMINI_FALLBACKS = ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"]
 
 
-DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
-GROQ_FALLBACKS = ["llama-3.3-70b-versatile", "llama-3.1-70b-versatile", "llama-3.2-3b-preview", "llama-3.2-1b-preview", "qwen-2.5-32b", "deepseek-r1-distill-llama-70b", "gemma2-9b-it"]
+DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b"
+GROQ_FALLBACKS = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b", "qwen/qwen3.6-27b", "groq/compound", "groq/compound-mini"]
+
 
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
 OPENAI_FALLBACKS = ["gpt-4o-mini", "gpt-4o"]
