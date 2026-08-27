@@ -22,10 +22,10 @@ logger = logging.getLogger("FrostyAI.Engine")
 
 # Supported Models
 DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
-GEMINI_FALLBACKS = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
+GEMINI_FALLBACKS = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-lite-preview-02-05"]
 
 DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
-GROQ_FALLBACKS = ["llama-3.3-70b-versatile", "deepseek-r1-distill-llama-70b", "mixtral-8x7b-32768", "llama3-70b-8192"]
+GROQ_FALLBACKS = ["llama-3.3-70b-versatile", "llama-3.1-70b-versatile", "llama-3.2-3b-preview", "llama-3.2-1b-preview", "qwen-2.5-32b", "deepseek-r1-distill-llama-70b", "gemma2-9b-it"]
 
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
 OPENAI_FALLBACKS = ["gpt-4o-mini", "gpt-4o"]

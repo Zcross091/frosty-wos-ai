@@ -137,17 +137,27 @@ async def expert_autocomplete(interaction: discord.Interaction, current: str) ->
 
 
 # --- Activity Loop ---
-@tasks.loop(minutes=5)
+@tasks.loop(minutes=3)
 async def rotate_presence():
-    activities = [
-        discord.Game(name="Whiteout Survival | /wos"),
-        discord.Activity(type=discord.ActivityType.watching, name=f"{knowledge_base.get_count()} Tactical Archives"),
-        discord.Game(name="Bear Trap & SvS Strategies | /bear"),
-        discord.Activity(type=discord.ActivityType.listening, name="Hero Formations & Guides | /help")
-    ]
-    for act in activities:
-        await bot.change_presence(activity=act)
-        await asyncio.sleep(60)
+    try:
+        await bot.wait_until_ready()
+        if bot.is_closed():
+            return
+        import random
+        activities = [
+            discord.Game(name="Whiteout Survival | /wos"),
+            discord.Activity(type=discord.ActivityType.watching, name=f"{knowledge_base.get_count()} Tactical Archives"),
+            discord.Game(name="Bear Trap & SvS Strategies | /bear"),
+            discord.Activity(type=discord.ActivityType.listening, name="Hero Formations & Guides | /help")
+        ]
+        await bot.change_presence(activity=random.choice(activities))
+    except Exception as e:
+        logger.debug(f"Presence update ignored: {e}")
+
+
+@rotate_presence.before_loop
+async def before_rotate():
+    await bot.wait_until_ready()
 
 
 @bot.event
