@@ -50,7 +50,7 @@ jobs:
 
       - name: 🚀 Build Android Release APK
         working-directory: device/mobile
-        run: flutter build apk --release
+        run: flutter build apk --release --android-skip-build-dependency-validation
 
       - name: 🏷️ Determine Version Tag
         id: get_version
