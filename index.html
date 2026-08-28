@@ -15,15 +15,15 @@
     --ice-1:#a9d8ff;
     --ice-2:#5aa9e6;
     --ice-3:#1c3a5e;
-    --bg:#050b14;
-    --bg2:#081422;
+    --bg:#040913;
+    --bg2:#071220;
     --accent:#7fe3ff;
-    --accent-glow:rgba(127,227,255,0.4);
+    --accent-glow:rgba(127,227,255,0.45);
     --accent2:#ffb877;
     --accent3:#ff6f91;
     --muted:#7f97ad;
-    --card-bg:rgba(15, 25, 44, 0.65);
-    --card-border:rgba(127, 227, 255, 0.18);
+    --card-bg:rgba(12, 22, 38, 0.72);
+    --card-border:rgba(127, 227, 255, 0.2);
   }
   *{margin:0;padding:0;box-sizing:border-box;}
   html{scroll-behavior:smooth;}
@@ -47,19 +47,19 @@
   }
   #loader.hide{opacity:0;visibility:hidden;pointer-events:none;}
   .snowflake-load{
-    width:46px;height:46px;border:2px solid rgba(127,227,255,.15);
+    width:50px;height:50px;border:3px solid rgba(127,227,255,.15);
     border-top-color:var(--accent);border-radius:50%;
-    animation:spin 1s linear infinite;
+    animation:spin 1s linear infinite;box-shadow:0 0 20px rgba(127,227,255,.3);
   }
   @keyframes spin{to{transform:rotate(360deg);}}
-  #loader p{color:var(--muted);letter-spacing:.3em;font-size:.7rem;text-transform:uppercase;}
+  #loader p{color:var(--muted);letter-spacing:.3em;font-size:.72rem;text-transform:uppercase;font-weight:700;}
 
   .content{position:relative;z-index:2;pointer-events:none;}
   .content a, .content button, .content input, .content select{pointer-events:auto;}
   section{
     min-height:100vh;
     display:flex;flex-direction:column;justify-content:center;
-    padding:9vh 8vw;
+    padding:10vh 8vw;
     position:relative;
   }
 
@@ -67,9 +67,9 @@
     position:fixed;top:0;left:0;width:100%;z-index:50;
     display:flex;align-items:center;justify-content:space-between;
     padding:1.2rem 5vw;pointer-events:auto;
-    background:linear-gradient(180deg, rgba(5,11,20,.9), rgba(5,11,20,.6) 80%, transparent);
-    backdrop-filter:blur(10px);
-    border-bottom:1px solid rgba(127,227,255,0.08);
+    background:linear-gradient(180deg, rgba(4,9,19,.92), rgba(4,9,19,.6) 80%, transparent);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(127,227,255,0.1);
   }
   .brand{display:flex;align-items:center;gap:.6rem;font-weight:800;letter-spacing:.03em;font-size:1.15rem;text-decoration:none;color:var(--ice-0);}
   .brand .flake{font-size:1.4rem;filter:drop-shadow(0 0 10px var(--accent));}
@@ -84,21 +84,21 @@
     transition:transform .2s, box-shadow .2s;
     display:inline-flex;align-items:center;gap:.4rem;
   }
-  .nav-cta:hover{transform:translateY(-2px);box-shadow:0 0 26px rgba(127,227,255,.55);}
+  .nav-cta:hover{transform:translateY(-2px);box-shadow:0 0 26px rgba(127,227,255,.6);}
   .nav-app-cta{
     padding:.55rem 1.1rem;border-radius:999px;
     background:rgba(255,255,255,0.06);border:1px solid rgba(127,227,255,0.3);
     color:var(--ice-0);font-weight:600;font-size:.8rem;text-decoration:none;
     transition:all .2s;
   }
-  .nav-app-cta:hover{border-color:var(--accent);background:rgba(127,227,255,0.12);}
+  .nav-app-cta:hover{border-color:var(--accent);background:rgba(127,227,255,0.15);}
 
   .eyebrow{
     display:inline-flex;align-items:center;gap:.5rem;
     color:var(--accent);font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;
     border:1px solid rgba(127,227,255,.3);border-radius:999px;
-    padding:.4rem 1rem;width:fit-content;margin-bottom:1.6rem;
-    background:rgba(127,227,255,.06);
+    padding:.4rem 1.1rem;width:fit-content;margin-bottom:1.6rem;
+    background:rgba(127,227,255,.07);backdrop-filter:blur(6px);
   }
   .dot{width:6px;height:6px;border-radius:50%;background:#5cff9d;box-shadow:0 0 8px #5cff9d;}
 
@@ -125,15 +125,15 @@
   .btn-primary{background:linear-gradient(135deg,#7fe3ff,#4f9fff);color:#001320;box-shadow:0 10px 30px rgba(79,159,255,.35);}
   .btn-app{background:linear-gradient(135deg,#00f0ff,#0072ff);color:#001320;box-shadow:0 10px 30px rgba(0,240,255,.35);}
   .btn-ghost{border:1px solid rgba(255,255,255,.18);color:var(--ice-0);background:rgba(255,255,255,.04);backdrop-filter:blur(6px);}
-  .btn-ghost:hover{border-color:var(--accent);background:rgba(127,227,255,.08);}
+  .btn-ghost:hover{border-color:var(--accent);background:rgba(127,227,255,.1);}
 
   .stats{
     display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;
     margin-top:4.5rem;max-width:950px;
   }
   .stat{
-    background:rgba(127,227,255,0.03);border:1px solid rgba(127,227,255,0.1);
-    padding:1.2rem 1.4rem;border-radius:14px;backdrop-filter:blur(6px);
+    background:rgba(127,227,255,0.04);border:1px solid rgba(127,227,255,0.12);
+    padding:1.2rem 1.4rem;border-radius:16px;backdrop-filter:blur(8px);
   }
   .stat b{display:block;font-size:clamp(1.6rem,3vw,2.2rem);color:var(--accent);}
   .stat span{font-size:.78rem;color:var(--muted);letter-spacing:.02em;}
@@ -149,13 +149,13 @@
     background:var(--card-bg);
     border:1px solid var(--card-border);
     border-radius:18px;padding:2rem;
-    backdrop-filter:blur(12px);
+    backdrop-filter:blur(14px);
     transition:transform .3s ease, border-color .3s ease, background .3s ease, box-shadow .3s ease;
   }
   .card:hover{
     transform:translateY(-6px);
     border-color:rgba(127,227,255,.45);
-    background:rgba(127,227,255,.07);
+    background:rgba(127,227,255,.08);
     box-shadow:0 12px 35px rgba(0,0,0,0.4);
   }
   .card .icon{font-size:1.8rem;margin-bottom:1.2rem;filter:drop-shadow(0 0 8px rgba(127,227,255,.5));}
@@ -164,119 +164,119 @@
 
   /* Interactive Simulator */
   .simulator-box{
-    max-width:900px;width:100%;
-    background:rgba(6, 12, 22, 0.85);
-    border:1px solid rgba(127,227,255,.25);
-    border-radius:20px;overflow:hidden;
-    box-shadow:0 20px 50px rgba(0,0,0,0.6);
+    max-width:920px;width:100%;
+    background:rgba(5, 11, 20, 0.88);
+    border:1px solid rgba(127,227,255,.28);
+    border-radius:22px;overflow:hidden;
+    box-shadow:0 20px 55px rgba(0,0,0,0.65);
     backdrop-filter:blur(16px);
   }
   .sim-header{
     display:flex;align-items:center;justify-content:space-between;
-    padding:1rem 1.5rem;background:rgba(127,227,255,0.05);
-    border-bottom:1px solid rgba(127,227,255,0.12);
+    padding:1rem 1.6rem;background:rgba(127,227,255,0.06);
+    border-bottom:1px solid rgba(127,227,255,0.15);
   }
-  .sim-chips{display:flex;gap:.5rem;padding:1rem 1.5rem;flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,0.05);}
+  .sim-chips{display:flex;gap:.5rem;padding:1rem 1.6rem;flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,0.05);}
   .sim-chip{
-    padding:.4rem .9rem;border-radius:999px;font-size:.78rem;font-weight:600;
-    background:rgba(127,227,255,0.08);border:1px solid rgba(127,227,255,0.2);
+    padding:.45rem 1rem;border-radius:999px;font-size:.8rem;font-weight:600;
+    background:rgba(127,227,255,0.08);border:1px solid rgba(127,227,255,0.22);
     color:var(--accent);cursor:pointer;transition:all .2s;
   }
-  .sim-chip:hover{background:rgba(127,227,255,0.18);border-color:var(--accent);}
-  .sim-chat{padding:1.5rem;max-height:380px;overflow-y:auto;display:flex;flex-direction:column;gap:1.2rem;}
+  .sim-chip:hover{background:rgba(127,227,255,0.22);border-color:var(--accent);transform:scale(1.03);}
+  .sim-chat{padding:1.6rem;max-height:380px;overflow-y:auto;display:flex;flex-direction:column;gap:1.2rem;}
   .sim-msg{display:flex;gap:1rem;font-size:.92rem;line-height:1.6;}
   .sim-avatar{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
-  .sim-avatar.bot{background:linear-gradient(135deg, #00f0ff, #0072ff);box-shadow:0 0 12px rgba(0,240,255,0.5);}
+  .sim-avatar.bot{background:linear-gradient(135deg, #00f0ff, #0072ff);box-shadow:0 0 14px rgba(0,240,255,0.5);}
   .sim-avatar.user{background:rgba(255,255,255,0.1);}
-  .sim-bubble{flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:1rem 1.2rem;border-radius:14px;}
-  .sim-input-row{display:flex;gap:.8rem;padding:1.2rem 1.5rem;background:rgba(2,6,12,0.8);border-top:1px solid rgba(127,227,255,0.15);}
-  .sim-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(127,227,255,0.2);border-radius:10px;padding:.75rem 1.2rem;color:#fff;font-size:.92rem;outline:none;}
+  .sim-bubble{flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:1rem 1.3rem;border-radius:14px;}
+  .sim-input-row{display:flex;gap:.8rem;padding:1.2rem 1.6rem;background:rgba(2,5,10,0.85);border-top:1px solid rgba(127,227,255,0.15);}
+  .sim-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(127,227,255,0.22);border-radius:10px;padding:.8rem 1.2rem;color:#fff;font-size:.92rem;outline:none;}
   .sim-input:focus{border-color:var(--accent);}
 
   /* Calculator */
   .calc-card{
-    max-width:850px;width:100%;background:var(--card-bg);
-    border:1px solid var(--card-border);border-radius:20px;padding:2.2rem;
-    backdrop-filter:blur(14px);
+    max-width:880px;width:100%;background:var(--card-bg);
+    border:1px solid var(--card-border);border-radius:22px;padding:2.4rem;
+    backdrop-filter:blur(16px);
   }
   .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1.5rem;}
   .calc-input-group label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:.5rem;font-weight:600;}
   .calc-input{
-    width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(127,227,255,0.25);
-    border-radius:10px;padding:.8rem 1rem;color:#fff;font-size:.95rem;outline:none;
+    width:100%;background:rgba(0,0,0,0.35);border:1px solid rgba(127,227,255,0.25);
+    border-radius:10px;padding:.85rem 1.1rem;color:#fff;font-size:.95rem;outline:none;
   }
   .calc-input:focus{border-color:var(--accent);}
   .calc-result{
-    margin-top:1.8rem;padding:1.5rem;border-radius:14px;
-    background:rgba(127,227,255,0.06);border:1px solid rgba(127,227,255,0.2);
+    margin-top:1.8rem;padding:1.6rem;border-radius:16px;
+    background:rgba(127,227,255,0.07);border:1px solid rgba(127,227,255,0.22);
     display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;
   }
-  .calc-stat b{display:block;font-size:1.4rem;color:var(--accent);}
+  .calc-stat b{display:block;font-size:1.45rem;color:var(--accent);}
   .calc-stat span{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
 
   /* codex */
-  .codex-list{display:flex;flex-direction:column;gap:.7rem;max-width:750px;}
+  .codex-list{display:flex;flex-direction:column;gap:.7rem;max-width:780px;}
   .codex-row{
     display:flex;justify-content:space-between;align-items:center;
-    padding:1.1rem 1.4rem;border-radius:14px;
+    padding:1.1rem 1.5rem;border-radius:14px;
     background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
     transition:border-color .3s, background .3s, transform .2s;
   }
-  .codex-row:hover{border-color:var(--accent);background:rgba(127,227,255,.08);transform:translateX(4px);}
+  .codex-row:hover{border-color:var(--accent);background:rgba(127,227,255,.08);transform:translateX(5px);}
   .codex-row .gen{font-weight:800;color:var(--accent);font-size:1rem;min-width:180px;}
-  .codex-row .heroes{color:var(--ice-1);font-size:.9rem;text-align:right;}
+  .codex-row .heroes{color:var(--ice-1);font-size:.92rem;text-align:right;}
 
   /* formations */
   .formation-tabs{display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:2.2rem;}
   .ftab{
-    padding:.7rem 1.2rem;border-radius:10px;font-size:.85rem;font-weight:600;
+    padding:.75rem 1.3rem;border-radius:11px;font-size:.85rem;font-weight:600;
     background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:var(--muted);
     cursor:pointer;transition:all .25s;
   }
-  .ftab.active,.ftab:hover{color:var(--ice-0);border-color:var(--accent);background:rgba(127,227,255,.12);}
-  .formation-bar{display:flex;height:38px;border-radius:10px;overflow:hidden;max-width:700px;margin-bottom:1.4rem;box-shadow:0 4px 15px rgba(0,0,0,0.3);}
-  .seg{display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;color:#001320;transition:width .5s ease;}
+  .ftab.active,.ftab:hover{color:var(--ice-0);border-color:var(--accent);background:rgba(127,227,255,.15);box-shadow:0 0 15px rgba(127,227,255,0.2);}
+  .formation-bar{display:flex;height:40px;border-radius:12px;overflow:hidden;max-width:750px;margin-bottom:1.4rem;box-shadow:0 4px 20px rgba(0,0,0,0.4);}
+  .seg{display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:800;color:#001320;transition:width .5s cubic-bezier(0.34, 1.56, 0.64, 1);}
   .seg.inf{background:#7fe3ff;}
   .seg.lan{background:#ffb877;}
   .seg.mark{background:#ff6f91;}
-  .formation-legend{display:flex;gap:1.6rem;font-size:.85rem;color:var(--muted);margin-bottom:1.4rem;flex-wrap:wrap;}
+  .formation-legend{display:flex;gap:1.8rem;font-size:.85rem;color:var(--muted);margin-bottom:1.4rem;flex-wrap:wrap;}
   .legend-item{display:flex;align-items:center;gap:.5rem;}
   .swatch{width:12px;height:12px;border-radius:4px;}
   .doctrine{
-    max-width:700px;padding:1.4rem 1.6rem;border-radius:14px;
-    background:rgba(127,227,255,.06);border:1px solid rgba(127,227,255,.18);
-    font-size:.92rem;color:var(--ice-1);line-height:1.65;
+    max-width:750px;padding:1.5rem 1.8rem;border-radius:16px;
+    background:rgba(127,227,255,.07);border:1px solid rgba(127,227,255,.2);
+    font-size:.95rem;color:var(--ice-1);line-height:1.65;
   }
 
   /* setup */
   .code-block{
-    max-width:750px;background:#020609;border:1px solid rgba(127,227,255,.18);
-    border-radius:16px;overflow:hidden;box-shadow:0 15px 40px rgba(0,0,0,0.5);
+    max-width:780px;background:#020508;border:1px solid rgba(127,227,255,.2);
+    border-radius:18px;overflow:hidden;box-shadow:0 15px 45px rgba(0,0,0,0.55);
   }
   .code-head{
     display:flex;justify-content:space-between;align-items:center;
-    padding:.9rem 1.4rem;border-bottom:1px solid rgba(255,255,255,.08);
-    font-size:.8rem;color:var(--muted);font-weight:600;
+    padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.08);
+    font-size:.82rem;color:var(--muted);font-weight:600;
   }
   .code-block pre{
-    padding:1.5rem 1.4rem;font-family:'SF Mono',Consolas,Menlo,monospace;
-    font-size:.82rem;line-height:1.75;color:#a9d8ff;overflow-x:auto;
+    padding:1.6rem 1.5rem;font-family:'SF Mono',Consolas,Menlo,monospace;
+    font-size:.84rem;line-height:1.75;color:#a9d8ff;overflow-x:auto;
   }
   .code-block .comment{color:#5c7285;}
 
   /* cta */
   .cta-box{
-    max-width:850px;text-align:center;margin:0 auto;
+    max-width:880px;text-align:center;margin:0 auto;
     display:flex;flex-direction:column;align-items:center;
-    background:linear-gradient(180deg, rgba(127,227,255,0.08), rgba(127,227,255,0.02));
-    border:1px solid rgba(127,227,255,0.25);border-radius:24px;padding:4rem 3rem;
-    backdrop-filter:blur(16px);
+    background:linear-gradient(180deg, rgba(127,227,255,0.09), rgba(127,227,255,0.02));
+    border:1px solid rgba(127,227,255,0.28);border-radius:26px;padding:4.2rem 3.2rem;
+    backdrop-filter:blur(18px);box-shadow:0 25px 60px rgba(0,0,0,0.5);
   }
 
   footer{
     padding:3.5rem 8vw;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1.5rem;
     border-top:1px solid rgba(255,255,255,.08);color:var(--muted);font-size:.85rem;
-    position:relative;z-index:2;background:rgba(2,5,10,0.9);
+    position:relative;z-index:2;background:rgba(2,4,8,0.95);
   }
   footer a{color:var(--muted);text-decoration:none;margin-left:1.4rem;transition:color .2s;}
   footer a:hover{color:var(--accent);}
@@ -295,7 +295,7 @@
 
 <div id="loader">
   <div class="snowflake-load"></div>
-  <p>Calibrating Frosty Tactical AI Core</p>
+  <p>Calibrating Frosty Tactical 3D Engine</p>
 </div>
 
 <canvas id="webgl-canvas"></canvas>
@@ -307,7 +307,7 @@
     <a href="#simulator">AI Simulator</a>
     <a href="#calculator">State Age</a>
     <a href="#codex">Hero Codex</a>
-    <a href="#formations">Formations</a>
+    <a href="#formations">3D Battle Hologram</a>
     <a href="#setup">Self-Hosting</a>
   </div>
   <div class="nav-actions">
@@ -444,19 +444,19 @@
     </div>
   </section>
 
-  <!-- Formations Visualizer -->
+  <!-- Formations Visualizer & 3D Hologram -->
   <section id="formations">
     <div class="section-head">
       <div class="kicker">Tactical Formations</div>
-      <h2>Interactive Troop Ratio Visualizer</h2>
-      <p>Select a combat scenario to see the grandmaster troop breakdown and tactical doctrine.</p>
+      <h2>3D Holographic Battle Formations</h2>
+      <p>Select a combat scenario to rearrange the real-time 3D battle hologram and tactical doctrine.</p>
     </div>
 
     <div class="formation-tabs">
-      <div class="ftab active" data-f="0">⚔️ Standard PvP / Field</div>
-      <div class="ftab" data-f="1">🐻 Bear Trap (Max PvE)</div>
-      <div class="ftab" data-f="2">🛡️ Castle Garrison Defense</div>
-      <div class="ftab" data-f="3">🎯 High Burst 4-1-1</div>
+      <div class="ftab active" data-f="0">⚔️ Standard PvP / Field (50/20/30)</div>
+      <div class="ftab" data-f="1">🐻 Bear Trap Max PvE (10/10/80)</div>
+      <div class="ftab" data-f="2">🛡️ Castle Garrison Defense (60/20/20)</div>
+      <div class="ftab" data-f="3">🎯 High Burst 4-1-1 (40/10/50)</div>
     </div>
 
     <div class="formation-bar" id="formationBar">
@@ -465,9 +465,9 @@
       <div class="seg mark" id="segMark">30%</div>
     </div>
     <div class="formation-legend">
-      <div class="legend-item"><span class="swatch" style="background:#7fe3ff"></span> Infantry (Frontline Tank)</div>
-      <div class="legend-item"><span class="swatch" style="background:#ffb877"></span> Lancers (Midline Burst & Flank)</div>
-      <div class="legend-item"><span class="swatch" style="background:#ff6f91"></span> Marksmen (Backline Sustained DPS)</div>
+      <div class="legend-item"><span class="swatch" style="background:#7fe3ff"></span> 🔷 Infantry (Frontline Tank)</div>
+      <div class="legend-item"><span class="swatch" style="background:#ffb877"></span> 🔶 Lancers (Midline Burst & Flank)</div>
+      <div class="legend-item"><span class="swatch" style="background:#ff6f91"></span> 🔴 Marksmen (Backline Sustained DPS)</div>
     </div>
     <div class="doctrine" id="doctrineText">
       Infantry absorbs 100% of enemy front damage. If infantry falls below 40%, your marksmen will be annihilated. 50/20/30 gives your marksmen the protection needed to deal maximum sustained damage over extended fights.
@@ -528,6 +528,27 @@ pm2 save</pre>
   </div>
 </footer>
 
+<!-- Web Audio Sound Synthesizer -->
+<script>
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playFrostTone(freq = 587.33, duration = 0.25, type = 'sine') {
+  if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(freq * 1.5, audioCtx.currentTime + duration);
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  } catch (_) {}
+}
+</script>
+
 <!-- Three.js + UnrealBloomPass + GSAP ScrollTrigger 3D Engine -->
 <script type="importmap">
 {
@@ -548,78 +569,84 @@ import { ScrollTrigger } from 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/ScrollTr
 gsap.registerPlugin(ScrollTrigger);
 ScrollTrigger.defaults({ scroller: window });
 
-/* ---------- Scene setup ---------- */
+/* ---------- WebGL Scene Setup ---------- */
 const canvas = document.getElementById('webgl-canvas');
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x050b14, 0.045);
+scene.fog = new THREE.FogExp2(0x040913, 0.045);
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-camera.position.set(0, 0, 8);
+camera.position.set(0, 0, 8.5);
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
+renderer.toneMappingExposure = 1.25;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-/* ---------- Lighting: cold three-point ---------- */
-const ambient = new THREE.AmbientLight(0x335577, 0.55);
-scene.add(ambient);
+/* ---------- Multi-Point Cinematic Lighting ---------- */
+const ambientLight = new THREE.AmbientLight(0x284968, 0.65);
+scene.add(ambientLight);
 
-const keyLight = new THREE.DirectionalLight(0x9fd8ff, 3.2);
-keyLight.position.set(5, 6, 6);
+const keyLight = new THREE.DirectionalLight(0x7fe3ff, 3.4);
+keyLight.position.set(6, 7, 6);
 keyLight.castShadow = true;
 keyLight.shadow.mapSize.set(1024, 1024);
-keyLight.shadow.bias = -0.0003;
+keyLight.shadow.bias = -0.0002;
 scene.add(keyLight);
 
-const fillLight = new THREE.PointLight(0x2a6ea8, 1.6, 30);
-fillLight.position.set(-6, -2, 2);
+const fillLight = new THREE.PointLight(0x245888, 2.2, 35);
+fillLight.position.set(-7, -3, 3);
 scene.add(fillLight);
 
-const rimLight = new THREE.DirectionalLight(0xffae7f, 1.4);
-rimLight.position.set(-4, 2, -5);
+const rimLight = new THREE.DirectionalLight(0xffb877, 2.0);
+rimLight.position.set(-5, 4, -6);
 scene.add(rimLight);
 
-/* ---------- Central ice-crystal hero object ---------- */
-const crystalGroup = new THREE.Group();
-scene.add(crystalGroup);
+/* ---------- Root 3D Container ---------- */
+const masterGroup = new THREE.Group();
+scene.add(masterGroup);
 
-const coreGeo = new THREE.IcosahedronGeometry(1.6, 2);
+/* ---------- 1. Central Refractive Ice Crystal Hero ---------- */
+const crystalGroup = new THREE.Group();
+masterGroup.add(crystalGroup);
+
+const coreGeo = new THREE.IcosahedronGeometry(1.65, 3);
 const coreMat = new THREE.MeshPhysicalMaterial({
-  color: 0x1a3a55,
-  metalness: 0.05,
-  roughness: 0.08,
-  transmission: 0.92,
-  thickness: 1.8,
-  ior: 1.42,
+  color: 0x143452,
+  metalness: 0.08,
+  roughness: 0.1,
+  transmission: 0.94,
+  thickness: 1.9,
+  ior: 1.48,
   clearcoat: 1.0,
-  clearcoatRoughness: 0.06,
-  reflectivity: 0.9,
+  clearcoatRoughness: 0.05,
+  reflectivity: 0.92,
   attenuationColor: new THREE.Color(0x6fc6ff),
-  attenuationDistance: 2.2,
+  attenuationDistance: 2.0,
+  emissive: 0x082038,
+  emissiveIntensity: 0.25,
 });
 const core = new THREE.Mesh(coreGeo, coreMat);
 core.castShadow = true;
 crystalGroup.add(core);
 
-// orbiting ice shards (instanced)
-const shardGeo = new THREE.OctahedronGeometry(0.28, 0);
+// Orbiting instanced ice shards
+const shardGeo = new THREE.OctahedronGeometry(0.26, 0);
 const shardMat = new THREE.MeshPhysicalMaterial({
   color: 0xbfe8ff,
-  metalness: 0.1,
-  roughness: 0.15,
-  transmission: 0.8,
-  thickness: 0.6,
-  ior: 1.4,
+  metalness: 0.15,
+  roughness: 0.12,
+  transmission: 0.85,
+  thickness: 0.8,
+  ior: 1.45,
   clearcoat: 1.0,
-  emissive: 0x1a4a6e,
-  emissiveIntensity: 0.15,
+  emissive: 0x1a527c,
+  emissiveIntensity: 0.35,
 });
-const SHARD_COUNT = 26;
+const SHARD_COUNT = 36;
 const shardMesh = new THREE.InstancedMesh(shardGeo, shardMat, SHARD_COUNT);
 shardMesh.castShadow = true;
 crystalGroup.add(shardMesh);
@@ -627,14 +654,14 @@ crystalGroup.add(shardMesh);
 const shardData = [];
 const dummy = new THREE.Object3D();
 for (let i = 0; i < SHARD_COUNT; i++) {
-  const radius = 2.6 + Math.random() * 1.6;
+  const radius = 2.5 + Math.random() * 2.0;
   const theta = Math.random() * Math.PI * 2;
   const phi = Math.acos((Math.random() * 2) - 1);
   shardData.push({
     radius, theta, phi,
-    speed: 0.08 + Math.random() * 0.12,
-    spin: (Math.random() - 0.5) * 2,
-    scale: 0.5 + Math.random() * 0.9,
+    speed: 0.08 + Math.random() * 0.14,
+    spin: (Math.random() - 0.5) * 3,
+    scale: 0.45 + Math.random() * 0.8,
   });
 }
 
@@ -645,7 +672,7 @@ function layoutShards() {
     const y = d.radius * Math.sin(d.phi) * Math.sin(d.theta);
     const z = d.radius * Math.cos(d.phi);
     dummy.position.set(x, y, z);
-    dummy.rotation.set(x * 0.3, y * 0.3, z * 0.3);
+    dummy.rotation.set(x * 0.3, y * 0.3 + d.theta, z * 0.3);
     dummy.scale.setScalar(d.scale);
     dummy.updateMatrix();
     shardMesh.setMatrixAt(i, dummy.matrix);
@@ -654,63 +681,161 @@ function layoutShards() {
 }
 layoutShards();
 
-/* ---------- Snow particle field ---------- */
-const SNOW_COUNT = 900;
+/* ---------- 2. 3D Holographic Battle Formation Rig ---------- */
+const battleRig = new THREE.Group();
+battleRig.position.set(0, -10, 0); // initial offset
+masterGroup.add(battleRig);
+
+// Create 3 troop groups (Infantry Cyan Shield, Lancers Amber Pyramids, Marksmen Pink Octahedrons)
+const infGroup = new THREE.Group();
+const lanGroup = new THREE.Group();
+const markGroup = new THREE.Group();
+battleRig.add(infGroup);
+battleRig.add(lanGroup);
+battleRig.add(markGroup);
+
+const infMat = new THREE.MeshPhysicalMaterial({ color: 0x7fe3ff, emissive: 0x00f0ff, emissiveIntensity: 0.6, metalness: 0.4, roughness: 0.2 });
+const lanMat = new THREE.MeshPhysicalMaterial({ color: 0xffb877, emissive: 0xff8833, emissiveIntensity: 0.6, metalness: 0.4, roughness: 0.2 });
+const markMat = new THREE.MeshPhysicalMaterial({ color: 0xff6f91, emissive: 0xff3366, emissiveIntensity: 0.6, metalness: 0.4, roughness: 0.2 });
+
+const infUnits = [], lanUnits = [], markUnits = [];
+
+for (let i = 0; i < 15; i++) {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.32, 0.32), infMat);
+  infGroup.add(mesh);
+  infUnits.push(mesh);
+}
+for (let i = 0; i < 10; i++) {
+  const mesh = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.45, 4), lanMat);
+  mesh.rotation.x = Math.PI / 2;
+  lanGroup.add(mesh);
+  lanUnits.push(mesh);
+}
+for (let i = 0; i < 15; i++) {
+  const mesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.24, 0), markMat);
+  markGroup.add(mesh);
+  markUnits.push(mesh);
+}
+
+// Positioning presets for 3D battle hologram
+window.update3DBattleFormation = function(fIndex) {
+  playFrostTone(440 + fIndex * 110, 0.2, 'triangle');
+  const presets = [
+    { infCount: 15, lanCount: 6, markCount: 9, infZ: 1.2, lanZ: 0.0, markZ: -1.2 },  // 50/20/30
+    { infCount: 3,  lanCount: 3, markCount: 15, infZ: 1.5, lanZ: 0.4, markZ: -0.8 },  // 10/10/80 Bear Trap
+    { infCount: 15, lanCount: 5, markCount: 5, infZ: 1.0, lanZ: -0.2, markZ: -1.4 },  // 60/20/20 Garrison
+    { infCount: 10, lanCount: 3, markCount: 12, infZ: 1.2, lanZ: 0.2, markZ: -1.0 }   // 40/10/50 Burst
+  ];
+  const p = presets[fIndex] || presets[0];
+
+  infUnits.forEach((u, i) => {
+    gsap.to(u.position, {
+      x: ((i % 5) - 2) * 0.55,
+      y: (Math.floor(i / 5) - 1) * 0.45,
+      z: p.infZ + (Math.sin(i) * 0.15),
+      duration: 0.65,
+      ease: 'back.out(1.7)'
+    });
+    gsap.to(u.scale, { x: i < p.infCount ? 1 : 0.001, y: i < p.infCount ? 1 : 0.001, z: i < p.infCount ? 1 : 0.001, duration: 0.4 });
+  });
+
+  lanUnits.forEach((u, i) => {
+    const side = i % 2 === 0 ? -1.8 : 1.8;
+    gsap.to(u.position, {
+      x: side + (Math.floor(i / 2) * 0.4 * (side > 0 ? 1 : -1)),
+      y: (i % 3 - 1) * 0.4,
+      z: p.lanZ,
+      duration: 0.65,
+      ease: 'back.out(1.7)'
+    });
+    gsap.to(u.scale, { x: i < p.lanCount ? 1 : 0.001, y: i < p.lanCount ? 1 : 0.001, z: i < p.lanCount ? 1 : 0.001, duration: 0.4 });
+  });
+
+  markUnits.forEach((u, i) => {
+    gsap.to(u.position, {
+      x: ((i % 5) - 2) * 0.55,
+      y: (Math.floor(i / 5) - 1) * 0.45,
+      z: p.markZ,
+      duration: 0.65,
+      ease: 'back.out(1.7)'
+    });
+    gsap.to(u.scale, { x: i < p.markCount ? 1 : 0.001, y: i < p.markCount ? 1 : 0.001, z: i < p.markCount ? 1 : 0.001, duration: 0.4 });
+  });
+};
+window.update3DBattleFormation(0);
+
+/* ---------- 3. Snow Particle Field ---------- */
+const SNOW_COUNT = 1200;
 const snowGeo = new THREE.BufferGeometry();
 const positions = new Float32Array(SNOW_COUNT * 3);
 const speeds = new Float32Array(SNOW_COUNT);
 for (let i = 0; i < SNOW_COUNT; i++) {
-  positions[i * 3] = (Math.random() - 0.5) * 40;
-  positions[i * 3 + 1] = (Math.random() - 0.5) * 30;
-  positions[i * 3 + 2] = (Math.random() - 0.5) * 30;
-  speeds[i] = 0.4 + Math.random() * 1.2;
+  positions[i * 3] = (Math.random() - 0.5) * 45;
+  positions[i * 3 + 1] = (Math.random() - 0.5) * 35;
+  positions[i * 3 + 2] = (Math.random() - 0.5) * 35;
+  speeds[i] = 0.4 + Math.random() * 1.3;
 }
 snowGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 const snowMat = new THREE.PointsMaterial({
   color: 0xdfefff,
   size: 0.045,
   transparent: true,
-  opacity: 0.65,
+  opacity: 0.7,
   depthWrite: false,
 });
 const snow = new THREE.Points(snowGeo, snowMat);
 scene.add(snow);
 
-/* ---------- Ground contact glow ---------- */
-const glowGeo = new THREE.CircleGeometry(3.2, 48);
-const glowMat = new THREE.MeshBasicMaterial({ color: 0x2c6fa8, transparent: true, opacity: 0.12 });
+/* ---------- 4. Contact Glow Plane ---------- */
+const glowGeo = new THREE.CircleGeometry(3.6, 64);
+const glowMat = new THREE.MeshBasicMaterial({ color: 0x1d5b8c, transparent: true, opacity: 0.16 });
 const glow = new THREE.Mesh(glowGeo, glowMat);
 glow.rotation.x = -Math.PI / 2;
-glow.position.y = -2.4;
+glow.position.y = -2.6;
 scene.add(glow);
 
-/* ---------- Post-processing ---------- */
+/* ---------- 5. Post-Processing Pipeline ---------- */
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 const bloomPass = new UnrealBloomPass(
   new THREE.Vector2(window.innerWidth, window.innerHeight),
-  0.55, 0.55, 0.82
+  0.65, // strength
+  0.5,  // radius
+  0.85  // threshold
 );
 composer.addPass(bloomPass);
 
-/* ---------- Scroll choreography ---------- */
+/* ---------- 6. Multi-Stage GSAP Scroll Choreography ---------- */
 gsap.timeline({
   scrollTrigger: {
     trigger: '.content',
     start: 'top top',
     end: 'bottom bottom',
-    scrub: 1.2,
+    scrub: 1.4,
     invalidateOnRefresh: true
   }
 })
-.to(crystalGroup.rotation, { y: Math.PI * 1.4, x: Math.PI * 0.3, ease: 'none' }, 0)
-.to(crystalGroup.position, { x: 2.4, y: -0.8, z: -1.5, ease: 'power1.inOut' }, 0)
-.to(camera.position, { z: 5.5, x: -0.6, ease: 'power1.inOut' }, 0)
-.to(coreMat.color, { r: 0.3, g: 0.55, b: 0.85, ease: 'none' }, 0.4)
-.to(crystalGroup.position, { x: -2, y: 0.6, z: 0, ease: 'power1.inOut' }, 0.75)
-.to(camera.position, { z: 7, x: 0, ease: 'power1.inOut' }, 0.75);
+// Stage 1: Hero -> Architecture (0% -> 25%)
+.to(crystalGroup.rotation, { y: Math.PI * 1.5, x: Math.PI * 0.35, ease: 'none' }, 0)
+.to(crystalGroup.position, { x: 2.6, y: -0.6, z: -1.2, ease: 'power1.inOut' }, 0)
+.to(camera.position, { z: 6.2, x: -0.4, ease: 'power1.inOut' }, 0)
 
-/* ---------- Mouse parallax ---------- */
+// Stage 2: Architecture -> Simulator (25% -> 50%)
+.to(crystalGroup.position, { x: -2.8, y: 0.5, z: 0.4, ease: 'power1.inOut' }, 0.25)
+.to(coreMat.color, { r: 0.25, g: 0.6, b: 0.95, ease: 'none' }, 0.25)
+
+// Stage 3: Simulator -> Formations (50% -> 75%)
+.to(crystalGroup.position, { y: 12, opacity: 0, ease: 'power2.in' }, 0.5)
+.to(battleRig.position, { x: 2.4, y: 0.2, z: 2.0, ease: 'back.out(1.2)' }, 0.55)
+.to(battleRig.rotation, { y: -Math.PI * 0.45, x: Math.PI * 0.18, ease: 'power1.inOut' }, 0.55)
+
+// Stage 4: Formations -> CTA (75% -> 100%)
+.to(battleRig.position, { y: -10, ease: 'power2.in' }, 0.8)
+.to(crystalGroup.position, { x: 0, y: 0.3, z: 1.2, ease: 'power2.out' }, 0.85)
+.to(crystalGroup.rotation, { y: Math.PI * 3.2, ease: 'none' }, 0.85)
+.to(camera.position, { z: 7.2, x: 0, ease: 'power1.inOut' }, 0.85);
+
+/* ---------- Mouse Parallax Smoothing ---------- */
 const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
 window.addEventListener('mousemove', (e) => {
   mouse.targetX = (e.clientX / window.innerWidth - 0.5) * 2;
@@ -724,47 +849,47 @@ window.addEventListener('resize', () => {
   composer.setSize(window.innerWidth, window.innerHeight);
 });
 
-/* ---------- Animate loop ---------- */
+/* ---------- Main 60 FPS Render Loop ---------- */
 const clock = new THREE.Clock();
 function animate() {
   requestAnimationFrame(animate);
   const t = clock.getElapsedTime();
 
-  mouse.x += (mouse.targetX - mouse.x) * 0.04;
-  mouse.y += (mouse.targetY - mouse.y) * 0.04;
+  mouse.x += (mouse.targetX - mouse.x) * 0.05;
+  mouse.y += (mouse.targetY - mouse.y) * 0.05;
 
-  core.rotation.y = t * 0.15;
-  core.rotation.x = Math.sin(t * 0.2) * 0.15;
+  core.rotation.y = t * 0.18;
+  core.rotation.x = Math.sin(t * 0.25) * 0.14;
 
   for (let i = 0; i < SHARD_COUNT; i++) {
     const d = shardData[i];
-    d.theta += d.speed * 0.006;
+    d.theta += d.speed * 0.007;
   }
   layoutShards();
 
   const snowPos = snowGeo.attributes.position.array;
   for (let i = 0; i < SNOW_COUNT; i++) {
-    snowPos[i * 3 + 1] -= speeds[i] * 0.012;
-    if (snowPos[i * 3 + 1] < -15) snowPos[i * 3 + 1] = 15;
+    snowPos[i * 3 + 1] -= speeds[i] * 0.014;
+    if (snowPos[i * 3 + 1] < -18) snowPos[i * 3 + 1] = 18;
   }
   snowGeo.attributes.position.needsUpdate = true;
 
-  camera.position.x += mouse.x * 0.3 - (camera.position.x - (camera.position.x)) ;
-  camera.lookAt(crystalGroup.position.x * 0.3, crystalGroup.position.y * 0.3, 0);
+  camera.position.x += mouse.x * 0.25 - (camera.position.x - (camera.position.x));
+  camera.lookAt(masterGroup.position.x * 0.2, masterGroup.position.y * 0.2, 0);
 
   composer.render();
 }
 animate();
 
-/* ---------- Loader ---------- */
+/* ---------- Loader Lifecycle ---------- */
 window.addEventListener('load', () => {
-  setTimeout(() => document.getElementById('loader').classList.add('hide'), 400);
-  setTimeout(() => ScrollTrigger.refresh(), 600);
+  setTimeout(() => document.getElementById('loader').classList.add('hide'), 300);
+  setTimeout(() => ScrollTrigger.refresh(), 500);
 });
 </script>
 
 <script>
-/* ---------- Formations Visualizer ---------- */
+/* ---------- Formations Visualizer (Hooked to DOM + 3D Hologram) ---------- */
 const formations = [
   { inf: 50, lan: 20, mark: 30, text: "Infantry absorbs 100% of enemy front damage. If infantry falls below 40%, your marksmen will be annihilated. 50/20/30 gives your marksmen the protection needed to deal maximum sustained damage over extended fights." },
   { inf: 10, lan: 10, mark: 80, text: "Bear Trap is pure PvE damage racing — there's no enemy front line to tank. Stack Marksmen to 80% for maximum sustained DPS against the trap, keeping just enough Infantry and Lancers to round out squad requirements." },
@@ -788,6 +913,11 @@ function setFormation(idx) {
   segMark.textContent = f.mark + '%';
   doctrineText.textContent = f.text;
   tabs.forEach((t, i) => t.classList.toggle('active', i === idx));
+
+  // Trigger 3D Battle Hologram Update in WebGL canvas
+  if (window.update3DBattleFormation) {
+    window.update3DBattleFormation(idx);
+  }
 }
 
 tabs.forEach((tab, i) => tab.addEventListener('click', () => setFormation(i)));
@@ -802,15 +932,14 @@ const responses = {
 };
 
 function simulateQuery(query) {
+  playFrostTone(520, 0.15, 'sine');
   const simChat = document.getElementById('simChat');
   
-  // User bubble
   const userMsg = document.createElement('div');
   userMsg.className = 'sim-msg';
   userMsg.innerHTML = `<div class="sim-avatar user">👤</div><div class="sim-bubble"><b>You:</b> ${query}</div>`;
   simChat.appendChild(userMsg);
 
-  // Bot response with cooking animation
   const botMsg = document.createElement('div');
   botMsg.className = 'sim-msg';
   botMsg.innerHTML = `<div class="sim-avatar bot">❄️</div><div class="sim-bubble"><i>⚡ Frosty is cooking tactical response...</i></div>`;
@@ -818,6 +947,7 @@ function simulateQuery(query) {
   simChat.scrollTop = simChat.scrollHeight;
 
   setTimeout(() => {
+    playFrostTone(784, 0.25, 'sine');
     const ans = responses[query] || `❄️ **Frosty Tactical Engine Response:**\nAnalyzing database for "${query}"...\n* **Recommendation:** Deploy a balanced 50/20/30 lineup with Jessie in Joiner slot #1.\n* **Note:** For deep multi-turn tactics, invite Frosty to your Discord server or download our Android APK!`;
     botMsg.querySelector('.sim-bubble').innerHTML = `<b>Frosty AI:</b><br>${ans.replace(/\\n/g, '<br>')}`;
     simChat.scrollTop = simChat.scrollHeight;
