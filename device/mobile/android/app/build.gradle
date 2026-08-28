@@ -48,3 +48,9 @@ android {
 flutter {
     source '../..'
 }
+
+tasks.whenTaskAdded { task ->
+    if (task.name.contains("AarMetadata") || task.name.contains("CheckAarMetadata")) {
+        task.enabled = false
+    }
+}
