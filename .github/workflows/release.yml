@@ -56,6 +56,7 @@ jobs:
         with:
           name: android-apk
           path: device/mobile/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
 
   # -------------------------------------------------------------
   # 2. Windows Desktop Build
@@ -72,6 +73,9 @@ jobs:
         with:
           channel: 'stable'
           cache: true
+
+      - name: ⚙️ Enable Windows Desktop
+        run: flutter config --enable-windows-desktop
 
       - name: 📦 Install Flutter Dependencies
         working-directory: device/mobile
@@ -91,6 +95,7 @@ jobs:
         with:
           name: windows-zip
           path: frosty-wos-ai-windows-x64.zip
+          if-no-files-found: error
 
   # -------------------------------------------------------------
   # 3. Linux Desktop Build
@@ -113,6 +118,9 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: ⚙️ Enable Linux Desktop
+        run: flutter config --enable-linux-desktop
+
       - name: 📦 Install Flutter Dependencies
         working-directory: device/mobile
         run: flutter pub get
@@ -130,6 +138,7 @@ jobs:
         with:
           name: linux-tar
           path: frosty-wos-ai-linux-x64.tar.gz
+          if-no-files-found: error
 
   # -------------------------------------------------------------
   # 4. Consolidated GitHub Release Publication
@@ -153,29 +162,25 @@ jobs:
             echo "TAG_NAME=v1.0.${{ github.run_number }}" >> $GITHUB_ENV
           fi
 
-      - name: 📥 Download Android Artifact
+      - name: 📥 Download All Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: android-apk
           path: release-output/
+          merge-multiple: true
 
-      - name: 📥 Download Windows Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-zip
-          path: release-output/
-
-      - name: 📥 Download Linux Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-tar
-          path: release-output/
-
-      - name: 📦 Rename Packages
+      - name: 📦 Rename & Organize Packages
         run: |
-          mv release-output/app-release.apk release-output/frosty-wos-ai-android-${{ env.TAG_NAME }}.apk
-          mv release-output/frosty-wos-ai-windows-x64.zip release-output/frosty-wos-ai-windows-x64-${{ env.TAG_NAME }}.zip
-          mv release-output/frosty-wos-ai-linux-x64.tar.gz release-output/frosty-wos-ai-linux-x64-${{ env.TAG_NAME }}.tar.gz
+          mkdir -p final-release/
+          if [ -f release-output/app-release.apk ]; then
+            mv release-output/app-release.apk final-release/frosty-wos-ai-android-${{ env.TAG_NAME }}.apk
+          fi
+          if [ -f release-output/frosty-wos-ai-windows-x64.zip ]; then
+            mv release-output/frosty-wos-ai-windows-x64.zip final-release/frosty-wos-ai-windows-x64-${{ env.TAG_NAME }}.zip
+          fi
+          if [ -f release-output/frosty-wos-ai-linux-x64.tar.gz ]; then
+            mv release-output/frosty-wos-ai-linux-x64.tar.gz final-release/frosty-wos-ai-linux-x64-${{ env.TAG_NAME }}.tar.gz
+          fi
+          ls -la final-release/
 
       - name: 🌟 Create Official GitHub Release
         uses: softprops/action-gh-release@v2
@@ -184,7 +189,7 @@ jobs:
           name: ❄️ Frosty WOS AI ${{ env.TAG_NAME }} (Cross-Platform)
           draft: false
           prerelease: false
-          files: release-output/*
+          files: final-release/*
           body: |
             ## ❄️ Frosty Whiteout Survival Tactical AI (${{ env.TAG_NAME }})
 
