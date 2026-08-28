@@ -1,3 +1,5 @@
 .env
 frosty_brain/
 __pycache__/
+temp/
+.agents
