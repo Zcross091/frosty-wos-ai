@@ -5,11 +5,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class UpdateService {
-  static const String currentVersion = '1.0.0';
+  static const String currentVersion =
+      String.fromEnvironment('APP_VERSION', defaultValue: '1.0.0');
   static const String githubApiUrl =
       'https://api.github.com/repos/Zcross091/frosty-wos-ai/releases/latest';
 
-  /// Checks GitHub API for the latest release and displays an update pop-up if a newer version is available.
+  /// Checks GitHub API for the latest release and displays an update pop-up ONLY if a newer version is available.
   static Future<void> checkForUpdates(BuildContext context, {bool manualCheck = false}) async {
     try {
       final response = await http
@@ -21,7 +22,8 @@ class UpdateService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final tagName = (data['tag_name'] as String? ?? '').replaceFirst('v', '').trim();
+        final rawTag = data['tag_name'] as String? ?? '';
+        final cleanTag = rawTag.toLowerCase().replaceAll('v', '').split('+').first.trim();
         final releaseName = data['name'] as String? ?? 'New Frosty Release';
         final releaseBody = data['body'] as String? ?? 'A new version of Frosty WOS AI is now available.';
         final htmlUrl = data['html_url'] as String? ?? 'https://github.com/Zcross091/frosty-wos-ai/releases';
@@ -40,16 +42,17 @@ class UpdateService {
         }
         final targetUrl = apkDownloadUrl ?? htmlUrl;
 
-        if (_isNewerVersion(currentVersion, tagName)) {
+        // ONLY trigger update dialog if latest tag is strictly newer than current installed version
+        if (_isNewerVersion(currentVersion, cleanTag)) {
           final prefs = await SharedPreferences.getInstance();
           final lastSkipped = prefs.getString('last_skipped_version');
 
-          // If manual check or user has not skipped this specific version
-          if (manualCheck || lastSkipped != tagName) {
+          // If manual check or user has not dismissed this specific version
+          if (manualCheck || lastSkipped != cleanTag) {
             if (context.mounted) {
               _showUpdateDialog(
                 context,
-                latestVersion: tagName,
+                latestVersion: cleanTag,
                 releaseTitle: releaseName,
                 releaseNotes: releaseBody,
                 downloadUrl: targetUrl,
@@ -79,14 +82,20 @@ class UpdateService {
     }
   }
 
-  /// Semver comparison: returns true if latest > current
+  /// Semver comparison: returns TRUE ONLY if latest > current
   static bool _isNewerVersion(String current, String latest) {
     if (latest.isEmpty) return false;
     try {
-      final curParts = current.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-      final latParts = latest.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+      final cleanCurrent = current.toLowerCase().replaceAll('v', '').split('+').first.trim();
+      final cleanLatest = latest.toLowerCase().replaceAll('v', '').split('+').first.trim();
 
-      for (int i = 0; i < 3; i++) {
+      if (cleanCurrent == cleanLatest) return false;
+
+      final curParts = cleanCurrent.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+      final latParts = cleanLatest.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+
+      final maxLen = curParts.length > latParts.length ? curParts.length : latParts.length;
+      for (int i = 0; i < maxLen; i++) {
         final cur = i < curParts.length ? curParts[i] : 0;
         final lat = i < latParts.length ? latParts[i] : 0;
         if (lat > cur) return true;

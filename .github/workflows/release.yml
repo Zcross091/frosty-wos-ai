@@ -48,20 +48,29 @@ jobs:
         working-directory: device/mobile
         run: flutter test
 
-      - name: 🚀 Build Android Release APK
-        working-directory: device/mobile
-        run: flutter build apk --release --android-skip-build-dependency-validation
-
       - name: 🏷️ Determine Version Tag
         id: get_version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "TAG_NAME=${{ github.event.inputs.version_name }}" >> $GITHUB_ENV
+            TAG="${{ github.event.inputs.version_name }}"
           elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+            TAG="${GITHUB_REF#refs/tags/}"
           else
-            echo "TAG_NAME=v1.0.${{ github.run_number }}" >> $GITHUB_ENV
+            TAG="v1.0.${{ github.run_number }}"
           fi
+          CLEAN_VER=$(echo "$TAG" | sed 's/^v//')
+          echo "TAG_NAME=${TAG}" >> $GITHUB_ENV
+          echo "APP_VER=${CLEAN_VER}" >> $GITHUB_ENV
+          echo "Determined Version: $TAG (Clean: $CLEAN_VER)"
+
+      - name: 🚀 Build Android Release APK (Signed with Permanent Keystore)
+        working-directory: device/mobile
+        run: |
+          flutter build apk --release \
+            --build-name="${{ env.APP_VER }}" \
+            --build-number=${{ github.run_number }} \
+            --dart-define=APP_VERSION="${{ env.APP_VER }}" \
+            --android-skip-build-dependency-validation
 
       - name: 📦 Prepare APK Package
         run: |
