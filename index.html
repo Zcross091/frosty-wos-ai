@@ -1034,43 +1034,106 @@ function sendCustomQuery() {
   input.value = '';
 }
 
-/* ---------- State Age Calculator ---------- */
+/* ---------- State Age & Generation Database (Gen 1 - 16+) ---------- */
+const generationRoadmap = [
+  { gen: 16, unlockDay: 1080, heroes: "Seigel (Infantry) · Aisling (Marksman) · Ursar (Lancer)", advice: "Endgame generation. Focus 100% on Seigel for Absolute Permafrost damage reduction and Aisling for lethal counter-burst." },
+  { gen: 15, unlockDay: 960,  heroes: "Alistair (Lancer) · Astrid (Marksman) · Cedric (Infantry)", advice: "State 260–330 tier. Invest generic mythic shards into Cedric for frontline shielding and Astrid for sustained Bear Trap DPS." },
+  { gen: 14, unlockDay: 900,  heroes: "Kai (Infantry) · Varg (Lancer) · Evelyn (Marksman)", advice: "Prioritize Kai for defense wall resilience. Evelyn is a top-tier rally joiner." },
+  { gen: 13, unlockDay: 830,  heroes: "Freyja (Marksman) · Eric (Lancer) · Morgan (Infantry)", advice: "Freyja provides exceptional backline burst. Save secondary shards for Gen 14." },
+  { gen: 12, unlockDay: 760,  heroes: "Anson (Infantry) · Eleanor (Marksman) · Lloyd (Lancer)", advice: "Anson is a premier castle anchor. Eleanor dominates Bear Trap damage races." },
+  { gen: 11, unlockDay: 690,  heroes: "Rufus (Lancer) · Nicole (Marksman) · Bern (Infantry)", advice: "Rufus brings heavy flank penetration. Build Nicole for high lethality PvE." },
+  { gen: 10, unlockDay: 620,  heroes: "Xylona (Marksman) · Fred (Lancer) · Gregory (Infantry)", advice: "Gregory provides massive troop HP buffs. Xylona is essential for high-end rally damage." },
+  { gen: 9,  unlockDay: 550,  heroes: "Magnus (Infantry) · Blanche (Marksman) · Luke (Lancer)", advice: "Magnus is a durable frontline wall. Save mythic shards for Gen 10." },
+  { gen: 8,  unlockDay: 480,  heroes: "Sonya (Marksman) · Reina (Lancer) · Gatot (Infantry)", advice: "Sonya dominates Bear Trap rankings. Reina is a deadly flank disruptor." },
+  { gen: 7,  unlockDay: 400,  heroes: "Bradley (Infantry) · Edith (Marksman) · Gordon (Lancer)", advice: "Invest all generic mythic shards into Bradley (Infantry) for frontline fortress tanking." },
+  { gen: 6,  unlockDay: 320,  heroes: "Renee (Lancer) · Hendrik (Marksman)", advice: "Hendrik is a solid marksman carry. Start hoarding general shards for Gen 7 Bradley." },
+  { gen: 5,  unlockDay: 250,  heroes: "Gwen (Marksman) · Norah (Lancer) · Wayne (Infantry)", advice: "Gwen is premier Lucky Wheel marksman carry. Norah is excellent for flank burst." },
+  { gen: 4,  unlockDay: 180,  heroes: "Lynn (Marksman) · Hector (Infantry) · Ahmose (Lancer)", advice: "Lynn is the primary Lucky Wheel carry for Bear Trap. Build to 4★ minimum." },
+  { gen: 3,  unlockDay: 120,  heroes: "Mia (Marksman) · Logan (Infantry) · Greg (Lancer)", advice: "Mia on Lucky Wheel is essential for Bear Trap damage spikes. Logan is top arena tank." },
+  { gen: 2,  unlockDay: 40,   heroes: "Flint (Infantry) · Alonso (Marksman) · Philly (Lancer)", advice: "Spin Lucky Wheel for Flint to 3-4★. Save mythic general shards for Alonso." },
+  { gen: 1,  unlockDay: 0,    heroes: "Jeronimo (Infantry) · Natalia (Lancer) · Molly (Marksman)", advice: "Early game core. Use Sergey as defense tank and Jessie as #1 rally joiner (+25% Dmg)." }
+];
+
+function stateToDays(stateNum) {
+  if (stateNum <= 100) {
+    return Math.round(1260 - (stateNum * 1.6));
+  } else if (stateNum <= 300) {
+    return Math.round(1100 - ((stateNum - 100) * 0.65));
+  } else if (stateNum <= 600) {
+    return Math.round(970 - ((stateNum - 300) * 0.8));
+  } else if (stateNum <= 1000) {
+    return Math.round(730 - ((stateNum - 600) * 0.7));
+  } else if (stateNum <= 1400) {
+    return Math.round(450 - ((stateNum - 1000) * 0.8));
+  } else {
+    return Math.max(5, Math.round(130 - ((stateNum - 1400) * 0.8)));
+  }
+}
+
+function daysToState(days) {
+  if (days >= 1100) {
+    return Math.max(1, Math.round((1260 - days) / 1.6));
+  } else if (days >= 970) {
+    return Math.round(100 + ((1100 - days) / 0.65));
+  } else if (days >= 730) {
+    return Math.round(300 + ((970 - days) / 0.8));
+  } else if (days >= 450) {
+    return Math.round(600 + ((730 - days) / 0.7));
+  } else if (days >= 130) {
+    return Math.round(1000 + ((450 - days) / 0.8));
+  } else {
+    return Math.round(1400 + ((130 - days) / 0.8));
+  }
+}
+
 function calculateState() {
   const stateNum = parseInt(document.getElementById('calcStateNum').value) || 1;
-  const days = Math.max(1, Math.round(1160 - (stateNum * 0.72)));
+  const days = stateToDays(stateNum);
   document.getElementById('calcDays').value = days;
   updateStateOutput(days);
 }
 
 function calculateFromDaysInput() {
   const days = parseInt(document.getElementById('calcDays').value) || 1;
-  const stateNum = Math.max(1, Math.round((1160 - days) / 0.72));
+  const stateNum = daysToState(days);
   document.getElementById('calcStateNum').value = stateNum;
   updateStateOutput(days);
 }
 
 function updateStateOutput(days) {
-  let gen = 1, nextGen = 2, daysLeft = 40, heroes = "Jeronimo · Natalia", advice = "Focus on Jessie and Sergey for core F2P progression.";
-  
-  if (days >= 1100) {
-    gen = 16; nextGen = 17; daysLeft = 60; heroes = "Seigel · Aisling · Ursar";
-    advice = "Endgame state. Maximum priority on Seigel (Infantry) and Aisling (Lancer). Save generic shards for Gen 17.";
-  } else if (days >= 400) {
-    gen = 7; nextGen = 8; daysLeft = 45; heroes = "Bradley · Edith";
-    advice = "Invest all generic mythic shards into Bradley for frontline fortress tanking.";
-  } else if (days >= 220) {
-    gen = 4; nextGen = 5; daysLeft = 50; heroes = "Lynn · Hector";
-    advice = "Lynn is the premier Marksman damage dealer for Bear Trap. Build to 4★ minimum.";
-  } else if (days >= 80) {
-    gen = 2; nextGen = 3; daysLeft = 40; heroes = "Flint · Alonso · Philly";
-    advice = "Spin Lucky Wheel for Flint (Infantry). Save mythic shards for Alonso.";
+  let matched = generationRoadmap[generationRoadmap.length - 1];
+  let nextGen = null;
+  let nextUnlockDay = null;
+
+  for (let i = 0; i < generationRoadmap.length; i++) {
+    if (days >= generationRoadmap[i].unlockDay) {
+      matched = generationRoadmap[i];
+      if (i > 0) {
+        nextGen = generationRoadmap[i - 1].gen;
+        nextUnlockDay = generationRoadmap[i - 1].unlockDay;
+      }
+      break;
+    }
   }
 
-  document.getElementById('resGen').textContent = 'Gen ' + gen;
-  document.getElementById('resNext').textContent = 'Gen ' + nextGen;
-  document.getElementById('resDaysLeft').textContent = 'in ' + daysLeft + ' Days';
-  document.getElementById('resHeroes').textContent = heroes;
-  document.getElementById('resAdvice').innerHTML = '💡 <b>Shard Roadmap:</b> ' + advice;
+  const resGen = document.getElementById('resGen');
+  const resNext = document.getElementById('resNext');
+  const resDaysLeft = document.getElementById('resDaysLeft');
+  const resHeroes = document.getElementById('resHeroes');
+  const resAdvice = document.getElementById('resAdvice');
+
+  if (resGen) resGen.textContent = 'Gen ' + matched.gen;
+  if (resHeroes) resHeroes.textContent = matched.heroes;
+  if (resAdvice) resAdvice.innerHTML = '💡 <b>Shard Roadmap:</b> ' + matched.advice;
+
+  if (nextGen) {
+    const daysLeft = Math.max(0, nextUnlockDay - days);
+    if (resNext) resNext.textContent = 'Gen ' + nextGen;
+    if (resDaysLeft) resDaysLeft.textContent = 'in ' + daysLeft + ' Days';
+  } else {
+    if (resNext) resNext.textContent = 'Endgame';
+    if (resDaysLeft) resDaysLeft.textContent = 'Max Generation';
+  }
 }
 
 calculateState();
