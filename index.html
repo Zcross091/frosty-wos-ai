@@ -1,491 +1,878 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Frosty AI — The Ultimate Whiteout Survival Tactical Discord Bot</title>
-  <meta name="description" content="Frosty is an advanced Whiteout Survival tactical AI Discord bot powered by Google Gemini 3.6 Flash, Groq, and ChromaDB Hybrid RAG covering Gen 0 to Gen 16+ heroes, Bear Trap, and lineup ratios." />
-  <meta property="og:title" content="Frosty AI — Whiteout Survival Grandmaster Tactical Bot" />
-  <meta property="og:description" content="Master Whiteout Survival with real-time AI tactical advice, hero dossiers (Gen 0-16+), Bear Trap rally joiner math, and formation calculators." />
-  <meta property="og:type" content="website" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20viewBox=%220%200%20100%20100%22><text y=%22.9em%22 font-size=%2290%22>❄️</text></svg>" />
-  
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
-  
-  <!-- Three.js (3D Graphics) & Lucide Icons -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  
-  <!-- CSS Stylesheet -->
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frosty AI — Whiteout Survival Grandmaster Tactical AI & Discord Bot</title>
+<meta name="description" content="Frosty AI is the ultimate Whiteout Survival tactical oracle and Discord bot powered by Google Gemini 3.6 Flash, Groq, and ChromaDB Hybrid RAG covering Gen 0 to Gen 16+ heroes, Bear Trap, and lineup ratios.">
+<meta property="og:title" content="Frosty AI — Whiteout Survival Grandmaster Tactical Bot & Android App">
+<meta property="og:description" content="Master Whiteout Survival with real-time AI tactical advice, hero dossiers (Gen 0-16+), Bear Trap rally joiner math, and offline Android calculator.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>❄️</text></svg>">
+
+<style>
+  :root{
+    --ice-0:#eaf6ff;
+    --ice-1:#a9d8ff;
+    --ice-2:#5aa9e6;
+    --ice-3:#1c3a5e;
+    --bg:#050b14;
+    --bg2:#081422;
+    --accent:#7fe3ff;
+    --accent-glow:rgba(127,227,255,0.4);
+    --accent2:#ffb877;
+    --accent3:#ff6f91;
+    --muted:#7f97ad;
+    --card-bg:rgba(15, 25, 44, 0.65);
+    --card-border:rgba(127, 227, 255, 0.18);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--ice-0);
+    font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  #webgl-canvas{
+    position:fixed;top:0;left:0;
+    width:100vw;height:100vh;
+    z-index:1;pointer-events:none;
+  }
+  #loader{
+    position:fixed;inset:0;z-index:100;
+    background:var(--bg);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:18px;transition:opacity .8s ease, visibility .8s ease;
+  }
+  #loader.hide{opacity:0;visibility:hidden;pointer-events:none;}
+  .snowflake-load{
+    width:46px;height:46px;border:2px solid rgba(127,227,255,.15);
+    border-top-color:var(--accent);border-radius:50%;
+    animation:spin 1s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  #loader p{color:var(--muted);letter-spacing:.3em;font-size:.7rem;text-transform:uppercase;}
+
+  .content{position:relative;z-index:2;pointer-events:none;}
+  .content a, .content button, .content input, .content select{pointer-events:auto;}
+  section{
+    min-height:100vh;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:9vh 8vw;
+    position:relative;
+  }
+
+  nav{
+    position:fixed;top:0;left:0;width:100%;z-index:50;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:1.2rem 5vw;pointer-events:auto;
+    background:linear-gradient(180deg, rgba(5,11,20,.9), rgba(5,11,20,.6) 80%, transparent);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(127,227,255,0.08);
+  }
+  .brand{display:flex;align-items:center;gap:.6rem;font-weight:800;letter-spacing:.03em;font-size:1.15rem;text-decoration:none;color:var(--ice-0);}
+  .brand .flake{font-size:1.4rem;filter:drop-shadow(0 0 10px var(--accent));}
+  nav .links{display:flex;gap:2rem;font-size:.85rem;color:var(--muted);}
+  nav .links a{color:var(--muted);text-decoration:none;transition:color .3s;font-weight:600;}
+  nav .links a:hover{color:var(--accent);}
+  .nav-actions{display:flex;align-items:center;gap:0.9rem;}
+  .nav-cta{
+    padding:.6rem 1.3rem;border-radius:999px;
+    background:linear-gradient(135deg, #7fe3ff, #4f9fff);color:#00131f;font-weight:700;font-size:.82rem;
+    text-decoration:none;box-shadow:0 0 20px rgba(127,227,255,.35);
+    transition:transform .2s, box-shadow .2s;
+    display:inline-flex;align-items:center;gap:.4rem;
+  }
+  .nav-cta:hover{transform:translateY(-2px);box-shadow:0 0 26px rgba(127,227,255,.55);}
+  .nav-app-cta{
+    padding:.55rem 1.1rem;border-radius:999px;
+    background:rgba(255,255,255,0.06);border:1px solid rgba(127,227,255,0.3);
+    color:var(--ice-0);font-weight:600;font-size:.8rem;text-decoration:none;
+    transition:all .2s;
+  }
+  .nav-app-cta:hover{border-color:var(--accent);background:rgba(127,227,255,0.12);}
+
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:.5rem;
+    color:var(--accent);font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;
+    border:1px solid rgba(127,227,255,.3);border-radius:999px;
+    padding:.4rem 1rem;width:fit-content;margin-bottom:1.6rem;
+    background:rgba(127,227,255,.06);
+  }
+  .dot{width:6px;height:6px;border-radius:50%;background:#5cff9d;box-shadow:0 0 8px #5cff9d;}
+
+  h1{
+    font-size:clamp(2.6rem,6.5vw,5.2rem);font-weight:800;letter-spacing:-.02em;
+    line-height:1.04;max-width:920px;
+    background:linear-gradient(180deg,var(--ice-0) 20%,var(--ice-1) 60%,var(--ice-2) 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  h2{
+    font-size:clamp(1.9rem,4vw,3rem);font-weight:800;letter-spacing:-.01em;
+    max-width:750px;color:var(--ice-0);line-height:1.15;
+  }
+  .kicker{color:var(--accent);font-size:.85rem;letter-spacing:.25em;text-transform:uppercase;margin-bottom:.9rem;font-weight:700;}
+  p.lead{margin-top:1.4rem;font-size:1.15rem;color:var(--muted);max-width:600px;line-height:1.6;}
+
+  .hero-actions{display:flex;gap:1rem;margin-top:2.6rem;flex-wrap:wrap;}
+  .btn{
+    padding:.9rem 1.7rem;border-radius:12px;font-weight:700;font-size:.95rem;
+    text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;
+    cursor:pointer;transition:transform .25s ease, box-shadow .25s ease, background .25s ease;
+  }
+  .btn:hover{transform:translateY(-3px);}
+  .btn-primary{background:linear-gradient(135deg,#7fe3ff,#4f9fff);color:#001320;box-shadow:0 10px 30px rgba(79,159,255,.35);}
+  .btn-app{background:linear-gradient(135deg,#00f0ff,#0072ff);color:#001320;box-shadow:0 10px 30px rgba(0,240,255,.35);}
+  .btn-ghost{border:1px solid rgba(255,255,255,.18);color:var(--ice-0);background:rgba(255,255,255,.04);backdrop-filter:blur(6px);}
+  .btn-ghost:hover{border-color:var(--accent);background:rgba(127,227,255,.08);}
+
+  .stats{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;
+    margin-top:4.5rem;max-width:950px;
+  }
+  .stat{
+    background:rgba(127,227,255,0.03);border:1px solid rgba(127,227,255,0.1);
+    padding:1.2rem 1.4rem;border-radius:14px;backdrop-filter:blur(6px);
+  }
+  .stat b{display:block;font-size:clamp(1.6rem,3vw,2.2rem);color:var(--accent);}
+  .stat span{font-size:.78rem;color:var(--muted);letter-spacing:.02em;}
+
+  .section-head{max-width:680px;margin-bottom:3.5rem;}
+  .section-head p{color:var(--muted);margin-top:1rem;font-size:1.05rem;line-height:1.6;}
+
+  .grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:1.5rem;max-width:1200px;
+  }
+  .card{
+    background:var(--card-bg);
+    border:1px solid var(--card-border);
+    border-radius:18px;padding:2rem;
+    backdrop-filter:blur(12px);
+    transition:transform .3s ease, border-color .3s ease, background .3s ease, box-shadow .3s ease;
+  }
+  .card:hover{
+    transform:translateY(-6px);
+    border-color:rgba(127,227,255,.45);
+    background:rgba(127,227,255,.07);
+    box-shadow:0 12px 35px rgba(0,0,0,0.4);
+  }
+  .card .icon{font-size:1.8rem;margin-bottom:1.2rem;filter:drop-shadow(0 0 8px rgba(127,227,255,.5));}
+  .card h3{font-size:1.15rem;margin-bottom:.6rem;color:var(--ice-0);}
+  .card p{font-size:.9rem;color:var(--muted);line-height:1.6;}
+
+  /* Interactive Simulator */
+  .simulator-box{
+    max-width:900px;width:100%;
+    background:rgba(6, 12, 22, 0.85);
+    border:1px solid rgba(127,227,255,.25);
+    border-radius:20px;overflow:hidden;
+    box-shadow:0 20px 50px rgba(0,0,0,0.6);
+    backdrop-filter:blur(16px);
+  }
+  .sim-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:1rem 1.5rem;background:rgba(127,227,255,0.05);
+    border-bottom:1px solid rgba(127,227,255,0.12);
+  }
+  .sim-chips{display:flex;gap:.5rem;padding:1rem 1.5rem;flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,0.05);}
+  .sim-chip{
+    padding:.4rem .9rem;border-radius:999px;font-size:.78rem;font-weight:600;
+    background:rgba(127,227,255,0.08);border:1px solid rgba(127,227,255,0.2);
+    color:var(--accent);cursor:pointer;transition:all .2s;
+  }
+  .sim-chip:hover{background:rgba(127,227,255,0.18);border-color:var(--accent);}
+  .sim-chat{padding:1.5rem;max-height:380px;overflow-y:auto;display:flex;flex-direction:column;gap:1.2rem;}
+  .sim-msg{display:flex;gap:1rem;font-size:.92rem;line-height:1.6;}
+  .sim-avatar{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+  .sim-avatar.bot{background:linear-gradient(135deg, #00f0ff, #0072ff);box-shadow:0 0 12px rgba(0,240,255,0.5);}
+  .sim-avatar.user{background:rgba(255,255,255,0.1);}
+  .sim-bubble{flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:1rem 1.2rem;border-radius:14px;}
+  .sim-input-row{display:flex;gap:.8rem;padding:1.2rem 1.5rem;background:rgba(2,6,12,0.8);border-top:1px solid rgba(127,227,255,0.15);}
+  .sim-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(127,227,255,0.2);border-radius:10px;padding:.75rem 1.2rem;color:#fff;font-size:.92rem;outline:none;}
+  .sim-input:focus{border-color:var(--accent);}
+
+  /* Calculator */
+  .calc-card{
+    max-width:850px;width:100%;background:var(--card-bg);
+    border:1px solid var(--card-border);border-radius:20px;padding:2.2rem;
+    backdrop-filter:blur(14px);
+  }
+  .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1.5rem;}
+  .calc-input-group label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:.5rem;font-weight:600;}
+  .calc-input{
+    width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(127,227,255,0.25);
+    border-radius:10px;padding:.8rem 1rem;color:#fff;font-size:.95rem;outline:none;
+  }
+  .calc-input:focus{border-color:var(--accent);}
+  .calc-result{
+    margin-top:1.8rem;padding:1.5rem;border-radius:14px;
+    background:rgba(127,227,255,0.06);border:1px solid rgba(127,227,255,0.2);
+    display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;
+  }
+  .calc-stat b{display:block;font-size:1.4rem;color:var(--accent);}
+  .calc-stat span{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+
+  /* codex */
+  .codex-list{display:flex;flex-direction:column;gap:.7rem;max-width:750px;}
+  .codex-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:1.1rem 1.4rem;border-radius:14px;
+    background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
+    transition:border-color .3s, background .3s, transform .2s;
+  }
+  .codex-row:hover{border-color:var(--accent);background:rgba(127,227,255,.08);transform:translateX(4px);}
+  .codex-row .gen{font-weight:800;color:var(--accent);font-size:1rem;min-width:180px;}
+  .codex-row .heroes{color:var(--ice-1);font-size:.9rem;text-align:right;}
+
+  /* formations */
+  .formation-tabs{display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:2.2rem;}
+  .ftab{
+    padding:.7rem 1.2rem;border-radius:10px;font-size:.85rem;font-weight:600;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:var(--muted);
+    cursor:pointer;transition:all .25s;
+  }
+  .ftab.active,.ftab:hover{color:var(--ice-0);border-color:var(--accent);background:rgba(127,227,255,.12);}
+  .formation-bar{display:flex;height:38px;border-radius:10px;overflow:hidden;max-width:700px;margin-bottom:1.4rem;box-shadow:0 4px 15px rgba(0,0,0,0.3);}
+  .seg{display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;color:#001320;transition:width .5s ease;}
+  .seg.inf{background:#7fe3ff;}
+  .seg.lan{background:#ffb877;}
+  .seg.mark{background:#ff6f91;}
+  .formation-legend{display:flex;gap:1.6rem;font-size:.85rem;color:var(--muted);margin-bottom:1.4rem;flex-wrap:wrap;}
+  .legend-item{display:flex;align-items:center;gap:.5rem;}
+  .swatch{width:12px;height:12px;border-radius:4px;}
+  .doctrine{
+    max-width:700px;padding:1.4rem 1.6rem;border-radius:14px;
+    background:rgba(127,227,255,.06);border:1px solid rgba(127,227,255,.18);
+    font-size:.92rem;color:var(--ice-1);line-height:1.65;
+  }
+
+  /* setup */
+  .code-block{
+    max-width:750px;background:#020609;border:1px solid rgba(127,227,255,.18);
+    border-radius:16px;overflow:hidden;box-shadow:0 15px 40px rgba(0,0,0,0.5);
+  }
+  .code-head{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:.9rem 1.4rem;border-bottom:1px solid rgba(255,255,255,.08);
+    font-size:.8rem;color:var(--muted);font-weight:600;
+  }
+  .code-block pre{
+    padding:1.5rem 1.4rem;font-family:'SF Mono',Consolas,Menlo,monospace;
+    font-size:.82rem;line-height:1.75;color:#a9d8ff;overflow-x:auto;
+  }
+  .code-block .comment{color:#5c7285;}
+
+  /* cta */
+  .cta-box{
+    max-width:850px;text-align:center;margin:0 auto;
+    display:flex;flex-direction:column;align-items:center;
+    background:linear-gradient(180deg, rgba(127,227,255,0.08), rgba(127,227,255,0.02));
+    border:1px solid rgba(127,227,255,0.25);border-radius:24px;padding:4rem 3rem;
+    backdrop-filter:blur(16px);
+  }
+
+  footer{
+    padding:3.5rem 8vw;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1.5rem;
+    border-top:1px solid rgba(255,255,255,.08);color:var(--muted);font-size:.85rem;
+    position:relative;z-index:2;background:rgba(2,5,10,0.9);
+  }
+  footer a{color:var(--muted);text-decoration:none;margin-left:1.4rem;transition:color .2s;}
+  footer a:hover{color:var(--accent);}
+
+  @media(max-width:850px){
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .calc-grid{grid-template-columns:1fr;}
+    .calc-result{grid-template-columns:1fr;}
+    nav .links{display:none;}
+    .codex-row .heroes{text-align:left;max-width:180px;}
+    .cta-box{padding:2.5rem 1.5rem;}
+  }
+</style>
 </head>
 <body>
-  <!-- 3D Canvas Background -->
-  <canvas id="bg3d"></canvas>
-  
-  <!-- Ambient Glow Orbs -->
-  <div class="ambient-glow glow-1"></div>
-  <div class="ambient-glow glow-2"></div>
-  <div class="ambient-glow glow-3"></div>
 
-  <!-- Navigation Bar -->
-  <nav class="navbar" id="navbar">
-    <div class="nav-container">
-      <a href="#hero" class="nav-brand">
-        <div class="brand-icon">❄️</div>
-        <div class="brand-text">
-          <span class="brand-name">Frosty<span class="highlight">AI</span></span>
-          <span class="brand-sub">WOS Grandmaster</span>
-        </div>
-      </a>
+<div id="loader">
+  <div class="snowflake-load"></div>
+  <p>Calibrating Frosty Tactical AI Core</p>
+</div>
 
-      <div class="nav-links" id="nav-links">
-        <a href="#features" class="nav-link">Features</a>
-        <a href="#simulator" class="nav-link">Interactive Demo</a>
-        <a href="#codex" class="nav-link">Hero Codex (Gen 0-16)</a>
-        <a href="#calculator" class="nav-link">Troop Formations</a>
-        <a href="#setup" class="nav-link">Self-Hosting</a>
-      </div>
+<canvas id="webgl-canvas"></canvas>
 
-      <div class="nav-actions">
-        <div class="status-indicator" title="Frosty AI Systems Operational">
-          <span class="pulse-dot"></span>
-          <span class="status-text">Live on Discord</span>
-        </div>
-        <a href="https://discord.com/oauth2/authorize?client_id=1501632240466006108&permissions=347200&integration_type=0&scope=bot+applications.commands" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-nav" id="nav-invite-btn">
-          <i data-lucide="bot"></i>
-          <span>Invite Bot</span>
-        </a>
-      </div>
-    </div>
-  </nav>
+<nav>
+  <a href="#hero" class="brand"><span class="flake">❄️</span> FROSTY AI</a>
+  <div class="links">
+    <a href="#features">Architecture</a>
+    <a href="#simulator">AI Simulator</a>
+    <a href="#calculator">State Age</a>
+    <a href="#codex">Hero Codex</a>
+    <a href="#formations">Formations</a>
+    <a href="#setup">Self-Hosting</a>
+  </div>
+  <div class="nav-actions">
+    <a class="nav-app-cta" href="https://github.com/Zcross091/frosty-wos-ai/releases/latest" target="_blank" rel="noopener">📱 Android APK</a>
+    <a class="nav-cta" href="https://discord.com/oauth2/authorize?client_id=1501632240466006108&permissions=347200&integration_type=0&scope=bot+applications.commands" target="_blank" rel="noopener">Add to Discord</a>
+  </div>
+</nav>
+
+<div class="content">
 
   <!-- Hero Section -->
-  <header class="hero-section" id="hero">
-    <div class="hero-container">
-      <div class="hero-badge">
-        <span class="badge-icon">⚡</span>
-        <span>Powered by Gemini 3.6 Flash & ChromaDB RAG • Generations 0 to 16+</span>
-      </div>
-
-      <h1 class="hero-title">
-        The Ultimate AI Tactical Oracle for <span class="gradient-text">Whiteout Survival</span>
-      </h1>
-
-      <p class="hero-description">
-        Elevate your alliance with instant grandmaster coaching. Query hero builds, rally joiner buffs, Bear Trap compositions, Crazy Joe defense, and troop ratios directly inside your Discord server.
-      </p>
-
-      <div class="hero-cta-group">
-        <a href="https://discord.com/oauth2/authorize?client_id=1501632240466006108&permissions=347200&integration_type=0&scope=bot+applications.commands" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-hero" id="hero-invite-btn">
-          <i data-lucide="sparkles"></i>
-          <span>Invite Frosty to Discord</span>
-          <i data-lucide="arrow-right"></i>
-        </a>
-        <a href="https://github.com/Zcross091/frosty-wos-ai/releases" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-hero" id="hero-apk-btn">
-          <i data-lucide="smartphone"></i>
-          <span>Download Android App</span>
-        </a>
-        <a href="#simulator" class="btn btn-ghost btn-hero" id="hero-demo-btn">
-          <i data-lucide="terminal"></i>
-          <span>Interactive Demo</span>
-        </a>
-        <a href="https://github.com/Zcross091/frosty-wos-ai" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-hero" id="hero-github-btn">
-          <i data-lucide="github"></i>
-          <span>GitHub (Made by StateCraft)</span>
-        </a>
-      </div>
-
-      <!-- Live Stats Bar -->
-      <div class="stats-bar">
-        <div class="stat-card">
-          <div class="stat-value">17+</div>
-          <div class="stat-label">Hero Generations (0 to 16)</div>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-card">
-          <div class="stat-value">5,500+</div>
-          <div class="stat-label">Indexed Strategy Chunks</div>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-card">
-          <div class="stat-value">&lt; 0.8s</div>
-          <div class="stat-label">Average AI Response Time</div>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-card">
-          <div class="stat-value">100%</div>
-          <div class="stat-label">Free & Open Source (MIT)</div>
-        </div>
-      </div>
+  <section id="hero">
+    <div class="eyebrow"><span class="dot"></span> Live on Discord · Gemini 3.6 Flash + Groq + ChromaDB RAG</div>
+    <h1>The Ultimate AI Tactical Oracle for Whiteout Survival</h1>
+    <p class="lead">Elevate your alliance with instant grandmaster coaching. Query hero builds, rally joiner buffs, Bear Trap compositions, Crazy Joe defense, and troop ratios — directly on Discord and via our offline Android App.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="https://discord.com/oauth2/authorize?client_id=1501632240466006108&permissions=347200&integration_type=0&scope=bot+applications.commands" target="_blank" rel="noopener">Invite to Discord</a>
+      <a class="btn btn-app" href="https://github.com/Zcross091/frosty-wos-ai/releases/latest" target="_blank" rel="noopener">📱 Download Android App</a>
+      <a class="btn btn-ghost" href="https://github.com/Zcross091/frosty-wos-ai" target="_blank" rel="noopener">GitHub Repo</a>
     </div>
-  </header>
+    <div class="stats">
+      <div class="stat"><b>17+</b><span>Hero Generations (0–16)</span></div>
+      <div class="stat"><b>5,500+</b><span>Indexed Strategy Chunks</span></div>
+      <div class="stat"><b>&lt;0.8s</b><span>Avg AI Response Time</span></div>
+      <div class="stat"><b>100%</b><span>Free & Open Source (MIT)</span></div>
+    </div>
+  </section>
 
-  <!-- Interactive Discord Simulator Section -->
-  <section class="simulator-section" id="simulator">
-    <div class="section-container">
-      <div class="section-header">
-        <div class="section-tag">🎮 Live Command Playground</div>
-        <h2 class="section-title">Experience Frosty Inside Discord</h2>
-        <p class="section-sub">Select any tactical query below to see how Frosty's Gemini-powered intelligence structures and delivers answers.</p>
+  <!-- Features / Engineering -->
+  <section id="features">
+    <div class="section-head">
+      <div class="kicker">Engineering Architecture</div>
+      <h2>Built for Speed, Accuracy & High ELO Strategy</h2>
+      <p>Why top Whiteout Survival state leaders and competitive alliances worldwide rely on Frosty.</p>
+    </div>
+    <div class="grid">
+      <div class="card"><div class="icon">🔀</div><h3>Multi-Provider AI Fallback</h3><p>Combines Google Gemini 3.6 Flash with automated failover to Groq LLMs and local Ollama. Zero downtime, zero rate limits.</p></div>
+      <div class="card"><div class="icon">🧠</div><h3>Semantic Hybrid RAG</h3><p>Powered by ChromaDB with exact structure-aware parsing over 5,500+ lines of verified Whiteout Survival game files and wikis.</p></div>
+      <div class="card"><div class="icon">📱</div><h3>Dedicated Offline Mobile App</h3><p>Flutter-powered Android app featuring offline State Age calculation, Hero Codex (Gen 0-16), formation visualizer, and in-app updates.</p></div>
+      <div class="card"><div class="icon">⚙️</div><h3>Non-Blocking Async Threads</h3><p>AI generation runs in background worker threads. Discord gateway heartbeats never freeze, guaranteeing instant typing feedback.</p></div>
+      <div class="card"><div class="icon">🐻</div><h3>Bear Trap & Rally Joiner Math</h3><p>Understands rally mechanics: automatically prioritizes Top 4 joiner buffs and optimal 10/10/80 damage-racing ratios.</p></div>
+      <div class="card"><div class="icon">⌨️</div><h3>Modern Slash & Prefix UI</h3><p>Full support for Discord Slash commands (/wos, /hero, /lineup) with instant autocomplete, plus classic !wos prefix commands.</p></div>
+    </div>
+  </section>
+
+  <!-- Interactive AI Simulator -->
+  <section id="simulator">
+    <div class="section-head">
+      <div class="kicker">Interactive Demonstration</div>
+      <h2>Test Frosty's Tactical Intelligence Live</h2>
+      <p>Try out commands below or type your own question to see how Frosty synthesizes grandmaster Whiteout Survival advice.</p>
+    </div>
+
+    <div class="simulator-box">
+      <div class="sim-header">
+        <span style="font-weight:700;font-size:.9rem;color:var(--accent);">❄️ Frosty Terminal Simulator</span>
+        <span style="font-size:.78rem;color:#5cff9d;display:flex;align-items:center;gap:.4rem;"><span class="dot"></span> Online & Cooking</span>
       </div>
-
-      <!-- Simulator Interactive Controls -->
-      <div class="simulator-controls">
-        <button class="sim-btn active" data-cmd="wos_bear" id="sim-btn-bear">
-          <i data-lucide="crosshair"></i>
-          <span>!wos Bear Trap Lineup</span>
-        </button>
-        <button class="sim-btn" data-cmd="hero_flint" id="sim-btn-flint">
-          <i data-lucide="shield"></i>
-          <span>/hero Flint (Gen 2)</span>
-        </button>
-        <button class="sim-btn" data-cmd="gen_16" id="sim-btn-gen16">
-          <i data-lucide="crown"></i>
-          <span>!wos Generation 16</span>
-        </button>
-        <button class="sim-btn" data-cmd="lineup_pvp" id="sim-btn-pvp">
-          <i data-lucide="swords"></i>
-          <span>/lineup PvP 50/20/30</span>
-        </button>
-        <button class="sim-btn" data-cmd="event_joe" id="sim-btn-joe">
-          <i data-lucide="flame"></i>
-          <span>!event Crazy Joe</span>
-        </button>
+      <div class="sim-chips">
+        <button class="sim-chip" onclick="simulateQuery('/wos hero:Seigel')">/wos hero:Seigel</button>
+        <button class="sim-chip" onclick="simulateQuery('What is the best Bear Trap lineup?')">🐻 Bear Trap Lineup</button>
+        <button class="sim-chip" onclick="simulateQuery('How should I save shards for Gen 7?')">💎 Shard Strategy</button>
+        <button class="sim-chip" onclick="simulateQuery('Crazy Joe defense tips')">🛡️ Crazy Joe</button>
       </div>
-
-      <!-- Discord Chat Box Mockup -->
-      <div class="discord-window">
-        <div class="discord-header">
-          <div class="discord-channel">
-            <span class="hash">#</span>
-            <span class="channel-name">whiteout-tactics</span>
-          </div>
-          <div class="discord-server-badge">AVM Whitewolfs Alliance</div>
-        </div>
-
-        <div class="discord-body">
-          <!-- User Message -->
-          <div class="chat-message user-msg">
-            <div class="avatar user-avatar">👑</div>
-            <div class="msg-content">
-              <div class="msg-author">
-                <span class="username">Alliance Chief</span>
-                <span class="timestamp">Today at 10:04 PM</span>
-              </div>
-              <div class="msg-text" id="sim-user-text">
-                !wos considering there are new generation of heroes now upto gen 16, write me a good lineup to use to join rallies in bear trap
-              </div>
-            </div>
-          </div>
-
-          <!-- Bot Response -->
-          <div class="chat-message bot-msg">
-            <div class="avatar bot-avatar">❄️</div>
-            <div class="msg-content">
-              <div class="msg-author">
-                <span class="username bot-name">Frosty wos AI</span>
-                <span class="bot-badge">APP</span>
-                <span class="timestamp">Today at 10:04 PM</span>
-              </div>
-              
-              <!-- Discord Cyan Embed -->
-              <div class="discord-embed" id="sim-embed-container">
-                <div class="embed-border"></div>
-                <div class="embed-inner">
-                  <div class="embed-title" id="sim-embed-title">
-                    ❄️ Frosty Tactical Advisory • Bear Trap Joiner Strategy
-                  </div>
-                  <div class="embed-description" id="sim-embed-body">
-                    <!-- Dynamic Simulated AI text injected by JS -->
-                  </div>
-                  <div class="embed-footer" id="sim-embed-footer">
-                    Engine: Gemini (gemini-3.6-flash) • Latency: 0.62s • Chief: Alliance Chief
-                  </div>
-                </div>
-              </div>
-
-              <!-- Interactive Buttons -->
-              <div class="discord-action-buttons">
-                <button class="dc-btn dc-btn-secondary" id="sim-regenerate-btn">
-                  <span>⚡</span> <span>Regenerate</span>
-                </button>
-                <button class="dc-btn dc-btn-primary" id="sim-lineup-btn">
-                  <span>🛡️</span> <span>Best Lineup Tips</span>
-                </button>
-                <button class="dc-btn dc-btn-danger" id="sim-dismiss-btn">
-                  <span>❌</span> <span>Dismiss</span>
-                </button>
-              </div>
-            </div>
+      <div class="sim-chat" id="simChat">
+        <div class="sim-msg">
+          <div class="sim-avatar bot">❄️</div>
+          <div class="sim-bubble">
+            <b>Frosty AI:</b> Greetings, Chief! I am your tactical grandmaster oracle. Select a quick query above or type a command to test my Whiteout Survival combat database.
           </div>
         </div>
+      </div>
+      <div class="sim-input-row">
+        <input type="text" id="simInput" class="sim-input" placeholder="Ask a tactical question (e.g. Best 50/20/30 heroes?)..." onkeydown="if(event.key==='Enter') sendCustomQuery()">
+        <button class="btn btn-primary" style="padding:.6rem 1.2rem;font-size:.85rem;" onclick="sendCustomQuery()">Send</button>
       </div>
     </div>
   </section>
 
-  <!-- Core Features Grid -->
-  <section class="features-section" id="features">
-    <div class="section-container">
-      <div class="section-header">
-        <div class="section-tag">✨ Engineering Architecture</div>
-        <h2 class="section-title">Built for Speed, Accuracy, & High ELO Strategy</h2>
-        <p class="section-sub">Why top Whiteout Survival state leaders and competitive alliances rely on Frosty.</p>
-      </div>
-
-      <div class="features-grid">
-        <div class="feature-card glass-card">
-          <div class="feature-icon"><i data-lucide="brain"></i></div>
-          <h3 class="feature-title">Multi-Provider AI Fallback</h3>
-          <p class="feature-desc">Combines Google Gemini 3.6 Flash with automated failover to Groq LLMs and Local Ollama. Zero downtime, zero rate limits.</p>
-        </div>
-
-        <div class="feature-card glass-card">
-          <div class="feature-icon"><i data-lucide="database"></i></div>
-          <h3 class="feature-title">Semantic Hybrid RAG</h3>
-          <p class="feature-desc">Powered by ChromaDB with exact structure-aware parsing over 5,500+ lines of verified Whiteout Survival game files and wikis.</p>
-        </div>
-
-        <div class="feature-card glass-card">
-          <div class="feature-icon"><i data-lucide="swords"></i></div>
-          <h3 class="feature-title">Gen 0 to Gen 16+ Codex</h3>
-          <p class="feature-desc">Comprehensive database covering every hero from early-game epics (Jessie, Sergey) to endgame legends (Seigel, Aisling, Ursar).</p>
-        </div>
-
-        <div class="feature-card glass-card">
-          <div class="feature-icon"><i data-lucide="zap"></i></div>
-          <h3 class="feature-title">Non-Blocking Async Threads</h3>
-          <p class="feature-desc">AI generation runs in background worker threads. Discord gateway heartbeats never freeze, guaranteeing immediate typing feedback.</p>
-        </div>
-
-        <div class="feature-card glass-card">
-          <div class="feature-icon"><i data-lucide="target"></i></div>
-          <h3 class="feature-title">Bear Trap & Rally Joiner Math</h3>
-          <p class="feature-desc">Understands rally mechanics: automatically prioritizes the Top 4 joiner buffs (+25% Jessie, +20% Seo-yoon) and 10/10/80 ratios.</p>
-        </div>
-
-        <div class="feature-card glass-card">
-          <div class="feature-icon"><i data-lucide="layout"></i></div>
-          <h3 class="feature-title">Modern Slash & Prefix UI</h3>
-          <p class="feature-desc">Full support for Discord Slash commands (`/wos`, `/hero`, `/lineup`) with instant autocomplete + prefix commands (`!wos`).</p>
-        </div>
-      </div>
+  <!-- Interactive State Age & Generation Calculator -->
+  <section id="calculator">
+    <div class="section-head">
+      <div class="kicker">Offline State Age Engine</div>
+      <h2>Server Age & Generation Calculator</h2>
+      <p>Calculate your state's active hero generation, countdown to next gen, and tactical shard roadmap.</p>
     </div>
-  </section>
 
-  <!-- Interactive Hero & Generation Codex Section -->
-  <section class="codex-section" id="codex">
-    <div class="section-container">
-      <div class="section-header">
-        <div class="section-tag">📖 Hero Archives</div>
-        <h2 class="section-title">Interactive Generation & Hero Codex</h2>
-        <p class="section-sub">Explore tactical evaluations, troop affinities, and investment ratings across all Whiteout Survival generations.</p>
-      </div>
-
-      <!-- Generation Selector Tabs -->
-      <div class="gen-tabs-wrapper">
-        <div class="gen-tabs" id="gen-tabs-container">
-          <button class="gen-tab active" data-gen="16" id="gen-tab-16">Gen 16 (Endgame)</button>
-          <button class="gen-tab" data-gen="7" id="gen-tab-7">Gen 7 (Bradley/Edith)</button>
-          <button class="gen-tab" data-gen="4" id="gen-tab-4">Gen 4 (Lynn/Hector)</button>
-          <button class="gen-tab" data-gen="2" id="gen-tab-2">Gen 2 (Flint/Alonso)</button>
-          <button class="gen-tab" data-gen="1" id="gen-tab-1">Gen 1 (Jeronimo)</button>
-          <button class="gen-tab" data-gen="0" id="gen-tab-0">Epic / F2P Core</button>
-        </div>
-      </div>
-
-      <!-- Hero Cards Display -->
-      <div class="hero-cards-grid" id="hero-cards-container">
-        <!-- Injected dynamically by app.js based on selected generation -->
-      </div>
-    </div>
-  </section>
-
-  <!-- Interactive Troop Ratio Calculator Section -->
-  <section class="calculator-section" id="calculator">
-    <div class="section-container">
-      <div class="section-header">
-        <div class="section-tag">📊 Tactical Formations</div>
-        <h2 class="section-title">Interactive Troop Ratio Visualizer</h2>
-        <p class="section-sub">Select a combat scenario to see the grandmaster troop breakdown and tactical doctrine.</p>
-      </div>
-
+    <div class="calc-card">
       <div class="calc-grid">
-        <div class="calc-sidebar glass-card">
-          <h3 class="calc-side-title">Combat Preset</h3>
-          <div class="preset-list">
-            <button class="preset-btn active" data-preset="pvp" id="preset-pvp">
-              <span class="p-icon">⚔️</span>
-              <span class="p-info">
-                <strong>Standard PvP / Field</strong>
-                <small>50% Inf / 20% Lancer / 30% Marks</small>
-              </span>
-            </button>
-            <button class="preset-btn" data-preset="bear" id="preset-bear">
-              <span class="p-icon">🐻</span>
-              <span class="p-info">
-                <strong>Bear Trap (Max PvE)</strong>
-                <small>10% Inf / 10% Lancer / 80% Marks</small>
-              </span>
-            </button>
-            <button class="preset-btn" data-preset="defense" id="preset-defense">
-              <span class="p-icon">🛡️</span>
-              <span class="p-info">
-                <strong>Castle Garrison Defense</strong>
-                <small>60% Inf / 20% Lancer / 20% Marks</small>
-              </span>
-            </button>
-            <button class="preset-btn" data-preset="burst" id="preset-burst">
-              <span class="p-icon">🎯</span>
-              <span class="p-info">
-                <strong>High Burst 4-1-1 Attack</strong>
-                <small>40% Inf / 10% Lancer / 50% Marks</small>
-              </span>
-            </button>
-          </div>
+        <div class="calc-input-group">
+          <label>State Number (#1 - #1500+)</label>
+          <input type="number" id="calcStateNum" class="calc-input" value="450" min="1" max="2000" oninput="calculateState()">
         </div>
-
-        <div class="calc-display glass-card">
-          <div class="calc-top">
-            <h3 id="calc-scenario-title">Standard PvP Field Battle Formation</h3>
-            <span class="ratio-badge" id="calc-ratio-badge">50 / 20 / 30</span>
-          </div>
-
-          <!-- Visual Distribution Bars -->
-          <div class="ratio-bars-container">
-            <div class="ratio-item">
-              <div class="ratio-meta">
-                <span>🛡️ Infantry (Frontline Tank)</span>
-                <span class="ratio-val" id="val-inf">50%</span>
-              </div>
-              <div class="bar-track">
-                <div class="bar-fill inf-fill" id="bar-inf" style="width: 50%"></div>
-              </div>
-            </div>
-
-            <div class="ratio-item">
-              <div class="ratio-meta">
-                <span>🐎 Lancers (Midline Burst & Flank)</span>
-                <span class="ratio-val" id="val-lan">20%</span>
-              </div>
-              <div class="bar-track">
-                <div class="bar-fill lan-fill" id="bar-lan" style="width: 20%"></div>
-              </div>
-            </div>
-
-            <div class="ratio-item">
-              <div class="ratio-meta">
-                <span>🏹 Marksmen (Backline Sustained DPS)</span>
-                <span class="ratio-val" id="val-mar">30%</span>
-              </div>
-              <div class="bar-track">
-                <div class="bar-fill mar-fill" id="bar-mar" style="width: 30%"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tactical Doctrine Box -->
-          <div class="tactical-notes" id="calc-notes">
-            <h4>💡 Grandmaster Tactical Doctrine</h4>
-            <p>Infantry absorbs 100% of enemy front damage. If infantry falls below 40%, your marksmen will be annihilated. 50/20/30 gives your marksmen the protection needed to deal maximum sustained damage over extended fights.</p>
-          </div>
+        <div class="calc-input-group">
+          <label>Or Server Days Open</label>
+          <input type="number" id="calcDays" class="calc-input" value="420" min="1" max="1500" oninput="calculateFromDaysInput()">
         </div>
+      </div>
+
+      <div class="calc-result" id="calcResult">
+        <div class="calc-stat">
+          <b id="resGen">Gen 7</b>
+          <span>Active Generation</span>
+        </div>
+        <div class="calc-stat">
+          <b id="resNext">Gen 8</b>
+          <span id="resDaysLeft">in 45 Days</span>
+        </div>
+        <div class="calc-stat">
+          <b id="resHeroes">Bradley · Edith</b>
+          <span>Featured Heroes</span>
+        </div>
+      </div>
+      <div style="margin-top:1.2rem;font-size:.85rem;color:var(--ice-1);line-height:1.6;" id="resAdvice">
+        💡 <b>Shard Roadmap:</b> Focus generic mythic shards on Bradley for frontline tanking. Save remaining shards for Gen 8 Marksman banner.
       </div>
     </div>
   </section>
 
-  <!-- Self-Hosting / Deployment Section -->
-  <section class="setup-section" id="setup">
-    <div class="section-container">
-      <div class="section-header">
-        <div class="section-tag">☁️ Self-Hosting Guide</div>
-        <h2 class="section-title">Deploy on Your Own Server in 60 Seconds</h2>
-        <p class="section-sub">Frosty is 100% open-source and comes ready with PM2 configuration for permanent 24/7 uptime on Oracle Cloud or any Linux VPS.</p>
-      </div>
+  <!-- Hero Codex -->
+  <section id="codex">
+    <div class="section-head">
+      <div class="kicker">Hero Archives</div>
+      <h2>Interactive Generation & Hero Codex</h2>
+      <p>Tactical evaluations, troop affinities, and investment ratings across every Whiteout Survival generation.</p>
+    </div>
+    <div class="codex-list">
+      <div class="codex-row"><span class="gen">Gen 16 (Endgame)</span><span class="heroes">Seigel · Aisling · Ursar</span></div>
+      <div class="codex-row"><span class="gen">Gen 7</span><span class="heroes">Bradley · Edith</span></div>
+      <div class="codex-row"><span class="gen">Gen 4</span><span class="heroes">Lynn · Hector</span></div>
+      <div class="codex-row"><span class="gen">Gen 2</span><span class="heroes">Flint · Alonso · Philly</span></div>
+      <div class="codex-row"><span class="gen">Gen 1</span><span class="heroes">Jeronimo · Natalia · Molly</span></div>
+      <div class="codex-row"><span class="gen">Epic / F2P Core</span><span class="heroes">Jessie · Sergey · Patrick · Bahiti</span></div>
+    </div>
+  </section>
 
-      <div class="code-terminal glass-card">
-        <div class="term-header">
-          <div class="term-dots">
-            <span class="dot red"></span>
-            <span class="dot yellow"></span>
-            <span class="dot green"></span>
-          </div>
-          <div class="term-title">bash — ubuntu@cloud-instance</div>
-          <button class="copy-btn" id="copy-deploy-btn" title="Copy Commands">
-            <i data-lucide="copy"></i>
-            <span>Copy</span>
-          </button>
-        </div>
-        <pre class="term-body"><code><span class="c"># 1. Clone Frosty Repository</span>
+  <!-- Formations Visualizer -->
+  <section id="formations">
+    <div class="section-head">
+      <div class="kicker">Tactical Formations</div>
+      <h2>Interactive Troop Ratio Visualizer</h2>
+      <p>Select a combat scenario to see the grandmaster troop breakdown and tactical doctrine.</p>
+    </div>
+
+    <div class="formation-tabs">
+      <div class="ftab active" data-f="0">⚔️ Standard PvP / Field</div>
+      <div class="ftab" data-f="1">🐻 Bear Trap (Max PvE)</div>
+      <div class="ftab" data-f="2">🛡️ Castle Garrison Defense</div>
+      <div class="ftab" data-f="3">🎯 High Burst 4-1-1</div>
+    </div>
+
+    <div class="formation-bar" id="formationBar">
+      <div class="seg inf" id="segInf">50%</div>
+      <div class="seg lan" id="segLan">20%</div>
+      <div class="seg mark" id="segMark">30%</div>
+    </div>
+    <div class="formation-legend">
+      <div class="legend-item"><span class="swatch" style="background:#7fe3ff"></span> Infantry (Frontline Tank)</div>
+      <div class="legend-item"><span class="swatch" style="background:#ffb877"></span> Lancers (Midline Burst & Flank)</div>
+      <div class="legend-item"><span class="swatch" style="background:#ff6f91"></span> Marksmen (Backline Sustained DPS)</div>
+    </div>
+    <div class="doctrine" id="doctrineText">
+      Infantry absorbs 100% of enemy front damage. If infantry falls below 40%, your marksmen will be annihilated. 50/20/30 gives your marksmen the protection needed to deal maximum sustained damage over extended fights.
+    </div>
+  </section>
+
+  <!-- Self-Hosting Setup -->
+  <section id="setup">
+    <div class="section-head">
+      <div class="kicker">Self-Hosting Guide</div>
+      <h2>Deploy on Your Own Server in 60 Seconds</h2>
+      <p>100% open-source and comes ready with PM2 configuration for permanent 24/7 uptime on Oracle Cloud or any Linux VPS.</p>
+    </div>
+    <div class="code-block">
+      <div class="code-head"><span>bash — ubuntu@cloud-instance</span><span>Frosty Setup</span></div>
+      <pre><span class="comment"># 1. Clone Frosty Repository</span>
 git clone https://github.com/Zcross091/frosty-wos-ai.git
 cd frosty-wos-ai
 
-<span class="c"># 2. Install Python Dependencies</span>
+<span class="comment"># 2. Install Python Dependencies</span>
 pip install -r requirements.txt
 
-<span class="c"># 3. Configure .env with your free keys (Discord Token + Gemini/Groq)</span>
+<span class="comment"># 3. Configure .env with your free keys (Discord Token + Gemini/Groq)</span>
 cp .env.example .env
 
-<span class="c"># 4. Clean-Ingest Local Knowledge Base into ChromaDB</span>
+<span class="comment"># 4. Clean-Ingest Local Knowledge Base into ChromaDB</span>
 python3 ingest.py --local-only --clean
 
-<span class="c"># 5. Start 24/7 Background Process via PM2</span>
+<span class="comment"># 5. Start 24/7 Background Process via PM2</span>
 pm2 start ecosystem.config.js
-pm2 save</code></pre>
+pm2 save</pre>
+    </div>
+  </section>
+
+  <!-- CTA Box -->
+  <section id="cta">
+    <div class="cta-box">
+      <div class="eyebrow"><span class="dot"></span> Ready to Dominate</div>
+      <h2>Ready to Dominate Whiteout Survival?</h2>
+      <p class="lead" style="text-align:center;max-width:620px;margin-left:auto;margin-right:auto;">Invite Frosty to your alliance Discord server today or download the Android app for offline tactical calculations. 100% free and open-source.</p>
+      <div class="hero-actions" style="justify-content:center;">
+        <a class="btn btn-primary" href="https://discord.com/oauth2/authorize?client_id=1501632240466006108&permissions=347200&integration_type=0&scope=bot+applications.commands" target="_blank" rel="noopener">Add to Discord Now</a>
+        <a class="btn btn-app" href="https://github.com/Zcross091/frosty-wos-ai/releases/latest" target="_blank" rel="noopener">📱 Download Android APK</a>
+        <a class="btn btn-ghost" href="https://github.com/Zcross091/frosty-wos-ai" target="_blank" rel="noopener">Star on GitHub</a>
       </div>
     </div>
   </section>
 
-  <!-- Discord Invitation CTA Banner -->
-  <section class="cta-section">
-    <div class="cta-container glass-card">
-      <div class="cta-glow"></div>
-      <div class="cta-content">
-        <div class="cta-icon">❄️</div>
-        <h2 class="cta-title">Ready to Dominate Whiteout Survival?</h2>
-        <p class="cta-sub">Invite Frosty to your alliance Discord server today. 100% Free, zero setup required for members, and instant tactical supremacy.</p>
-        <div class="cta-buttons">
-          <a href="https://discord.com/oauth2/authorize?client_id=1501632240466006108&permissions=347200&integration_type=0&scope=bot+applications.commands" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-cta" id="cta-invite-btn">
-            <i data-lucide="bot"></i>
-            <span>Add to Discord Now</span>
-          </a>
-          <a href="https://github.com/Zcross091/frosty-wos-ai" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-cta" id="cta-github-btn">
-            <i data-lucide="github"></i>
-            <span>Star on GitHub</span>
-          </a>
-        </div>
-      </div>
-    </div>
-  </section>
+</div>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="footer-container">
-      <div class="footer-brand">
-        <div class="footer-logo">❄️ Frosty AI</div>
-        <p>The premier tactical companion and AI military advisor for Whiteout Survival Chiefs worldwide.</p>
-      </div>
-      <div class="footer-links">
-        <a href="#features">Architecture</a>
-        <a href="#simulator">Interactive Demo</a>
-        <a href="#codex">Hero Codex</a>
-        <a href="https://github.com/Zcross091/frosty-wos-ai" target="_blank" rel="noopener noreferrer">GitHub</a>
-        <a href="https://discord.com/oauth2/authorize?client_id=1501632240466006108&permissions=347200&integration_type=0&scope=bot+applications.commands" target="_blank" rel="noopener noreferrer">Invite Bot</a>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>© 2026 Frosty AI. Open Source under the MIT License. Whiteout Survival is a registered trademark of Century Games.</p>
-    </div>
-  </footer>
+<footer>
+  <div>© 2026 Frosty AI · Made by <b>StateCraft</b> · Open Source under MIT License. Whiteout Survival is a registered trademark of Century Games.</div>
+  <div>
+    <a href="#features">Architecture</a>
+    <a href="#simulator">Simulator</a>
+    <a href="#codex">Hero Codex</a>
+    <a href="https://github.com/Zcross091/frosty-wos-ai" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</footer>
 
-  <!-- Scripts -->
-  <script src="app.js"></script>
-  <script>
-    // Initialize Lucide Icons
-    lucide.createIcons();
-  </script>
+<!-- Three.js + UnrealBloomPass + GSAP ScrollTrigger 3D Engine -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://esm.sh/three@0.160.0",
+    "three/addons/": "https://esm.sh/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import gsap from 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/+esm';
+import { ScrollTrigger } from 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/ScrollTrigger/+esm';
+
+gsap.registerPlugin(ScrollTrigger);
+ScrollTrigger.defaults({ scroller: window });
+
+/* ---------- Scene setup ---------- */
+const canvas = document.getElementById('webgl-canvas');
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x050b14, 0.045);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 0, 8);
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+/* ---------- Lighting: cold three-point ---------- */
+const ambient = new THREE.AmbientLight(0x335577, 0.55);
+scene.add(ambient);
+
+const keyLight = new THREE.DirectionalLight(0x9fd8ff, 3.2);
+keyLight.position.set(5, 6, 6);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.set(1024, 1024);
+keyLight.shadow.bias = -0.0003;
+scene.add(keyLight);
+
+const fillLight = new THREE.PointLight(0x2a6ea8, 1.6, 30);
+fillLight.position.set(-6, -2, 2);
+scene.add(fillLight);
+
+const rimLight = new THREE.DirectionalLight(0xffae7f, 1.4);
+rimLight.position.set(-4, 2, -5);
+scene.add(rimLight);
+
+/* ---------- Central ice-crystal hero object ---------- */
+const crystalGroup = new THREE.Group();
+scene.add(crystalGroup);
+
+const coreGeo = new THREE.IcosahedronGeometry(1.6, 2);
+const coreMat = new THREE.MeshPhysicalMaterial({
+  color: 0x1a3a55,
+  metalness: 0.05,
+  roughness: 0.08,
+  transmission: 0.92,
+  thickness: 1.8,
+  ior: 1.42,
+  clearcoat: 1.0,
+  clearcoatRoughness: 0.06,
+  reflectivity: 0.9,
+  attenuationColor: new THREE.Color(0x6fc6ff),
+  attenuationDistance: 2.2,
+});
+const core = new THREE.Mesh(coreGeo, coreMat);
+core.castShadow = true;
+crystalGroup.add(core);
+
+// orbiting ice shards (instanced)
+const shardGeo = new THREE.OctahedronGeometry(0.28, 0);
+const shardMat = new THREE.MeshPhysicalMaterial({
+  color: 0xbfe8ff,
+  metalness: 0.1,
+  roughness: 0.15,
+  transmission: 0.8,
+  thickness: 0.6,
+  ior: 1.4,
+  clearcoat: 1.0,
+  emissive: 0x1a4a6e,
+  emissiveIntensity: 0.15,
+});
+const SHARD_COUNT = 26;
+const shardMesh = new THREE.InstancedMesh(shardGeo, shardMat, SHARD_COUNT);
+shardMesh.castShadow = true;
+crystalGroup.add(shardMesh);
+
+const shardData = [];
+const dummy = new THREE.Object3D();
+for (let i = 0; i < SHARD_COUNT; i++) {
+  const radius = 2.6 + Math.random() * 1.6;
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.acos((Math.random() * 2) - 1);
+  shardData.push({
+    radius, theta, phi,
+    speed: 0.08 + Math.random() * 0.12,
+    spin: (Math.random() - 0.5) * 2,
+    scale: 0.5 + Math.random() * 0.9,
+  });
+}
+
+function layoutShards() {
+  for (let i = 0; i < SHARD_COUNT; i++) {
+    const d = shardData[i];
+    const x = d.radius * Math.sin(d.phi) * Math.cos(d.theta);
+    const y = d.radius * Math.sin(d.phi) * Math.sin(d.theta);
+    const z = d.radius * Math.cos(d.phi);
+    dummy.position.set(x, y, z);
+    dummy.rotation.set(x * 0.3, y * 0.3, z * 0.3);
+    dummy.scale.setScalar(d.scale);
+    dummy.updateMatrix();
+    shardMesh.setMatrixAt(i, dummy.matrix);
+  }
+  shardMesh.instanceMatrix.needsUpdate = true;
+}
+layoutShards();
+
+/* ---------- Snow particle field ---------- */
+const SNOW_COUNT = 900;
+const snowGeo = new THREE.BufferGeometry();
+const positions = new Float32Array(SNOW_COUNT * 3);
+const speeds = new Float32Array(SNOW_COUNT);
+for (let i = 0; i < SNOW_COUNT; i++) {
+  positions[i * 3] = (Math.random() - 0.5) * 40;
+  positions[i * 3 + 1] = (Math.random() - 0.5) * 30;
+  positions[i * 3 + 2] = (Math.random() - 0.5) * 30;
+  speeds[i] = 0.4 + Math.random() * 1.2;
+}
+snowGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+const snowMat = new THREE.PointsMaterial({
+  color: 0xdfefff,
+  size: 0.045,
+  transparent: true,
+  opacity: 0.65,
+  depthWrite: false,
+});
+const snow = new THREE.Points(snowGeo, snowMat);
+scene.add(snow);
+
+/* ---------- Ground contact glow ---------- */
+const glowGeo = new THREE.CircleGeometry(3.2, 48);
+const glowMat = new THREE.MeshBasicMaterial({ color: 0x2c6fa8, transparent: true, opacity: 0.12 });
+const glow = new THREE.Mesh(glowGeo, glowMat);
+glow.rotation.x = -Math.PI / 2;
+glow.position.y = -2.4;
+scene.add(glow);
+
+/* ---------- Post-processing ---------- */
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(window.innerWidth, window.innerHeight),
+  0.55, 0.55, 0.82
+);
+composer.addPass(bloomPass);
+
+/* ---------- Scroll choreography ---------- */
+gsap.timeline({
+  scrollTrigger: {
+    trigger: '.content',
+    start: 'top top',
+    end: 'bottom bottom',
+    scrub: 1.2,
+    invalidateOnRefresh: true
+  }
+})
+.to(crystalGroup.rotation, { y: Math.PI * 1.4, x: Math.PI * 0.3, ease: 'none' }, 0)
+.to(crystalGroup.position, { x: 2.4, y: -0.8, z: -1.5, ease: 'power1.inOut' }, 0)
+.to(camera.position, { z: 5.5, x: -0.6, ease: 'power1.inOut' }, 0)
+.to(coreMat.color, { r: 0.3, g: 0.55, b: 0.85, ease: 'none' }, 0.4)
+.to(crystalGroup.position, { x: -2, y: 0.6, z: 0, ease: 'power1.inOut' }, 0.75)
+.to(camera.position, { z: 7, x: 0, ease: 'power1.inOut' }, 0.75);
+
+/* ---------- Mouse parallax ---------- */
+const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
+window.addEventListener('mousemove', (e) => {
+  mouse.targetX = (e.clientX / window.innerWidth - 0.5) * 2;
+  mouse.targetY = (e.clientY / window.innerHeight - 0.5) * 2;
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
+});
+
+/* ---------- Animate loop ---------- */
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+
+  mouse.x += (mouse.targetX - mouse.x) * 0.04;
+  mouse.y += (mouse.targetY - mouse.y) * 0.04;
+
+  core.rotation.y = t * 0.15;
+  core.rotation.x = Math.sin(t * 0.2) * 0.15;
+
+  for (let i = 0; i < SHARD_COUNT; i++) {
+    const d = shardData[i];
+    d.theta += d.speed * 0.006;
+  }
+  layoutShards();
+
+  const snowPos = snowGeo.attributes.position.array;
+  for (let i = 0; i < SNOW_COUNT; i++) {
+    snowPos[i * 3 + 1] -= speeds[i] * 0.012;
+    if (snowPos[i * 3 + 1] < -15) snowPos[i * 3 + 1] = 15;
+  }
+  snowGeo.attributes.position.needsUpdate = true;
+
+  camera.position.x += mouse.x * 0.3 - (camera.position.x - (camera.position.x)) ;
+  camera.lookAt(crystalGroup.position.x * 0.3, crystalGroup.position.y * 0.3, 0);
+
+  composer.render();
+}
+animate();
+
+/* ---------- Loader ---------- */
+window.addEventListener('load', () => {
+  setTimeout(() => document.getElementById('loader').classList.add('hide'), 400);
+  setTimeout(() => ScrollTrigger.refresh(), 600);
+});
+</script>
+
+<script>
+/* ---------- Formations Visualizer ---------- */
+const formations = [
+  { inf: 50, lan: 20, mark: 30, text: "Infantry absorbs 100% of enemy front damage. If infantry falls below 40%, your marksmen will be annihilated. 50/20/30 gives your marksmen the protection needed to deal maximum sustained damage over extended fights." },
+  { inf: 10, lan: 10, mark: 80, text: "Bear Trap is pure PvE damage racing — there's no enemy front line to tank. Stack Marksmen to 80% for maximum sustained DPS against the trap, keeping just enough Infantry and Lancers to round out squad requirements." },
+  { inf: 60, lan: 20, mark: 20, text: "Garrison defense favors raw durability. A heavy 60% Infantry wall absorbs siege damage while Lancers counter-flank and a modest Marksman line punishes attackers who break through." },
+  { inf: 40, lan: 10, mark: 50, text: "The 4-1-1 burst formation trades some frontline durability for a heavier Marksman core, aiming to end fights fast before your thinner Infantry line collapses." },
+];
+
+const segInf = document.getElementById('segInf');
+const segLan = document.getElementById('segLan');
+const segMark = document.getElementById('segMark');
+const doctrineText = document.getElementById('doctrineText');
+const tabs = document.querySelectorAll('.ftab');
+
+function setFormation(idx) {
+  const f = formations[idx];
+  segInf.style.width = f.inf + '%';
+  segLan.style.width = f.lan + '%';
+  segMark.style.width = f.mark + '%';
+  segInf.textContent = f.inf + '%';
+  segLan.textContent = f.lan + '%';
+  segMark.textContent = f.mark + '%';
+  doctrineText.textContent = f.text;
+  tabs.forEach((t, i) => t.classList.toggle('active', i === idx));
+}
+
+tabs.forEach((tab, i) => tab.addEventListener('click', () => setFormation(i)));
+setFormation(0);
+
+/* ---------- Simulator Responses ---------- */
+const responses = {
+  '/wos hero:Seigel': `🛡️ **Seigel (Endgame Gen 16 Infantry Lead)**\n* **Role:** Ultimate Kinetic Barrier & Rally Anchor\n* **Primary Skill:** *Absolute Permafrost* — Reduces incoming skill damage by 42% for all squad members.\n* **F2P/P2W Advice:** Priority #1 investment for Gen 16 states. Replaces Bradley completely. Pair with Aisling (Lancer) for lethal counter-burst.`,
+  'What is the best Bear Trap lineup?': `🐻 **Grandmaster Bear Trap Doctrine (10/10/80 Ratio)**\n* **Rally Captain:** Best Lethality/Attack Hero (Jeronimo / Alonso / Mia / Lynn)\n* **Top 4 Joiners:** Must send **Jessie (+25% Dmg)**, **Jeronimo (+15% Dmg)**, **Chen (+15% Dmg)**, or **Patrick (+15% Dmg)**\n* **Troop Composition:** 10% Infantry, 10% Lancers, 80% Marksmen. Avoid sending defenders or defensive heroes as joiners!`,
+  'How should I save shards for Gen 7?': `💎 **Gen 7 Shard Investment Roadmap**\n* **Days 380–450:** Stop spending mythic shards on Gen 5/6 heroes.\n* **Hero Priority:** 100% focus on **Bradley (Infantry)** to 4★ minimum before unlocking Edith.\n* **F2P Note:** Bradley's damage reduction scales exponentially, making him usable through Gen 10.`,
+  'Crazy Joe defense tips': `🛡️ **Crazy Joe Alliance Defense Strategy**\n* **Reinforce Offline Members:** Send 100% of your troops out to reinforce offline HQ/allies to score double points.\n* **Home Defense:** Keep Patrick or Sergey as wall captain with a balanced 50/20/30 garrison.\n* **Rounds 14 & 20:** All players must recall defensive marches to alliance HQ for maximum point multiplier.`
+};
+
+function simulateQuery(query) {
+  const simChat = document.getElementById('simChat');
+  
+  // User bubble
+  const userMsg = document.createElement('div');
+  userMsg.className = 'sim-msg';
+  userMsg.innerHTML = `<div class="sim-avatar user">👤</div><div class="sim-bubble"><b>You:</b> ${query}</div>`;
+  simChat.appendChild(userMsg);
+
+  // Bot response with cooking animation
+  const botMsg = document.createElement('div');
+  botMsg.className = 'sim-msg';
+  botMsg.innerHTML = `<div class="sim-avatar bot">❄️</div><div class="sim-bubble"><i>⚡ Frosty is cooking tactical response...</i></div>`;
+  simChat.appendChild(botMsg);
+  simChat.scrollTop = simChat.scrollHeight;
+
+  setTimeout(() => {
+    const ans = responses[query] || `❄️ **Frosty Tactical Engine Response:**\nAnalyzing database for "${query}"...\n* **Recommendation:** Deploy a balanced 50/20/30 lineup with Jessie in Joiner slot #1.\n* **Note:** For deep multi-turn tactics, invite Frosty to your Discord server or download our Android APK!`;
+    botMsg.querySelector('.sim-bubble').innerHTML = `<b>Frosty AI:</b><br>${ans.replace(/\\n/g, '<br>')}`;
+    simChat.scrollTop = simChat.scrollHeight;
+  }, 600);
+}
+
+function sendCustomQuery() {
+  const input = document.getElementById('simInput');
+  const text = input.value.trim();
+  if (!text) return;
+  simulateQuery(text);
+  input.value = '';
+}
+
+/* ---------- State Age Calculator ---------- */
+function calculateState() {
+  const stateNum = parseInt(document.getElementById('calcStateNum').value) || 1;
+  const days = Math.max(1, Math.round(1160 - (stateNum * 0.72)));
+  document.getElementById('calcDays').value = days;
+  updateStateOutput(days);
+}
+
+function calculateFromDaysInput() {
+  const days = parseInt(document.getElementById('calcDays').value) || 1;
+  const stateNum = Math.max(1, Math.round((1160 - days) / 0.72));
+  document.getElementById('calcStateNum').value = stateNum;
+  updateStateOutput(days);
+}
+
+function updateStateOutput(days) {
+  let gen = 1, nextGen = 2, daysLeft = 40, heroes = "Jeronimo · Natalia", advice = "Focus on Jessie and Sergey for core F2P progression.";
+  
+  if (days >= 1100) {
+    gen = 16; nextGen = 17; daysLeft = 60; heroes = "Seigel · Aisling · Ursar";
+    advice = "Endgame state. Maximum priority on Seigel (Infantry) and Aisling (Lancer). Save generic shards for Gen 17.";
+  } else if (days >= 400) {
+    gen = 7; nextGen = 8; daysLeft = 45; heroes = "Bradley · Edith";
+    advice = "Invest all generic mythic shards into Bradley for frontline fortress tanking.";
+  } else if (days >= 220) {
+    gen = 4; nextGen = 5; daysLeft = 50; heroes = "Lynn · Hector";
+    advice = "Lynn is the premier Marksman damage dealer for Bear Trap. Build to 4★ minimum.";
+  } else if (days >= 80) {
+    gen = 2; nextGen = 3; daysLeft = 40; heroes = "Flint · Alonso · Philly";
+    advice = "Spin Lucky Wheel for Flint (Infantry). Save mythic shards for Alonso.";
+  }
+
+  document.getElementById('resGen').textContent = 'Gen ' + gen;
+  document.getElementById('resNext').textContent = 'Gen ' + nextGen;
+  document.getElementById('resDaysLeft').textContent = 'in ' + daysLeft + ' Days';
+  document.getElementById('resHeroes').textContent = heroes;
+  document.getElementById('resAdvice').innerHTML = '💡 <b>Shard Roadmap:</b> ' + advice;
+}
+
+calculateState();
+</script>
+
 </body>
 </html>
