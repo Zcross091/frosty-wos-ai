@@ -55,6 +55,25 @@ class KnowledgeService {
       bestTeam: 'Seigel + Aisling + Ursar',
     ),
 
+    // --- Gen 15 ---
+    HeroProfile(
+      name: 'Hank',
+      generation: 15,
+      generationLabel: 'Gen 15 (Legendary)',
+      troopType: TroopType.infantry,
+      rarity: 'Legendary',
+      roleOverview: 'Titan of the permafrost frontline. High health scaling and damage absorption.',
+      attack: 24500,
+      defense: 32000,
+      health: 480000,
+      expeditionMultiplier: 1850.00,
+      explorationSkill: 'Glacial Rampart: Absorbs 40% incoming damage and pulses freeze waves.',
+      expeditionSkill: 'Endless Bastion: Infantry Defense +35% and Health +30%.',
+      exclusiveGear: 'Frostbound Shield: Gains +20% damage reduction when below 50% HP.',
+      f2pAdvice: 'Primary Lucky Wheel investment for Gen 15 states (State 260–330).',
+      bestTeam: 'Hank (Lead) + Viveca + Estrella',
+    ),
+
     // --- Gen 7 ---
     HeroProfile(
       name: 'Bradley',
@@ -109,22 +128,42 @@ class KnowledgeService {
       f2pAdvice: 'Must-build for F2P on Lucky Wheel. Excellent in Arena and Bear Trap.',
       bestTeam: 'Hector + Lynn + Ahmose',
     ),
+    // --- Gen 5 ---
     HeroProfile(
       name: 'Hector',
-      generation: 4,
-      generationLabel: 'Gen 4 (Mythic)',
+      generation: 5,
+      generationLabel: 'Gen 5 (Mythic)',
       troopType: TroopType.infantry,
       rarity: 'Mythic',
       roleOverview: 'Endurance wall built for long castle garrisons and sustained rallies.',
-      attack: 4100,
-      defense: 5400,
-      health: 81000,
-      expeditionMultiplier: 420.00,
+      attack: 5800,
+      defense: 7600,
+      health: 114000,
+      expeditionMultiplier: 520.00,
       explorationSkill: 'Indomitable: Gains +5% defense every 5s of battle up to +35%.',
       expeditionSkill: 'Castle Wall: Defender troops Health +30%.',
       exclusiveGear: 'Tower of Iron: Reduces incoming enemy skill damage by 20%.',
-      f2pAdvice: 'King of Icefield reward. Build after Lynn for SvS garrison defense.',
-      bestTeam: 'Hector + Lynn + Ahmose',
+      f2pAdvice: 'Lucky Wheel target for Gen 5. Excellent frontline tank for SvS garrison defense.',
+      bestTeam: 'Hector (Lead) + Gwen + Norah',
+    ),
+
+    // --- Gen 3 ---
+    HeroProfile(
+      name: 'Mia',
+      generation: 3,
+      generationLabel: 'Gen 3 (Mythic)',
+      troopType: TroopType.marksman,
+      rarity: 'Mythic',
+      roleOverview: 'Top Lucky Wheel marksman and essential damage multiplier for early Bear Trap.',
+      attack: 3800,
+      defense: 2900,
+      health: 29000,
+      expeditionMultiplier: 320.00,
+      explorationSkill: 'Dazzling Fireworks: Multi-target burst damage with blind effect.',
+      expeditionSkill: 'Firework Festival: Marksman Attack +30% and Lethality +20%.',
+      exclusiveGear: 'Carnival Launcher: Increases critical hit rate by 20%.',
+      f2pAdvice: 'The #1 Lucky Wheel priority in Gen 3. Build to 3-4★ for huge Bear Trap score increases.',
+      bestTeam: 'Logan + Mia + Greg',
     ),
 
     // --- Gen 2 ---
