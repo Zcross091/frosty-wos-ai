@@ -31,7 +31,7 @@ class StateAgeService {
     4: ['Ahmose (Inf)', 'Reina (Lan)', 'Lynn (Mark)'],
     5: ['Hector (Inf)', 'Norah (Lan)', 'Gwen (Mark)'],
     6: ['Wayne (Inf)', 'Wu Ming (Lan)', 'Renee (Mark)'],
-    7: ['Bradley (Inf)', 'Gordon (Lan)', 'Edith (Mark)'],
+    7: ['Edith (Inf)', 'Gordon (Lan)', 'Bradley (Mark)'],
     8: ['Gatot (Inf)', 'Sonya (Lan)', 'Hendrik (Mark)'],
     9: ['Magnus (Inf)', 'Fred (Lan)', 'Xura (Mark)'],
     10: ['Gregory (Inf)', 'Freya (Lan)', 'Blanchette (Mark)'],

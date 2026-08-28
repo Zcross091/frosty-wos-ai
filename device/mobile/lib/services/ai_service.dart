@@ -145,7 +145,7 @@ class AIService extends ChangeNotifier {
         // 1. Try Central Backend REST Server (ChromaDB RAG + Server LLMs)
         bool backendSuccess = false;
         try {
-          final result = await _callBackend(cleanText).timeout(const Duration(seconds: 8));
+          final result = await _callBackend(cleanText).timeout(const Duration(seconds: 60));
           if (result['text']!.isNotEmpty) {
             botAnswer = result['text']!;
             modelUsed = result['model']!;
@@ -159,7 +159,7 @@ class AIService extends ChangeNotifier {
           // 2. Try Direct Gemini (if user configured key)
           if (_geminiKey.isNotEmpty) {
             try {
-              final result = await _callGemini(cleanText).timeout(const Duration(seconds: 8));
+              final result = await _callGemini(cleanText).timeout(const Duration(seconds: 45));
               botAnswer = result['text']!;
               modelUsed = result['model']!;
               backendSuccess = true;
@@ -171,7 +171,7 @@ class AIService extends ChangeNotifier {
           // 3. Try Direct Groq (if user configured key)
           if (_groqKey.isNotEmpty) {
             try {
-              final result = await _callGroq(cleanText).timeout(const Duration(seconds: 8));
+              final result = await _callGroq(cleanText).timeout(const Duration(seconds: 45));
               botAnswer = result['text']!;
               modelUsed = result['model']!;
               backendSuccess = true;
@@ -182,7 +182,7 @@ class AIService extends ChangeNotifier {
         if (!backendSuccess) {
           // 4. Try Local Ollama
           try {
-            final result = await _callOllama(cleanText).timeout(const Duration(seconds: 5));
+            final result = await _callOllama(cleanText).timeout(const Duration(seconds: 15));
             botAnswer = result['text']!;
             modelUsed = result['model']!;
             backendSuccess = true;
@@ -251,7 +251,7 @@ class AIService extends ChangeNotifier {
         'X-Frosty-Signature': signature,
       },
       body: jsonPayload,
-    );
+    ).timeout(const Duration(seconds: 60));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
@@ -298,14 +298,14 @@ class AIService extends ChangeNotifier {
               ]
             }
           ],
-          'generationConfig': {'temperature': 0.6, 'maxOutputTokens': 1200}
+          'generationConfig': {'temperature': 0.6, 'maxOutputTokens': 1500}
         };
 
         final response = await http.post(
           url,
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode(payload),
-        );
+        ).timeout(const Duration(seconds: 45));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
@@ -348,7 +348,7 @@ class AIService extends ChangeNotifier {
             {'role': 'user', 'content': prompt}
           ],
           'temperature': 0.6,
-          'max_tokens': 1200,
+          'max_tokens': 1500,
         };
 
         final response = await http.post(
@@ -358,7 +358,7 @@ class AIService extends ChangeNotifier {
             'Content-Type': 'application/json',
           },
           body: jsonEncode(payload),
-        );
+        ).timeout(const Duration(seconds: 45));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
@@ -388,14 +388,14 @@ class AIService extends ChangeNotifier {
         {'role': 'user', 'content': prompt}
       ],
       'stream': false,
-      'options': {'num_predict': 350, 'temperature': 0.6}
+      'options': {'num_predict': 500, 'temperature': 0.6}
     };
 
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(payload),
-    );
+    ).timeout(const Duration(seconds: 20));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -413,6 +413,54 @@ class AIService extends ChangeNotifier {
     final q = query.toLowerCase();
 
     // 1. Specific Hero Queries
+    if (q.contains('edith')) {
+      return '''
+### 🛡️ HERO OVERVIEW: EDITH & MR. TIN — Generation 7 (Mythic Infantry)
+
+• **Generation:** Gen 7 (Unlocks around Day 440)
+• **Troop Class:** 🔷 **Infantry** (Frontline Mech Tank / Damage Mitigation Specialist)
+• **Sub-Class:** Combat / Defense Shield
+• **Key Specialty:** Squad-wide damage reduction, backline protection, and heavy defender health buffs.
+
+Edith operates alongside her giant mech companion, **Mr. Tin**. She is engineered specifically to lock down the frontline, absorb immense punishment, and shield your Marksmen while boosting your Lancers.
+
+---
+
+### ⚔️ EXPEDITION SKILLS (PvP / RALLIES / CASTLE WARS)
+1. **Strategic Balance (Top-Right Skill):** Reduces damage taken by friendly **Marksmen by 20%** AND increases damage dealt by friendly **Lancers by 20%** at Lv. 5.
+2. **Ironclad:** Reduces damage taken for all **Infantry by 20%** at Lv. 5. Makes your frontline virtually unbreakable.
+3. **Steel Sentinel:** Increases Health of **ALL troops by 25%** at Lv. 5.
+
+---
+
+### 🔧 EXCLUSIVE WIDGET & SPECIAL SKILLS
+• **Pocket Engineer (Level 5):** When Mr. Tin's health drops below 50%, Edith instantly restores **35% of his Max Health** and grants a permanent **+30% Defense** boost.
+
+---
+
+### 📊 FORMATIONS & TROOP RATIOS
+• **Castle Garrison / Facility Defense:** `60% Infantry / 20% Lancer / 20% Marksman` (`60/20/20`) with **Edith (Leader)**.
+• **Open Field PvP:** `50% Infantry / 20% Lancer / 30% Marksman` (`50/20/30`). Pair with `Bradley (Marksman) + Gordon (Lancer)`.
+
+---
+
+### ⚖️ F2P vs. P2W VERDICT
+• **P2W Players:** **MUST-HAVE.** Edith is an absolute fortress during Sunfire Castle battles and high-level SvS garrisons.
+• **F2P Players:** Pair with Bradley (Lucky Wheel) to form the ultimate Gen 7 combat core!
+''';
+    }
+
+    if (q.contains('bradley')) {
+      return '''
+### 🎯 HERO OVERVIEW: BRADLEY — Generation 7 (Mythic Marksman)
+• **Generation:** Gen 7 (Unlocks ~Day 400+)
+• **Troop Class:** 🔴 **Marksman** (Long-Range Artillery / Heavy Siege Sniper)
+• **Role Overview:** The premier damage carry of Gen 7. Fires armor-piercing high-explosive shells that shred enemy defenses.
+• **Top Skill (*Piercing Shell*):** Massive line burst with armor reduction.
+• **Lucky Wheel Status:** #1 F2P Lucky Wheel priority in Gen 7. Build to 4★ minimum!
+• **Best Team:** `Edith (Infantry Tank) + Bradley (Marksman DPS) + Gordon (Lancer)`
+''';
+    }
     if (q.contains('seigel')) {
       return '''
 ### 🛡️ Hero Dossier: Seigel — Generation 16 (Legendary Infantry)
