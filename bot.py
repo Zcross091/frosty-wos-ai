@@ -284,22 +284,25 @@ async def slash_bear(interaction: discord.Interaction):
     await interaction.followup.send(embed=embed, view=view)
 
 
-@bot.tree.command(name="status", description="Check Frosty's system health, active AI engine, RAM usage, and database stats.")
+@bot.tree.command(name="status", description="Display live Discord servers, total users reached, active AI model, and RAM.")
 async def slash_status(interaction: discord.Interaction):
     process = psutil.Process(os.getpid())
-    ram_mb = process.memory_info().rss / 1024 / 1024
+    ram = process.memory_info().rss / 1024 / 1024
     uptime_sec = time.time() - process.create_time()
     hours, remainder = divmod(int(uptime_sec), 3600)
     minutes, seconds = divmod(remainder, 60)
+    total_guilds = len(bot.guilds)
+    total_members = sum(g.member_count for g in bot.guilds if g.member_count)
 
-    embed = discord.Embed(title="📊 Frosty AI Diagnostics", color=FROSTY_COLOR)
-    embed.add_field(name="🧠 Active AI Engine", value=f"`{ai_engine.get_active_model_name()}`", inline=True)
-    embed.add_field(name="📚 Indexed Archives", value=f"`{knowledge_base.get_count()} chunks`", inline=True)
-    embed.add_field(name="💾 RAM Usage", value=f"`{ram_mb:.2f} MB`", inline=True)
+    embed = discord.Embed(title="📊 Frosty AI — Live Analytics & Health", color=FROSTY_COLOR)
+    embed.add_field(name="🌐 Discord Servers", value=f"**{total_guilds}** Active Guilds", inline=True)
+    embed.add_field(name="👥 Total Chiefs Reached", value=f"**{total_members:,}** Members", inline=True)
+    embed.add_field(name="⚡ Tactical Engine", value=f"`{ai_engine.get_active_model_name()}`", inline=True)
+    embed.add_field(name="📚 Database Chunks", value=f"`{knowledge_base.get_count()} chunks`", inline=True)
+    embed.add_field(name="💾 Bot Memory", value=f"`{ram:.1f} MB`", inline=True)
     embed.add_field(name="⏱️ Uptime", value=f"`{hours}h {minutes}m {seconds}s`", inline=True)
-    embed.add_field(name="🌐 Ping", value=f"`{bot.latency * 1000:.1f} ms`", inline=True)
-    embed.add_field(name="🏰 Connected Guilds", value=f"`{len(bot.guilds)}`", inline=True)
-    embed.set_footer(text="Frosty AI • Oracle Cloud PM2 Daemon")
+    embed.add_field(name="📡 Gateway Ping", value=f"`{bot.latency * 1000:.1f} ms`", inline=True)
+    embed.set_footer(text="Mobile & Web API: Check http://<server-ip>:8000/api/stats for active app users")
     await interaction.response.send_message(embed=embed)
 
 
@@ -331,24 +334,6 @@ async def slash_reindex(interaction: discord.Interaction, local_only: bool = Tru
             color=ERROR_COLOR
         )
         await interaction.followup.send(embed=embed)
-
-
-@bot.tree.command(name="status", description="Display live Discord servers, total users reached, active AI model, and RAM.")
-async def slash_status(interaction: discord.Interaction):
-    process = psutil.Process(os.getpid())
-    ram = process.memory_info().rss / 1024 / 1024
-    total_guilds = len(bot.guilds)
-    total_members = sum(g.member_count for g in bot.guilds if g.member_count)
-
-    embed = discord.Embed(title="📊 Frosty AI — Live Analytics & Health", color=FROSTY_COLOR)
-    embed.add_field(name="🌐 Discord Servers", value=f"**{total_guilds}** Active Guilds", inline=True)
-    embed.add_field(name="👥 Total Chiefs Reached", value=f"**{total_members:,}** Members", inline=True)
-    embed.add_field(name="⚡ Tactical Engine", value=f"`{ai_engine.get_active_model_name()}`", inline=True)
-    embed.add_field(name="📚 Database Chunks", value=f"`{knowledge_base.get_count()} chunks`", inline=True)
-    embed.add_field(name="💾 Bot Memory", value=f"`{ram:.1f} MB`", inline=True)
-    embed.add_field(name="📡 Gateway Ping", value=f"`{bot.latency * 1000:.1f} ms`", inline=True)
-    embed.set_footer(text="Mobile & Web API: Check http://<server-ip>:8000/api/stats for active app users")
-    await interaction.response.send_message(embed=embed)
 
 
 @bot.tree.command(name="help", description="Show Frosty AI commands and strategic capabilities.")
