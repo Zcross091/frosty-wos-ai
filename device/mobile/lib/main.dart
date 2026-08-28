@@ -75,63 +75,163 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF0A111F),
-          border: Border(
-            top: BorderSide(color: const Color(0xFF00F0FF).withOpacity(0.18)),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 720;
+
+        if (isDesktop) {
+          return Scaffold(
+            body: Row(
+              children: [
+                NavigationRail(
+                  selectedIndex: _currentIndex,
+                  backgroundColor: const Color(0xFF0A111F),
+                  indicatorColor: const Color(0xFF00F0FF).withOpacity(0.2),
+                  extended: constraints.maxWidth >= 1000,
+                  minWidth: 72,
+                  onDestinationSelected: (index) {
+                    setState(() => _currentIndex = index);
+                  },
+                  leading: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFF00F0FF).withOpacity(0.15),
+                            border: Border.all(color: const Color(0xFF00F0FF), width: 1.2),
+                          ),
+                          child: const Center(child: Text('❄️', style: TextStyle(fontSize: 18))),
+                        ),
+                        if (constraints.maxWidth >= 1000) ...[
+                          const SizedBox(width: 10),
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Frosty AI',
+                                style: TextStyle(
+                                  fontFamily: 'Outfit',
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              Text(
+                                'Desktop Command',
+                                style: TextStyle(fontSize: 10, color: Color(0xFF00F0FF)),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  destinations: const [
+                    NavigationRailDestination(
+                      icon: Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF94A3B8)),
+                      selectedIcon: Icon(Icons.chat_bubble_rounded, color: Color(0xFF00F0FF)),
+                      label: Text('AI Oracle'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.timer_outlined, color: Color(0xFF94A3B8)),
+                      selectedIcon: Icon(Icons.timer_rounded, color: Color(0xFF00F0FF)),
+                      label: Text('State Age'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.menu_book_outlined, color: Color(0xFF94A3B8)),
+                      selectedIcon: Icon(Icons.menu_book_rounded, color: Color(0xFF00F0FF)),
+                      label: Text('Hero Codex'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.shield_outlined, color: Color(0xFF94A3B8)),
+                      selectedIcon: Icon(Icons.shield_rounded, color: Color(0xFF00F0FF)),
+                      label: Text('Formations'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.settings_outlined, color: Color(0xFF94A3B8)),
+                      selectedIcon: Icon(Icons.settings_rounded, color: Color(0xFF00F0FF)),
+                      label: Text('Community'),
+                    ),
+                  ],
+                ),
+                const VerticalDivider(thickness: 1, width: 1, color: Color(0xFF1E293B)),
+                Expanded(
+                  child: IndexedStack(
+                    index: _currentIndex,
+                    children: _screens,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // Mobile Screen Layout
+        return Scaffold(
+          body: IndexedStack(
+            index: _currentIndex,
+            children: _screens,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.4),
-              blurRadius: 16,
-              offset: const Offset(0, -4),
+          bottomNavigationBar: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF0A111F),
+              border: Border(
+                top: BorderSide(color: const Color(0xFF00F0FF).withOpacity(0.18)),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 16,
+                  offset: const Offset(0, -4),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: NavigationBar(
-          selectedIndex: _currentIndex,
-          backgroundColor: Colors.transparent,
-          indicatorColor: const Color(0xFF00F0FF).withOpacity(0.2),
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-          onDestinationSelected: (index) {
-            setState(() => _currentIndex = index);
-          },
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF94A3B8)),
-              selectedIcon: Icon(Icons.chat_bubble_rounded, color: Color(0xFF00F0FF)),
-              label: 'AI Oracle',
+            child: NavigationBar(
+              selectedIndex: _currentIndex,
+              backgroundColor: Colors.transparent,
+              indicatorColor: const Color(0xFF00F0FF).withOpacity(0.2),
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              onDestinationSelected: (index) {
+                setState(() => _currentIndex = index);
+              },
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF94A3B8)),
+                  selectedIcon: Icon(Icons.chat_bubble_rounded, color: Color(0xFF00F0FF)),
+                  label: 'AI Oracle',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.timer_outlined, color: Color(0xFF94A3B8)),
+                  selectedIcon: Icon(Icons.timer_rounded, color: Color(0xFF00F0FF)),
+                  label: 'State Age',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.menu_book_outlined, color: Color(0xFF94A3B8)),
+                  selectedIcon: Icon(Icons.menu_book_rounded, color: Color(0xFF00F0FF)),
+                  label: 'Codex',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.shield_outlined, color: Color(0xFF94A3B8)),
+                  selectedIcon: Icon(Icons.shield_rounded, color: Color(0xFF00F0FF)),
+                  label: 'Formations',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.settings_outlined, color: Color(0xFF94A3B8)),
+                  selectedIcon: Icon(Icons.settings_rounded, color: Color(0xFF00F0FF)),
+                  label: 'Community',
+                ),
+              ],
             ),
-            NavigationDestination(
-              icon: Icon(Icons.timer_outlined, color: Color(0xFF94A3B8)),
-              selectedIcon: Icon(Icons.timer_rounded, color: Color(0xFF00F0FF)),
-              label: 'State Age',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.menu_book_outlined, color: Color(0xFF94A3B8)),
-              selectedIcon: Icon(Icons.menu_book_rounded, color: Color(0xFF00F0FF)),
-              label: 'Codex',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.shield_outlined, color: Color(0xFF94A3B8)),
-              selectedIcon: Icon(Icons.shield_rounded, color: Color(0xFF00F0FF)),
-              label: 'Formations',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.settings_outlined, color: Color(0xFF94A3B8)),
-              selectedIcon: Icon(Icons.settings_rounded, color: Color(0xFF00F0FF)),
-              label: 'Community',
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

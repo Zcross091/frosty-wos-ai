@@ -1,4 +1,4 @@
-name: Build & Release Android APK
+name: Build & Release Multi-Platform Binaries
 
 on:
   push:
@@ -15,10 +15,12 @@ permissions:
   contents: write
 
 jobs:
-  build-apk:
-    name: 🔨 Build Android Release APK
+  # -------------------------------------------------------------
+  # 1. Android Release Build
+  # -------------------------------------------------------------
+  build-android:
+    name: 📱 Build Android APK
     runs-on: ubuntu-latest
-
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
@@ -43,6 +45,97 @@ jobs:
         working-directory: device/mobile
         run: flutter build apk --release
 
+      - name: 📤 Upload Android Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: device/mobile/build/app/outputs/flutter-apk/app-release.apk
+
+  # -------------------------------------------------------------
+  # 2. Windows Desktop Build
+  # -------------------------------------------------------------
+  build-windows:
+    name: 🪟 Build Windows Desktop (x64)
+    runs-on: windows-latest
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🎯 Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: 📦 Install Flutter Dependencies
+        working-directory: device/mobile
+        run: flutter pub get
+
+      - name: 🚀 Build Windows Release
+        working-directory: device/mobile
+        run: flutter build windows --release
+
+      - name: 📦 Archive Windows Bundle
+        shell: pwsh
+        run: |
+          Compress-Archive -Path device/mobile/build/windows/x64/runner/Release/* -DestinationPath frosty-wos-ai-windows-x64.zip
+
+      - name: 📤 Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-zip
+          path: frosty-wos-ai-windows-x64.zip
+
+  # -------------------------------------------------------------
+  # 3. Linux Desktop Build
+  # -------------------------------------------------------------
+  build-linux:
+    name: 🐧 Build Linux Desktop (x64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Install Linux Build Tools & GTK
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev
+
+      - name: 🎯 Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: 📦 Install Flutter Dependencies
+        working-directory: device/mobile
+        run: flutter pub get
+
+      - name: 🚀 Build Linux Release
+        working-directory: device/mobile
+        run: flutter build linux --release
+
+      - name: 📦 Archive Linux Bundle
+        run: |
+          tar -czf frosty-wos-ai-linux-x64.tar.gz -C device/mobile/build/linux/x64/release/bundle .
+
+      - name: 📤 Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-tar
+          path: frosty-wos-ai-linux-x64.tar.gz
+
+  # -------------------------------------------------------------
+  # 4. Consolidated GitHub Release Publication
+  # -------------------------------------------------------------
+  publish-release:
+    name: 🚀 Publish Multi-Platform GitHub Release
+    needs: [build-android, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
       - name: 🏷️ Determine Version Tag
         id: get_version
         run: |
@@ -52,34 +145,52 @@ jobs:
             echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
           fi
 
-      - name: 📦 Prepare APK Artifact
-        run: |
-          mkdir -p release-output
-          cp device/mobile/build/app/outputs/flutter-apk/app-release.apk release-output/frosty-wos-ai-${{ env.TAG_NAME }}.apk
-
-      - name: 📤 Upload Build Artifact
-        uses: actions/upload-artifact@v4
+      - name: 📥 Download Android Artifact
+        uses: actions/download-artifact@v4
         with:
-          name: frosty-android-apk
-          path: release-output/frosty-wos-ai-${{ env.TAG_NAME }}.apk
+          name: android-apk
+          path: release-output/
 
-      - name: 🚀 Create GitHub Release & Attach APK
+      - name: 📥 Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-zip
+          path: release-output/
+
+      - name: 📥 Download Linux Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-tar
+          path: release-output/
+
+      - name: 📦 Rename Packages
+        run: |
+          mv release-output/app-release.apk release-output/frosty-wos-ai-android-${{ env.TAG_NAME }}.apk
+          mv release-output/frosty-wos-ai-windows-x64.zip release-output/frosty-wos-ai-windows-x64-${{ env.TAG_NAME }}.zip
+          mv release-output/frosty-wos-ai-linux-x64.tar.gz release-output/frosty-wos-ai-linux-x64-${{ env.TAG_NAME }}.tar.gz
+
+      - name: 🌟 Create Official GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG_NAME }}
-          name: ❄️ Frosty WOS AI Mobile ${{ env.TAG_NAME }}
+          name: ❄️ Frosty WOS AI ${{ env.TAG_NAME }} (Cross-Platform)
           draft: false
           prerelease: false
-          files: release-output/frosty-wos-ai-${{ env.TAG_NAME }}.apk
+          files: release-output/*
           body: |
-            ## ❄️ Frosty Whiteout Survival Tactical AI Mobile (${{ env.TAG_NAME }})
+            ## ❄️ Frosty Whiteout Survival Tactical AI (${{ env.TAG_NAME }})
 
-            ### 📱 What's New:
+            Cross-platform tactical oracle and grandmaster companion for Whiteout Survival Chiefs worldwide.
+
+            ### 📦 Download Packages by Platform:
+            * 📱 **Android:** `frosty-wos-ai-android-${{ env.TAG_NAME }}.apk` (Install directly on Android devices)
+            * 🪟 **Windows Desktop:** `frosty-wos-ai-windows-x64-${{ env.TAG_NAME }}.zip` (Extract and run `frosty_wos_ai.exe`)
+            * 🐧 **Linux Desktop:** `frosty-wos-ai-linux-x64-${{ env.TAG_NAME }}.tar.gz` (Extract and run `./frosty_wos_ai`)
+            * 🍎 **iOS & macOS:** Source build targets available in repository (`device/mobile/ios` and `device/mobile/macos`)
+
+            ### 🌟 Key Capabilities:
             * 💬 **Live Tactical AI Chat:** Powered by **Google Gemini 3.6 Flash / Groq / Local Ollama** with real-time cooking typing indicators.
             * ⏱️ **Offline State Age & Generation Calculator:** Compute exact server age, active hero generation, countdown to next gen, and tactical shard roadmaps.
             * 📖 **Offline Hero Codex (Gen 0–16+):** Complete offline database for heroes (Seigel, Aisling, Ursar, Bradley, Edith, Flint, etc.) with stats and F2P/P2W advice.
             * 📊 **Troop Formations & Lineups:** Interactive 50/20/30, 10/10/80 Bear Trap, and 60/20/20 Garrison calculators with march capacity sliders.
             * 🌟 **Community & GitHub Hub:** Made by **StateCraft** with direct issue reporting, star, fork, and Discord bot invite links.
-
-            ### 📥 Download & Install:
-            Download the `frosty-wos-ai-${{ env.TAG_NAME }}.apk` attached below and install it directly on your Android device!
