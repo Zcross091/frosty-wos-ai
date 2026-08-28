@@ -412,7 +412,7 @@ class _FormationsScreenState extends State<FormationsScreen> {
                 style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Outfit'),
               ),
               Text(
-                '${_marchCapacity.round():,} Troops',
+                '${_marchCapacity.round().toString().replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (m) => "${m[1]},")} Troops',
                 style: const TextStyle(color: Color(0xFF00F0FF), fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Outfit'),
               ),
             ],
