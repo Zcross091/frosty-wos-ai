@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
 import '../services/ai_service.dart';
 import '../widgets/typing_indicator.dart';
+import '../widgets/spatial_background.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -53,46 +55,55 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final aiService = Provider.of<AIService>(context);
 
-    // Auto-scroll when messages change or generation starts/ends
+    // Auto-scroll on new message
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
 
     return Scaffold(
-      backgroundColor: const Color(0xFF060B13),
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A111F).withOpacity(0.9),
+        backgroundColor: const Color(0xFF070D18).withOpacity(0.85),
         elevation: 0,
         title: Row(
           children: [
             Container(
-              width: 32,
-              height: 32,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF00F0FF).withOpacity(0.15),
-                border: Border.all(color: const Color(0xFF00F0FF), width: 1.2),
+                gradient: const RadialGradient(
+                  colors: [Color(0xFF00F0FF), Color(0xFF0284C7)],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF00F0FF).withOpacity(0.4),
+                    blurRadius: 10,
+                  ),
+                ],
               ),
               child: const Center(
-                child: Text('❄️', style: TextStyle(fontSize: 16)),
+                child: Text('❄️', style: TextStyle(fontSize: 18)),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Frosty AI Tactical Oracle',
+                  'Frosty Tactical Oracle',
                   style: TextStyle(
                     fontFamily: 'Outfit',
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 16.5,
                     color: Colors.white,
+                    letterSpacing: 0.3,
                   ),
                 ),
                 Text(
-                  'Gemini 3.6 • Groq • Ollama • Gen 0-16+',
+                  'Gemini 2.5 • ChromaDB RAG • Gen 0-16+',
                   style: TextStyle(
                     fontSize: 11,
                     color: Color(0xFF00F0FF),
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -107,64 +118,82 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Quick Suggestion Chips
-          Container(
-            height: 48,
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: _quickPrompts.length,
-              itemBuilder: (context, index) {
-                final prompt = _quickPrompts[index];
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ActionChip(
-                    backgroundColor: const Color(0xFF0F192C),
-                    side: BorderSide(
-                      color: const Color(0xFF00F0FF).withOpacity(0.3),
-                      width: 1,
-                    ),
-                    label: Text(
-                      prompt,
-                      style: const TextStyle(
-                        color: Color(0xFFE2E8F0),
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
+      body: SpatialBackground(
+        child: Column(
+          children: [
+            // Quick Suggestion Chips Carousel
+            Container(
+              height: 52,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                itemCount: _quickPrompts.length,
+                itemBuilder: (context, index) {
+                  final prompt = _quickPrompts[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () => _send(aiService, prompt),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F192C).withOpacity(0.85),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color(0xFF00F0FF).withOpacity(0.35),
+                            width: 1.1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF00F0FF).withOpacity(0.08),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            prompt,
+                            style: const TextStyle(
+                              color: Color(0xFFE2E8F0),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Outfit',
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    onPressed: () => _send(aiService, prompt),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
 
-          const Divider(height: 1, color: Color(0xFF1E293B)),
+            const Divider(height: 1, color: Colors.white10),
 
-          // Messages List
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: aiService.messages.length + (aiService.isGenerating ? 1 : 0),
-              itemBuilder: (context, index) {
-                // Show Typing/Cooking Indicator at the bottom if generating
-                if (index == aiService.messages.length) {
-                  return const FrostyTypingIndicator();
-                }
+            // Messages Stream
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                itemCount: aiService.messages.length + (aiService.isGenerating ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == aiService.messages.length) {
+                    return const FrostyTypingIndicator();
+                  }
 
-                final msg = aiService.messages[index];
-                return _buildMessageBubble(msg);
-              },
+                  final msg = aiService.messages[index];
+                  return _buildMessageBubble(msg);
+                },
+              ),
             ),
-          ),
 
-          // Message Input Field
-          _buildInputBar(aiService),
-        ],
+            // Floating Glassmorphic Input Dock
+            _buildInputBar(aiService),
+          ],
+        ),
       ),
     );
   }
@@ -175,98 +204,132 @@ class _ChatScreenState extends State<ChatScreen> {
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 6),
+        margin: const EdgeInsets.symmetric(vertical: 8),
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.88,
         ),
         decoration: BoxDecoration(
-          color: isUser
-              ? const Color(0xFF0284C7)
-              : const Color(0xFF0F192C),
+          gradient: isUser
+              ? const LinearGradient(
+                  colors: [Color(0xFF0369A1), Color(0xFF0284C7)],
+                )
+              : LinearGradient(
+                  colors: [
+                    const Color(0xFF132238).withOpacity(0.88),
+                    const Color(0xFF0A1220).withOpacity(0.95),
+                  ],
+                ),
           borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(18),
-            topRight: const Radius.circular(18),
-            bottomLeft: Radius.circular(isUser ? 18 : 4),
-            bottomRight: Radius.circular(isUser ? 4 : 18),
+            topLeft: const Radius.circular(20),
+            topRight: const Radius.circular(20),
+            bottomLeft: Radius.circular(isUser ? 20 : 4),
+            bottomRight: Radius.circular(isUser ? 4 : 20),
           ),
           border: Border.all(
             color: isUser
                 ? const Color(0xFF38BDF8)
-                : const Color(0xFF00F0FF).withOpacity(0.3),
-            width: 1,
+                : const Color(0xFF00F0FF).withOpacity(0.35),
+            width: 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
+              color: isUser
+                  ? const Color(0xFF0284C7).withOpacity(0.3)
+                  : const Color(0xFF00F0FF).withOpacity(0.1),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header tag for assistant response
+              if (!isUser) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Text('❄️', style: TextStyle(fontSize: 14)),
+                        const SizedBox(width: 6),
+                        Text(
+                          msg.modelUsed ?? 'Frosty Oracle',
+                          style: const TextStyle(
+                            color: Color(0xFF00F0FF),
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.copy_rounded, size: 16, color: Color(0xFF94A3B8)),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Copy Answer',
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: msg.text));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('📋 Copied tactical advice to clipboard!'),
+                            duration: const Duration(seconds: 2),
+                            backgroundColor: const Color(0xFF0284C7),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Divider(color: Colors.white10, height: 1),
+                const SizedBox(height: 8),
+              ],
+
               // Markdown Content
               MarkdownBody(
-                data: msg.content,
-                selectable: true,
+                data: msg.text,
                 styleSheet: MarkdownStyleSheet(
                   p: const TextStyle(
                     color: Color(0xFFF1F5F9),
                     fontSize: 13.5,
                     height: 1.45,
                   ),
-                  h3: const TextStyle(
+                  strong: const TextStyle(
                     color: Color(0xFF00F0FF),
-                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  h1: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Outfit',
                   ),
-                  h4: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13.5,
+                  h2: const TextStyle(
+                    color: Color(0xFF00F0FF),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Outfit',
+                  ),
+                  h3: const TextStyle(
+                    color: Color(0xFF38BDF8),
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
+                  listBullet: const TextStyle(color: Color(0xFF00F0FF)),
                   code: const TextStyle(
-                    backgroundColor: Color(0xFF030712),
+                    backgroundColor: Color(0xFF060B13),
                     color: Color(0xFF38BDF8),
                     fontFamily: 'monospace',
                     fontSize: 12,
                   ),
-                  listBullet: const TextStyle(
-                    color: Color(0xFF00F0FF),
-                  ),
                 ),
               ),
-
-              if (!isUser && msg.modelUsed != null) ...[
-                const SizedBox(height: 8),
-                const Divider(height: 1, color: Color(0xFF334155)),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '⚡ ${msg.modelUsed}',
-                      style: const TextStyle(
-                        color: Color(0xFF64748B),
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (msg.latencySeconds != null && msg.latencySeconds! > 0)
-                      Text(
-                        '${msg.latencySeconds!.toStringAsFixed(2)}s',
-                        style: const TextStyle(
-                          color: Color(0xFF64748B),
-                          fontSize: 10.5,
-                        ),
-                      ),
-                  ],
-                ),
-              ],
             ],
           ),
         ),
@@ -276,61 +339,58 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildInputBar(AIService aiService) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF0A111F),
-        border: Border(
-          top: BorderSide(color: const Color(0xFF00F0FF).withOpacity(0.2)),
-        ),
+        color: const Color(0xFF070D18).withOpacity(0.92),
+        border: const Border(top: BorderSide(color: Colors.white10)),
       ),
       child: SafeArea(
+        top: false,
         child: Row(
           children: [
             Expanded(
-              child: TextField(
-                controller: _textController,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (val) => _send(aiService, val),
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-                decoration: InputDecoration(
-                  hintText: 'Ask Frosty tactical question...',
-                  hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
-                  filled: true,
-                  fillColor: const Color(0xFF0F192C),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide(color: const Color(0xFF00F0FF).withOpacity(0.3)),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F192C),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: const Color(0xFF00F0FF).withOpacity(0.3),
+                    width: 1.2,
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(color: Color(0xFF00F0FF), width: 1.5),
+                ),
+                child: TextField(
+                  controller: _textController,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (text) => _send(aiService, text),
+                  decoration: const InputDecoration(
+                    hintText: 'Ask Frosty (e.g. Bear Trap, Gen 16, 50/20/30)...',
+                    hintStyle: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [Color(0xFF00F0FF), Color(0xFF0088FF)],
+                gradient: const RadialGradient(
+                  colors: [Color(0xFF00F0FF), Color(0xFF0284C7)],
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF00F0FF).withOpacity(0.4),
+                    blurRadius: 10,
+                  ),
+                ],
               ),
               child: IconButton(
-                icon: aiService.isGenerating
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Color(0xFF040914),
-                        ),
-                      )
-                    : const Icon(Icons.send_rounded, color: Color(0xFF040914)),
-                onPressed: aiService.isGenerating
-                    ? null
-                    : () => _send(aiService, _textController.text),
+                icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                onPressed: () => _send(aiService, _textController.text),
               ),
             ),
           ],

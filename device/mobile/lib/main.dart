@@ -30,13 +30,14 @@ class FrostyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF060B13),
+        scaffoldBackgroundColor: const Color(0xFF040812),
         primaryColor: const Color(0xFF00F0FF),
         colorScheme: const ColorScheme.dark(
           primary: Color(0xFF00F0FF),
-          secondary: Color(0xFF0088FF),
+          secondary: Color(0xFF0284C7),
+          tertiary: Color(0xFFF59E0B),
           surface: Color(0xFF0F192C),
-          background: Color(0xFF060B13),
+          background: Color(0xFF040812),
         ),
         fontFamily: 'Outfit',
         useMaterial3: true,
@@ -81,11 +82,12 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
         if (isDesktop) {
           return Scaffold(
+            backgroundColor: const Color(0xFF040812),
             body: Row(
               children: [
                 NavigationRail(
                   selectedIndex: _currentIndex,
-                  backgroundColor: const Color(0xFF0A111F),
+                  backgroundColor: const Color(0xFF070D18),
                   indicatorColor: const Color(0xFF00F0FF).withOpacity(0.2),
                   extended: constraints.maxWidth >= 1000,
                   minWidth: 72,
@@ -98,17 +100,24 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          width: 36,
-                          height: 36,
+                          width: 40,
+                          height: 40,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: const Color(0xFF00F0FF).withOpacity(0.15),
-                            border: Border.all(color: const Color(0xFF00F0FF), width: 1.2),
+                            gradient: const RadialGradient(
+                              colors: [Color(0xFF00F0FF), Color(0xFF0284C7)],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF00F0FF).withOpacity(0.4),
+                                blurRadius: 12,
+                              ),
+                            ],
                           ),
-                          child: const Center(child: Text('❄️', style: TextStyle(fontSize: 18))),
+                          child: const Center(child: Text('❄️', style: TextStyle(fontSize: 20))),
                         ),
                         if (constraints.maxWidth >= 1000) ...[
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 12),
                           const Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
@@ -118,13 +127,13 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                                 style: TextStyle(
                                   fontFamily: 'Outfit',
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                                  fontSize: 17,
                                   color: Colors.white,
                                 ),
                               ),
                               Text(
-                                'Desktop Command',
-                                style: TextStyle(fontSize: 10, color: Color(0xFF00F0FF)),
+                                'Tactical Command',
+                                style: TextStyle(fontSize: 11, color: Color(0xFF00F0FF)),
                               ),
                             ],
                           ),
@@ -156,11 +165,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                     NavigationRailDestination(
                       icon: Icon(Icons.settings_outlined, color: Color(0xFF94A3B8)),
                       selectedIcon: Icon(Icons.settings_rounded, color: Color(0xFF00F0FF)),
-                      label: Text('Community'),
+                      label: Text('Settings'),
                     ),
                   ],
                 ),
-                const VerticalDivider(thickness: 1, width: 1, color: Color(0xFF1E293B)),
+                const VerticalDivider(thickness: 1, width: 1, color: Colors.white10),
                 Expanded(
                   child: IndexedStack(
                     index: _currentIndex,
@@ -172,23 +181,28 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           );
         }
 
-        // Mobile Screen Layout
+        // Mobile Screen Layout with Floating Glassmorphic Dock
         return Scaffold(
+          backgroundColor: const Color(0xFF040812),
           body: IndexedStack(
             index: _currentIndex,
             children: _screens,
           ),
           bottomNavigationBar: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFF0A111F),
+              color: const Color(0xFF070D18).withOpacity(0.95),
               border: Border(
-                top: BorderSide(color: const Color(0xFF00F0FF).withOpacity(0.18)),
+                top: BorderSide(color: const Color(0xFF00F0FF).withOpacity(0.2), width: 1.2),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.4),
-                  blurRadius: 16,
-                  offset: const Offset(0, -4),
+                  color: Colors.black.withOpacity(0.5),
+                  blurRadius: 20,
+                  offset: const Offset(0, -6),
+                ),
+                BoxShadow(
+                  color: const Color(0xFF00F0FF).withOpacity(0.08),
+                  blurRadius: 15,
                 ),
               ],
             ),
@@ -198,34 +212,35 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               indicatorColor: const Color(0xFF00F0FF).withOpacity(0.2),
               surfaceTintColor: Colors.transparent,
               elevation: 0,
+              height: 65,
               onDestinationSelected: (index) {
                 setState(() => _currentIndex = index);
               },
               destinations: const [
                 NavigationDestination(
-                  icon: Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF94A3B8)),
-                  selectedIcon: Icon(Icons.chat_bubble_rounded, color: Color(0xFF00F0FF)),
+                  icon: Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF94A3B8), size: 22),
+                  selectedIcon: Icon(Icons.chat_bubble_rounded, color: Color(0xFF00F0FF), size: 24),
                   label: 'AI Oracle',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.timer_outlined, color: Color(0xFF94A3B8)),
-                  selectedIcon: Icon(Icons.timer_rounded, color: Color(0xFF00F0FF)),
+                  icon: Icon(Icons.timer_outlined, color: Color(0xFF94A3B8), size: 22),
+                  selectedIcon: Icon(Icons.timer_rounded, color: Color(0xFF00F0FF), size: 24),
                   label: 'State Age',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.menu_book_outlined, color: Color(0xFF94A3B8)),
-                  selectedIcon: Icon(Icons.menu_book_rounded, color: Color(0xFF00F0FF)),
+                  icon: Icon(Icons.menu_book_outlined, color: Color(0xFF94A3B8), size: 22),
+                  selectedIcon: Icon(Icons.menu_book_rounded, color: Color(0xFF00F0FF), size: 24),
                   label: 'Codex',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.shield_outlined, color: Color(0xFF94A3B8)),
-                  selectedIcon: Icon(Icons.shield_rounded, color: Color(0xFF00F0FF)),
+                  icon: Icon(Icons.shield_outlined, color: Color(0xFF94A3B8), size: 22),
+                  selectedIcon: Icon(Icons.shield_rounded, color: Color(0xFF00F0FF), size: 24),
                   label: 'Formations',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.settings_outlined, color: Color(0xFF94A3B8)),
-                  selectedIcon: Icon(Icons.settings_rounded, color: Color(0xFF00F0FF)),
-                  label: 'Community',
+                  icon: Icon(Icons.settings_outlined, color: Color(0xFF94A3B8), size: 22),
+                  selectedIcon: Icon(Icons.settings_rounded, color: Color(0xFF00F0FF), size: 24),
+                  label: 'Settings',
                 ),
               ],
             ),

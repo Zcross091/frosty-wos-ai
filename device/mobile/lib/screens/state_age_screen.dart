@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/state_calculation.dart';
 import '../services/state_age_service.dart';
+import '../widgets/spatial_background.dart';
 
 class StateAgeScreen extends StatefulWidget {
   const StateAgeScreen({super.key});
@@ -73,119 +74,128 @@ class _StateAgeScreenState extends State<StateAgeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF060B13),
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A111F).withOpacity(0.9),
+        backgroundColor: const Color(0xFF070D18).withOpacity(0.85),
         elevation: 0,
         title: const Row(
           children: [
             Text('⏱️ ', style: TextStyle(fontSize: 18)),
             Text(
-              'State Age & Gen Calculator',
+              'State Age & Gen Telemetry',
               style: TextStyle(
                 fontFamily: 'Outfit',
                 fontWeight: FontWeight.bold,
-                fontSize: 17,
+                fontSize: 18,
                 color: Colors.white,
+                letterSpacing: 0.3,
               ),
             ),
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Mode Selector
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F192C),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF00F0FF).withOpacity(0.2)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildModeTab(
-                      label: 'State #',
-                      isSelected: _selectedMode == 0,
-                      onTap: () {
-                        setState(() => _selectedMode = 0);
-                        _recalculate();
-                      },
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildModeTab(
-                      label: 'Server Days',
-                      isSelected: _selectedMode == 1,
-                      onTap: () {
-                        setState(() => _selectedMode = 1);
-                        _recalculate();
-                      },
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildModeTab(
-                      label: '📅 Pick Date',
-                      isSelected: _selectedMode == 2,
-                      onTap: _pickDate,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Input Field
-            if (_selectedMode != 2) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _stateInputController,
-                      keyboardType: TextInputType.number,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+      body: SpatialBackground(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Mode Selector
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F192C).withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF00F0FF).withOpacity(0.25)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildModeTab(
+                        label: 'State #',
+                        isSelected: _selectedMode == 0,
+                        onTap: () {
+                          setState(() => _selectedMode = 0);
+                          _recalculate();
+                        },
                       ),
-                      decoration: InputDecoration(
-                        labelText: _selectedMode == 0 ? 'Enter State Number (e.g. 750)' : 'Enter Exact Server Days (e.g. 420)',
-                        labelStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                        filled: true,
-                        fillColor: const Color(0xFF0F192C),
-                        prefixIcon: Icon(
-                          _selectedMode == 0 ? Icons.tag : Icons.calendar_today,
-                          color: const Color(0xFF00F0FF),
-                          size: 20,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: const Color(0xFF00F0FF).withOpacity(0.3)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(color: Color(0xFF00F0FF), width: 1.5),
-                        ),
-                      ),
-                      onChanged: (_) => _recalculate(),
                     ),
-                  ),
-                ],
+                    Expanded(
+                      child: _buildModeTab(
+                        label: 'Server Days',
+                        isSelected: _selectedMode == 1,
+                        onTap: () {
+                          setState(() => _selectedMode = 1);
+                          _recalculate();
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildModeTab(
+                        label: '📅 Pick Date',
+                        isSelected: _selectedMode == 2,
+                        onTap: _pickDate,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
-            ],
-
-            // Calculation Results
-            if (_calculation != null) ...[
-              _buildCalculationCard(_calculation!),
               const SizedBox(height: 16),
-              _buildRoadmapCard(_calculation!),
+
+              // Input Field
+              if (_selectedMode != 2) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _stateInputController,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Outfit',
+                        ),
+                        decoration: InputDecoration(
+                          labelText: _selectedMode == 0 ? 'Enter State Number (e.g. 750)' : 'Enter Exact Server Days (e.g. 420)',
+                          labelStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                          filled: true,
+                          fillColor: const Color(0xFF0F192C).withOpacity(0.85),
+                          prefixIcon: Icon(
+                            _selectedMode == 0 ? Icons.tag : Icons.calendar_today,
+                            color: const Color(0xFF00F0FF),
+                            size: 20,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: const Color(0xFF00F0FF).withOpacity(0.3)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: const Color(0xFF00F0FF).withOpacity(0.25)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: const BorderSide(color: Color(0xFF00F0FF), width: 1.5),
+                          ),
+                        ),
+                        onChanged: (_) => _recalculate(),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
+
+              // Calculation Results
+              if (_calculation != null) ...[
+                _buildCalculationCard(_calculation!),
+                const SizedBox(height: 16),
+                _buildRoadmapCard(_calculation!),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -194,11 +204,17 @@ class _StateAgeScreenState extends State<StateAgeScreen> {
   Widget _buildModeTab({required String label, required bool isSelected, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF00F0FF) : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          gradient: isSelected
+              ? const LinearGradient(
+                  colors: [Color(0xFF00F0FF), Color(0xFF0284C7)],
+                )
+              : null,
+          color: isSelected ? null : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Center(
           child: Text(
@@ -207,6 +223,7 @@ class _StateAgeScreenState extends State<StateAgeScreen> {
               color: isSelected ? const Color(0xFF040914) : const Color(0xFF94A3B8),
               fontSize: 12.5,
               fontWeight: FontWeight.bold,
+              fontFamily: 'Outfit',
             ),
           ),
         ),
@@ -217,12 +234,19 @@ class _StateAgeScreenState extends State<StateAgeScreen> {
   Widget _buildCalculationCard(StateCalculation calc) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0F192C),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF132238).withOpacity(0.85),
+            const Color(0xFF0A1220).withOpacity(0.95),
+          ],
+        ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFF00F0FF).withOpacity(0.35), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF00F0FF).withOpacity(0.1),
+            color: const Color(0xFF00F0FF).withOpacity(0.12),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -265,8 +289,14 @@ class _StateAgeScreenState extends State<StateAgeScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: const Color(0xFF00F0FF).withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: const Color(0xFF00F0FF)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF00F0FF).withOpacity(0.25),
+                        blurRadius: 10,
+                      ),
+                    ],
                   ),
                   child: Text(
                     'Day ~${calc.ageInDays}',
@@ -274,13 +304,14 @@ class _StateAgeScreenState extends State<StateAgeScreen> {
                       color: Color(0xFF00F0FF),
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
+                      fontFamily: 'Outfit',
                     ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 18),
-            const Divider(height: 1, color: Color(0xFF334155)),
+            const Divider(height: 1, color: Colors.white12),
             const SizedBox(height: 16),
 
             // Active Heroes
@@ -300,7 +331,7 @@ class _StateAgeScreenState extends State<StateAgeScreen> {
                 return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
+                    color: const Color(0xFF1E293B).withOpacity(0.8),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: const Color(0xFF38BDF8).withOpacity(0.4)),
                   ),
@@ -323,8 +354,14 @@ class _StateAgeScreenState extends State<StateAgeScreen> {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.4),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.4)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFF59E0B).withOpacity(0.1),
+                      blurRadius: 12,
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
@@ -349,6 +386,7 @@ class _StateAgeScreenState extends State<StateAgeScreen> {
                               color: Colors.white,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              fontFamily: 'Outfit',
                             ),
                           ),
                           if (calc.estimatedNextGenDate != null)
@@ -375,7 +413,7 @@ class _StateAgeScreenState extends State<StateAgeScreen> {
   Widget _buildRoadmapCard(StateCalculation calc) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0F192C),
+        color: const Color(0xFF0F192C).withOpacity(0.85),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFF38BDF8).withOpacity(0.25)),
       ),
@@ -406,7 +444,7 @@ class _StateAgeScreenState extends State<StateAgeScreen> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: const Color(0xFF00F0FF).withOpacity(0.08),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFF00F0FF).withOpacity(0.3)),
               ),
               child: Text(
