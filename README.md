@@ -2,23 +2,40 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Frosty_AI-v2.5_Active-00D2FF?style=for-the-badge&logo=discord&logoColor=white" alt="Frosty AI Version" />
+  <img src="https://img.shields.io/badge/Android-Flutter_App-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android App" />
+  <img src="https://img.shields.io/badge/Made_By-StateCraft-00F0FF?style=for-the-badge" alt="Made by StateCraft" />
   <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.10+" />
   <img src="https://img.shields.io/badge/Google_Gemini-3.6_Flash-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google Gemini" />
-  <img src="https://img.shields.io/badge/Groq-Llama_3.3_70B-F55036?style=for-the-badge&logo=groq&logoColor=white" alt="Groq" />
-  <img src="https://img.shields.io/badge/ChromaDB-Hybrid_RAG-FF6B6B?style=for-the-badge" alt="ChromaDB" />
+  <img src="https://img.shields.io/badge/Groq-Active_LLMs-F55036?style=for-the-badge&logo=groq&logoColor=white" alt="Groq" />
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="MIT License" />
 </p>
 
 <p align="center">
-  <b>The ultimate Discord AI tactical companion for Whiteout Survival Chiefs, Alliances, and Grandmasters.</b><br />
-  Combines conversational LLM intelligence (Google Gemini 3.6 Flash & Groq) with a dedicated ChromaDB Hybrid RAG engine containing verified archives for <b>Generations 0 through 16+</b>, event walkthroughs, Dawn Academy experts, and formation calculators.
+  <b>The ultimate Discord & Android AI tactical companion for Whiteout Survival Chiefs, Alliances, and Grandmasters.</b><br />
+  Combines conversational LLM intelligence (Google Gemini 3.6 Flash & Groq) with a dedicated ChromaDB Hybrid RAG engine containing verified archives for <b>Generations 0 through 16+</b>, State Age calculators, event walkthroughs, Dawn Academy experts, and formation calculators.
 </p>
 
 <p align="center">
   <a href="https://discord.com/oauth2/authorize?client_id=1501632240466006108&permissions=347200&integration_type=0&scope=bot+applications.commands">
     <img src="https://img.shields.io/badge/❄️_INVITE_FROSTY_TO_DISCORD-5865F2?style=for-the-badge&logo=discord&logoColor=white" height="42" alt="Invite Frosty to Discord" />
   </a>
+  <a href="https://github.com/Zcross091/frosty-wos-ai/releases">
+    <img src="https://img.shields.io/badge/📱_DOWNLOAD_ANDROID_APK-3DDC84?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download Android App" />
+  </a>
 </p>
+
+---
+
+## 📱 Frosty Mobile (Native Android Flutter App)
+
+Located in [`device/mobile/`](file:///c:/Users/afaqa/OneDrive/Documents/Development/Frosty%20Bot%20wos/device/mobile), the Frosty Android app brings all tactical intelligence directly to your mobile device:
+
+* 💬 **Live Tactical AI Chat:** Ask complex questions with real-time "cooking" typing animations. Supports **Gemini 3.6 Flash**, **Groq**, **Local Ollama**, and **Offline Tactical Core**.
+* ⏱️ **Offline State Age & Generation Calculator:** Enter your State Number (1 - 1500+) or launch date to calculate exact server age, active hero generation, countdown to the next generation, and tactical shard-saving advice.
+* 📖 **Offline Hero Codex (Gen 0 - 16+):** Complete offline dossier for heroes (Seigel, Aisling, Ursar, Bradley, Edith, Flint, Alonso, etc.) with stats, exclusive gear, and F2P/P2W star roadmaps.
+* 📊 **Interactive Troop Formation Calculator:** Preset switches (`50/20/30 PvP`, `10/10/80 Bear Trap`, `60/20/20 Garrison`) with march capacity sliders and exact troop counts.
+* 🌟 **Community & Settings Hub:** Direct links to **Post Issues**, **Fork Repository**, **Star on GitHub**, **Contribute**, and Discord bot invite.
+
 
 ---
 
