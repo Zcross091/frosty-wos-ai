@@ -21,8 +21,8 @@ load_dotenv()
 logger = logging.getLogger("FrostyAI.Engine")
 
 # Supported Models
-DEFAULT_GEMINI_MODEL = "gemini-3.6-flash"
-GEMINI_FALLBACKS = ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"]
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_FALLBACKS = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.5-pro", "gemini-3.6-flash"]
 
 
 DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b"
@@ -53,6 +53,9 @@ class AIEngine:
         self.openrouter_model = os.getenv("OPENROUTER_MODEL", DEFAULT_OPENROUTER_MODEL).strip() or DEFAULT_OPENROUTER_MODEL
 
         # Sanitize known deprecated models
+        if self.gemini_model in ["gemini-2.0-flash", "gemini-2.0-flash-exp", "gemini-1.0-pro"]:
+            self.gemini_model = "gemini-2.5-flash"
+
         if "8b-instant" in self.groq_model or "llama-3.1-8b" in self.groq_model:
             self.groq_model = DEFAULT_GROQ_MODEL
 
