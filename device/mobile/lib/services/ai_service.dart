@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -215,7 +216,7 @@ class AIService extends ChangeNotifier {
     }
   }
 
-  // --- 0. Central Backend Server Provider ---
+  // --- 0. Central Backend Server Provider with Cryptographic Handshake ---
   Future<Map<String, String>> _callBackend(String prompt) async {
     if (_backendUrl.isEmpty) throw Exception('Backend URL not configured');
 
@@ -233,10 +234,23 @@ class AIService extends ChangeNotifier {
           .toList(),
     };
 
+    final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final jsonPayload = jsonEncode(payload);
+
+    // Cryptographic App Handshake Signature: HMAC-SHA256(secret, "$timestamp:$jsonPayload")
+    const appSecret = 'frosty-wos-grandmaster-v2-secure-handshake';
+    final hmacSha256 = Hmac(sha256, utf8.encode(appSecret));
+    final signature = hmacSha256.convert(utf8.encode('$timestamp:$jsonPayload')).toString();
+
     final response = await http.post(
       uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(payload),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Frosty-App-Id': 'frosty-wos-official-client',
+        'X-Frosty-Timestamp': timestamp.toString(),
+        'X-Frosty-Signature': signature,
+      },
+      body: jsonPayload,
     );
 
     if (response.statusCode == 200) {
@@ -245,6 +259,15 @@ class AIService extends ChangeNotifier {
         'text': (data['text'] ?? data['response'] ?? '') as String,
         'model': (data['model'] ?? 'Frosty Central Server') as String,
       };
+    } else if (response.statusCode == 400) {
+      // Zero-Token Guardrail Response
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      if (data['message'] != null) {
+        return {
+          'text': data['message'] as String,
+          'model': 'Frosty Guardrail Defense',
+        };
+      }
     }
     throw Exception('Backend HTTP ${response.statusCode}');
   }
