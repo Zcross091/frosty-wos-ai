@@ -347,8 +347,8 @@ const CODEX_DATA = {
     { name: "Ursar", type: "lancer", title: "Gen 16 (Legendary)", statAtk: 94, statDef: 92, statHp: 91, skill: "Toxic Gale: +35% Enemy Attack reduction & Bleed dots.", role: "Hall of Heroes Support & Marksman Counter" }
   ],
   7: [
-    { name: "Bradley", type: "infantry", title: "Gen 7 (Mythic)", statAtk: 84, statDef: 90, statHp: 89, skill: "Frost Barrier: Shield absorptions & Rally Defense buff.", role: "Premier Gen 7 Rally Anchor" },
-    { name: "Edith", type: "marksman", title: "Gen 7 (Mythic)", statAtk: 91, statDef: 78, statHp: 80, skill: "Piercing Bolt: Direct backline execution.", role: "Core PvP Damage Carry" }
+    { name: "Edith", type: "infantry", title: "Gen 7 (Mythic)", statAtk: 84, statDef: 95, statHp: 94, skill: "Strategic Balance: Shields Marksmen & boosts Lancers.", role: "Frontline Mech Tank with Mr. Tin" },
+    { name: "Bradley", type: "marksman", title: "Gen 7 (Mythic)", statAtk: 92, statDef: 78, statHp: 80, skill: "Piercing Shell: Armor penetration & heavy siege sniper.", role: "Core PvP Damage Carry" }
   ],
   4: [
     { name: "Lynn", type: "marksman", title: "Gen 4 (Mythic)", statAtk: 85, statDef: 74, statHp: 76, skill: "Heavy Shot: Stun chances & high attack speed.", role: "F2P Wheel Marksman Star" },

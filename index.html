@@ -221,18 +221,162 @@
   .calc-stat b{display:block;font-size:1.45rem;color:var(--accent);}
   .calc-stat span{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
 
-  /* Hero Codex */
-  .codex-list{display:flex;flex-direction:column;gap:.7rem;max-width:780px;}
-  .codex-row{
-    display:flex;justify-content:space-between;align-items:center;
-    padding:1.1rem 1.5rem;border-radius:14px;
-    background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
-    transition:border-color .3s, background .3s, transform .2s;
-    cursor:pointer;
+  /* Hero Codex Pop-Down Menu & Drawer */
+  .codex-dropdown-container {
+    max-width: 860px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
   }
-  .codex-row:hover{border-color:var(--accent);background:rgba(127,227,255,.08);transform:translateX(5px);}
-  .codex-row .gen{font-weight:800;color:var(--accent);font-size:1rem;min-width:180px;}
-  .codex-row .heroes{color:var(--ice-1);font-size:.92rem;text-align:right;}
+  .codex-select-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.2rem 1.6rem;
+    border-radius: 18px;
+    background: rgba(15, 25, 44, 0.75);
+    border: 1px solid rgba(0, 240, 255, 0.25);
+    backdrop-filter: blur(12px);
+  }
+  .codex-select-group {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-grow: 1;
+  }
+  .codex-select-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .codex-select {
+    flex-grow: 1;
+    max-width: 320px;
+    background: rgba(4, 9, 20, 0.95);
+    color: #fff;
+    border: 1.5px solid var(--accent);
+    padding: 0.65rem 1rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+  .codex-select:focus {
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+    border-color: #7fe3ff;
+  }
+  .codex-toggle-btn {
+    background: rgba(0, 240, 255, 0.1);
+    color: var(--accent);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    padding: 0.65rem 1.2rem;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.25s ease;
+  }
+  .codex-toggle-btn:hover {
+    background: rgba(0, 240, 255, 0.2);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .codex-active-card {
+    background: rgba(8, 16, 28, 0.85);
+    border: 1.5px solid rgba(0, 240, 255, 0.3);
+    border-radius: 20px;
+    padding: 1.8rem 2rem;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 240, 255, 0.1);
+    transition: all 0.3s ease;
+  }
+  .codex-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .codex-gen-badge {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .codex-unlock-tag {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .hero-roster-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+  }
+  .hero-roster-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 1rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .hero-roster-item.inf { border-left: 3px solid #38bdf8; }
+  .hero-roster-item.lan { border-left: 3px solid #fb923c; }
+  .hero-roster-item.mark { border-left: 3px solid #f87171; }
+  .hero-roster-icon { font-size: 1.4rem; }
+  .hero-roster-type { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .hero-roster-name { font-size: 1.05rem; font-weight: 700; color: #fff; }
+  .codex-active-advice {
+    background: rgba(0, 240, 255, 0.06);
+    border: 1px solid rgba(0, 240, 255, 0.18);
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    font-size: 0.92rem;
+    color: var(--ice-1);
+    line-height: 1.5;
+  }
+  .codex-drawer {
+    background: rgba(4, 9, 20, 0.95);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    border-radius: 18px;
+    padding: 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+  .codex-drawer-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+  }
+  .codex-list { display: flex; flex-direction: column; gap: 0.6rem; }
+  .codex-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.9rem 1.4rem; border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: all 0.2s ease; cursor: pointer;
+  }
+  .codex-row:hover, .codex-row.active {
+    border-color: var(--accent); background: rgba(0, 240, 255, 0.08); transform: translateX(4px);
+  }
+  .codex-row .gen { font-weight: 800; color: var(--accent); font-size: 0.95rem; min-width: 140px; }
+  .codex-row .heroes { color: var(--ice-1); font-size: 0.88rem; text-align: right; }
 
   /* 2-Column Split Layout for Formations & 3D Hologram */
   .formations-layout{
@@ -466,32 +610,72 @@
     </div>
   </section>
 
-  <!-- Hero Codex -->
+  <!-- Hero Codex (On-Demand Pop-Down Menu & Drawer) -->
   <section id="codex">
     <div class="section-head">
       <div class="kicker">Official Hero Archives</div>
-      <h2>Interactive Generation & Hero Codex (Gen 0 – 16+)</h2>
-      <p>Verified roster, troop affinities, and release generations sourced directly from the official Whiteout Survival archives.</p>
+      <h2>Interactive Hero Codex</h2>
+      <p>Select any generation from the dropdown menu to inspect featured heroes, troop affinities, and investment roadmaps on demand.</p>
     </div>
-    <div class="codex-list">
-      <div class="codex-row"><span class="gen">Gen 16 (Endgame)</span><span class="heroes">🔷 Seigel (Inf) · 🔶 Ursar (Lan) · 🔴 Aisling (Mark)</span></div>
-      <div class="codex-row"><span class="gen">Gen 15</span><span class="heroes">🔷 Hank (Inf) · 🔶 Estrella (Lan) · 🔴 Viveca (Mark)</span></div>
-      <div class="codex-row"><span class="gen">Gen 14</span><span class="heroes">🔷 Elif (Inf) · 🔶 Dominic (Lan) · 🔴 Cara (Mark)</span></div>
-      <div class="codex-row"><span class="gen">Gen 13</span><span class="heroes">🔷 Gisela (Inf) · 🔶 Flora (Lan) · 🔴 Vulcanus (Mark)</span></div>
-      <div class="codex-row"><span class="gen">Gen 12</span><span class="heroes">🔷 Hervor (Inf) · 🔶 Karol (Lan) · 🔴 Ligeia (Mark)</span></div>
-      <div class="codex-row"><span class="gen">Gen 11</span><span class="heroes">🔷 Eleonora (Inf) · 🔶 Lloyd (Lan) · 🔴 Rufus (Mark)</span></div>
-      <div class="codex-row"><span class="gen">Gen 10</span><span class="heroes">🔷 Gregory (Inf) · 🔶 Freya (Lan) · 🔴 Blanchette (Mark)</span></div>
-      <div class="codex-row"><span class="gen">Gen 9</span><span class="heroes">🔷 Magnus (Inf) · 🔶 Fred (Lan) · 🔴 Xura (Mark)</span></div>
-      <div class="codex-row"><span class="gen">Gen 8</span><span class="heroes">🔷 Gatot (Inf) · 🔶 Sonya (Lan) · 🔴 Hendrik (Mark)</span></div>
-      <div class="codex-row"><span class="gen">Gen 7</span><span class="heroes">🔷 Edith (Inf) · 🔶 Gordon (Lan) · 🔴 Bradley (Mark)</span></div>
-      <div class="codex-row"><span class="gen">Gen 6</span><span class="heroes">🔷 Wayne (Inf) · 🔶 Wu Ming (Lan) · 🔴 Renee (Mark)</span></div>
-      <div class="codex-row"><span class="gen">Gen 5</span><span class="heroes">🔷 Hector (Inf) · 🔶 Norah (Lan) · 🔴 Gwen (Mark)</span></div>
-      <div class="codex-row"><span class="gen">Gen 4</span><span class="heroes">🔷 Ahmose (Inf) · 🔶 Reina (Lan) · 🔴 Lynn (Mark)</span></div>
-      <div class="codex-row"><span class="gen">Gen 3</span><span class="heroes">🔷 Logan (Inf) · 🔶 Greg (Lan) · 🔴 Mia (Mark)</span></div>
-      <div class="codex-row"><span class="gen">Gen 2</span><span class="heroes">🔷 Flint (Inf) · 🔶 Philly (Lan) · 🔴 Alonso (Mark)</span></div>
-      <div class="codex-row"><span class="gen">Gen 1</span><span class="heroes">🔷 Jeronimo (Inf) · 🔶 Natalia (Lan) · 🔴 Molly & Zinman (Mark)</span></div>
-      <div class="codex-row"><span class="gen">Epic Core (F2P)</span><span class="heroes">🔷 Sergey & Patrick · 🔶 Jessie & Seo-yoon · 🔴 Bahiti & Gina</span></div>
-      <div class="codex-row"><span class="gen">Rare (Gen 0 Growth)</span><span class="heroes">🔷 Smith & Eugene (Inf) · 🔶 Charlie (Lan) · 🔴 Cloris (Mark)</span></div>
+
+    <!-- Dropdown Selector & Active View Card -->
+    <div class="codex-dropdown-container">
+      <div class="codex-select-bar">
+        <div class="codex-select-group">
+          <label for="codexGenSelect" class="codex-select-label">Choose Generation:</label>
+          <select id="codexGenSelect" class="codex-select" onchange="onCodexSelectChange(this.value)">
+            <!-- Populated dynamically from heroes_data.json -->
+          </select>
+        </div>
+        <button type="button" class="codex-toggle-btn" id="codexToggleBtn" onclick="toggleCodexDrawer()">
+          <span id="codexToggleIcon">📖</span> <span id="codexToggleText">Browse Full Codex List</span>
+        </button>
+      </div>
+
+      <!-- Focused Generation Card (Pop-Down View) -->
+      <div class="codex-active-card" id="codexActiveCard">
+        <div class="codex-card-header">
+          <span class="codex-gen-badge" id="activeGenBadge">Gen 16</span>
+          <span class="codex-unlock-tag" id="activeGenUnlock">Unlocks ~Day 1080+</span>
+        </div>
+        <div class="hero-roster-grid">
+          <div class="hero-roster-item inf">
+            <span class="hero-roster-icon">🔷</span>
+            <div>
+              <div class="hero-roster-type">Infantry</div>
+              <div class="hero-roster-name" id="activeInfHero">Seigel</div>
+            </div>
+          </div>
+          <div class="hero-roster-item lan">
+            <span class="hero-roster-icon">🔶</span>
+            <div>
+              <div class="hero-roster-type">Lancer</div>
+              <div class="hero-roster-name" id="activeLanHero">Ursar</div>
+            </div>
+          </div>
+          <div class="hero-roster-item mark">
+            <span class="hero-roster-icon">🔴</span>
+            <div>
+              <div class="hero-roster-type">Marksman</div>
+              <div class="hero-roster-name" id="activeMarkHero">Aisling</div>
+            </div>
+          </div>
+        </div>
+        <div class="codex-active-advice" id="activeGenAdvice">
+          💡 <b>Tactical Verdict:</b> Focus 100% on Seigel for Absolute Permafrost damage reduction and Aisling for lethal counter-burst.
+        </div>
+      </div>
+
+      <!-- Full Accordion Drawer (Closed by default, opens only when user clicks) -->
+      <div class="codex-drawer" id="codexDrawer" style="display: none;">
+        <div class="codex-drawer-title">
+          <span>All Generations Archive</span>
+          <span>Click row to inspect</span>
+        </div>
+        <div class="codex-list" id="codexList">
+          <!-- Populated dynamically from heroes_data.json -->
+        </div>
+      </div>
     </div>
   </section>
 
@@ -1046,25 +1230,123 @@ function sendCustomQuery() {
   input.value = '';
 }
 
-/* ---------- State Age & Generation Database (Gen 1 - 16+) ---------- */
-const generationRoadmap = [
-  { gen: 16, unlockDay: 1080, heroes: "Seigel (Inf) · Ursar (Lan) · Aisling (Mark)", advice: "Endgame generation. Focus 100% on Seigel for Absolute Permafrost damage reduction and Aisling for lethal counter-burst." },
-  { gen: 15, unlockDay: 960,  heroes: "Hank (Inf) · Estrella (Lan) · Viveca (Mark)", advice: "State 260–330 tier. Hank is a premier Lucky Wheel tank. Build Viveca for sustained Marksman damage." },
-  { gen: 14, unlockDay: 900,  heroes: "Elif (Inf) · Dominic (Lan) · Cara (Mark)", advice: "Cara is top Lucky Wheel carry. Elif provides heavy defense wall resilience." },
-  { gen: 13, unlockDay: 830,  heroes: "Gisela (Inf) · Flora (Lan) · Vulcanus (Mark)", advice: "Gisela is a formidable Lucky Wheel tank. Vulcanus provides explosive backline burst." },
-  { gen: 12, unlockDay: 760,  heroes: "Hervor (Inf) · Karol (Lan) · Ligeia (Mark)", advice: "Ligeia on Lucky Wheel dominates Bear Trap rankings. Hervor is a premier rally anchor." },
-  { gen: 11, unlockDay: 690,  heroes: "Eleonora (Inf) · Lloyd (Lan) · Rufus (Mark)", advice: "Eleonora is the primary Lucky Wheel tank. Rufus brings heavy armor penetration." },
-  { gen: 10, unlockDay: 620,  heroes: "Gregory (Inf) · Freya (Lan) · Blanchette (Mark)", advice: "Blanchette on Lucky Wheel is essential for high lethality PvE. Gregory provides massive troop HP buffs." },
-  { gen: 9,  unlockDay: 550,  heroes: "Magnus (Inf) · Fred (Lan) · Xura (Mark)", advice: "Magnus is a durable Lucky Wheel frontline wall. Fred provides devastating lancer flanking." },
-  { gen: 8,  unlockDay: 480,  heroes: "Gatot (Inf) · Sonya (Lan) · Hendrik (Mark)", advice: "Hendrik on Lucky Wheel is premier marksman carry. Gatot provides immense rally resilience." },
-  { gen: 7,  unlockDay: 400,  heroes: "Edith (Inf) · Gordon (Lan) · Bradley (Mark)", advice: "Edith & Mr. Tin are premier frontline fortress tanks for castle garrisons. Bradley on Lucky Wheel is top marksman sniper." },
-  { gen: 6,  unlockDay: 320,  heroes: "Wayne (Inf) · Wu Ming (Lan) · Renee (Mark)", advice: "Renee on Lucky Wheel is premier marksman damage dealer. Wayne is a solid garrison defender." },
-  { gen: 5,  unlockDay: 250,  heroes: "Hector (Inf) · Norah (Lan) · Gwen (Mark)", advice: "Hector is a top-tier Lucky Wheel tank. Norah is excellent for flank burst." },
-  { gen: 4,  unlockDay: 180,  heroes: "Ahmose (Inf) · Reina (Lan) · Lynn (Mark)", advice: "Lynn on Lucky Wheel is the primary carry for Bear Trap. Ahmose is an impenetrable frontline wall." },
-  { gen: 3,  unlockDay: 120,  heroes: "Logan (Inf) · Greg (Lan) · Mia (Mark)", advice: "Mia on Lucky Wheel is essential for Bear Trap damage spikes. Logan is top arena tank." },
-  { gen: 2,  unlockDay: 40,   heroes: "Flint (Inf) · Philly (Lan) · Alonso (Mark)", advice: "Spin Lucky Wheel for Flint to 3-4★. Save mythic general shards for Alonso." },
-  { gen: 1,  unlockDay: 0,    heroes: "Jeronimo (Inf) · Natalia (Lan) · Molly & Zinman (Mark)", advice: "Early game core. Use Sergey as defense tank and Jessie as #1 rally joiner (+25% Dmg)." }
+/* ---------- Dynamic Heroes Data & Generation Roadmap ---------- */
+let generationRoadmap = [
+  { gen: 16, label: "Gen 16", unlockDay: 1080, infantry: "Seigel", lancer: "Ursar", marksman: "Aisling", advice: "Focus 100% on Seigel for Absolute Permafrost damage reduction and Aisling for lethal counter-burst." },
+  { gen: 15, label: "Gen 15", unlockDay: 960,  infantry: "Hank", lancer: "Estrella", marksman: "Viveca", advice: "State 260–330 tier. Hank is a premier Lucky Wheel tank. Build Viveca for sustained Marksman damage." },
+  { gen: 14, label: "Gen 14", unlockDay: 900,  infantry: "Elif", lancer: "Dominic", marksman: "Cara", advice: "Cara is top Lucky Wheel carry. Elif provides heavy defense wall resilience." },
+  { gen: 13, label: "Gen 13", unlockDay: 830,  infantry: "Gisela", lancer: "Flora", marksman: "Vulcanus", advice: "Gisela is a formidable Lucky Wheel tank. Vulcanus provides explosive backline burst." },
+  { gen: 12, label: "Gen 12", unlockDay: 760,  infantry: "Hervor", lancer: "Karol", marksman: "Ligeia", advice: "Ligeia on Lucky Wheel dominates Bear Trap rankings. Hervor is a premier rally anchor." },
+  { gen: 11, label: "Gen 11", unlockDay: 690,  infantry: "Eleonora", lancer: "Lloyd", marksman: "Rufus", advice: "Eleonora is the primary Lucky Wheel tank. Rufus brings heavy armor penetration." },
+  { gen: 10, label: "Gen 10", unlockDay: 620,  infantry: "Gregory", lancer: "Freya", marksman: "Blanchette", advice: "Blanchette on Lucky Wheel is essential for high lethality PvE. Gregory provides massive troop HP buffs." },
+  { gen: 9,  label: "Gen 9",  unlockDay: 550,  infantry: "Magnus", lancer: "Fred", marksman: "Xura", advice: "Magnus is a durable Lucky Wheel frontline wall. Fred provides devastating lancer flanking." },
+  { gen: 8,  label: "Gen 8",  unlockDay: 480,  infantry: "Gatot", lancer: "Sonya", marksman: "Hendrik", advice: "Hendrik on Lucky Wheel is premier marksman carry. Gatot provides immense rally resilience." },
+  { gen: 7,  label: "Gen 7",  unlockDay: 400,  infantry: "Edith", lancer: "Gordon", marksman: "Bradley", advice: "Edith & Mr. Tin are premier frontline fortress tanks for castle garrisons. Bradley on Lucky Wheel is top marksman sniper." },
+  { gen: 6,  label: "Gen 6",  unlockDay: 320,  infantry: "Wayne", lancer: "Wu Ming", marksman: "Renee", advice: "Renee on Lucky Wheel is premier marksman damage dealer. Wayne is a solid garrison defender." },
+  { gen: 5,  label: "Gen 5",  unlockDay: 250,  infantry: "Hector", lancer: "Norah", marksman: "Gwen", advice: "Hector is a top-tier Lucky Wheel tank. Norah is excellent for flank burst." },
+  { gen: 4,  label: "Gen 4",  unlockDay: 180,  infantry: "Ahmose", lancer: "Reina", marksman: "Lynn", advice: "Lynn on Lucky Wheel is the primary carry for Bear Trap. Ahmose is an impenetrable frontline wall." },
+  { gen: 3,  label: "Gen 3",  unlockDay: 120,  infantry: "Logan", lancer: "Greg", marksman: "Mia", advice: "Mia on Lucky Wheel is essential for Bear Trap damage spikes. Logan is top arena tank." },
+  { gen: 2,  label: "Gen 2",  unlockDay: 40,   infantry: "Flint", lancer: "Philly", marksman: "Alonso", advice: "Spin Lucky Wheel for Flint to 3-4★. Save mythic general shards for Alonso." },
+  { gen: 1,  label: "Gen 1",  unlockDay: 0,    infantry: "Jeronimo", lancer: "Natalia", marksman: "Molly & Zinman", advice: "Early game core. Use Sergey as defense tank and Jessie as #1 rally joiner (+25% Dmg)." },
+  { gen: 0,  label: "Epic Core (F2P)", unlockDay: 0, infantry: "Sergey & Patrick", lancer: "Jessie & Seo-yoon", marksman: "Bahiti & Gina", advice: "Max Jessie (+25% rally damage) and Patrick (+15% garrison HP) immediately!" },
+  { gen: -1, label: "Rare (Growth)", unlockDay: 0, infantry: "Smith & Eugene", lancer: "Charlie", marksman: "Cloris", advice: "Use for settlement construction speed, hunting stamina discounts, and initial exploration." }
 ];
+
+/* Fetch external heroes_data.json on load to stay dynamically updated */
+function loadExternalHeroData() {
+  fetch('heroes_data.json')
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (Array.isArray(data) && data.length > 0) {
+        generationRoadmap = data;
+        renderHeroCodexUI();
+        calculateState();
+      }
+    })
+    .catch(() => {
+      renderHeroCodexUI();
+      calculateState();
+    });
+}
+
+function renderHeroCodexUI() {
+  const select = document.getElementById('codexGenSelect');
+  const drawerList = document.getElementById('codexList');
+  if (!select || !drawerList) return;
+
+  select.innerHTML = '';
+  drawerList.innerHTML = '';
+
+  generationRoadmap.forEach((item, idx) => {
+    // Dropdown Option
+    const opt = document.createElement('option');
+    opt.value = item.gen;
+    const unlockStr = item.unlockDay > 0 ? ` (~Day ${item.unlockDay}+)` : '';
+    opt.textContent = `${item.label || 'Gen ' + item.gen}${unlockStr}`;
+    select.appendChild(opt);
+
+    // Drawer List Item
+    const row = document.createElement('div');
+    row.className = 'codex-row' + (idx === 0 ? ' active' : '');
+    row.id = `codex-row-${item.gen}`;
+    row.onclick = () => {
+      select.value = item.gen;
+      onCodexSelectChange(item.gen);
+    };
+    row.innerHTML = `
+      <span class="gen">${item.label || 'Gen ' + item.gen}</span>
+      <span class="heroes">🔷 ${item.infantry} · 🔶 ${item.lancer} · 🔴 ${item.marksman}</span>
+    `;
+    drawerList.appendChild(row);
+  });
+
+  if (generationRoadmap.length > 0) {
+    onCodexSelectChange(generationRoadmap[0].gen);
+  }
+}
+
+function onCodexSelectChange(selectedGen) {
+  const genNum = parseInt(selectedGen);
+  const found = generationRoadmap.find(g => g.gen === genNum) || generationRoadmap[0];
+  if (!found) return;
+
+  // Update Active Focus Card
+  const badge = document.getElementById('activeGenBadge');
+  const unlock = document.getElementById('activeGenUnlock');
+  const inf = document.getElementById('activeInfHero');
+  const lan = document.getElementById('activeLanHero');
+  const mark = document.getElementById('activeMarkHero');
+  const advice = document.getElementById('activeGenAdvice');
+
+  if (badge) badge.textContent = found.label || 'Gen ' + found.gen;
+  if (unlock) unlock.textContent = found.unlockDay > 0 ? `Unlocks ~Day ${found.unlockDay}+` : 'Starter Available';
+  if (inf) inf.textContent = found.infantry;
+  if (lan) lan.textContent = found.lancer;
+  if (mark) mark.textContent = found.marksman;
+  if (advice) advice.innerHTML = `💡 <b>Tactical Verdict:</b> ${found.advice}`;
+
+  // Highlight selected in drawer
+  document.querySelectorAll('.codex-row').forEach(r => r.classList.remove('active'));
+  const activeRow = document.getElementById(`codex-row-${found.gen}`);
+  if (activeRow) activeRow.classList.add('active');
+}
+
+function toggleCodexDrawer() {
+  const drawer = document.getElementById('codexDrawer');
+  const btnText = document.getElementById('codexToggleText');
+  const btnIcon = document.getElementById('codexToggleIcon');
+  if (!drawer) return;
+
+  if (drawer.style.display === 'none' || !drawer.style.display) {
+    drawer.style.display = 'flex';
+    if (btnText) btnText.textContent = 'Hide Codex List ▴';
+    if (btnIcon) btnIcon.textContent = '✖';
+  } else {
+    drawer.style.display = 'none';
+    if (btnText) btnText.textContent = 'Browse Full Codex List ▾';
+    if (btnIcon) btnIcon.textContent = '📖';
+  }
+}
 
 function stateToDays(stateNum) {
   if (stateNum <= 100) {
@@ -1113,16 +1395,17 @@ function calculateFromDaysInput() {
 }
 
 function updateStateOutput(days) {
-  let matched = generationRoadmap[generationRoadmap.length - 1];
+  const roadmapGenerations = generationRoadmap.filter(g => g.gen > 0);
+  let matched = roadmapGenerations[roadmapGenerations.length - 1];
   let nextGen = null;
   let nextUnlockDay = null;
 
-  for (let i = 0; i < generationRoadmap.length; i++) {
-    if (days >= generationRoadmap[i].unlockDay) {
-      matched = generationRoadmap[i];
+  for (let i = 0; i < roadmapGenerations.length; i++) {
+    if (days >= roadmapGenerations[i].unlockDay) {
+      matched = roadmapGenerations[i];
       if (i > 0) {
-        nextGen = generationRoadmap[i - 1].gen;
-        nextUnlockDay = generationRoadmap[i - 1].unlockDay;
+        nextGen = roadmapGenerations[i - 1].gen;
+        nextUnlockDay = roadmapGenerations[i - 1].unlockDay;
       }
       break;
     }
@@ -1134,8 +1417,8 @@ function updateStateOutput(days) {
   const resHeroes = document.getElementById('resHeroes');
   const resAdvice = document.getElementById('resAdvice');
 
-  if (resGen) resGen.textContent = 'Gen ' + matched.gen;
-  if (resHeroes) resHeroes.textContent = matched.heroes;
+  if (resGen) resGen.textContent = matched.label || ('Gen ' + matched.gen);
+  if (resHeroes) resHeroes.textContent = `${matched.infantry} · ${matched.lancer} · ${matched.marksman}`;
   if (resAdvice) resAdvice.innerHTML = '💡 <b>Shard Roadmap:</b> ' + matched.advice;
 
   if (nextGen) {
@@ -1143,12 +1426,12 @@ function updateStateOutput(days) {
     if (resNext) resNext.textContent = 'Gen ' + nextGen;
     if (resDaysLeft) resDaysLeft.textContent = 'in ' + daysLeft + ' Days';
   } else {
-    if (resNext) resNext.textContent = 'Endgame';
-    if (resDaysLeft) resDaysLeft.textContent = 'Max Generation';
+    if (resNext) resNext.textContent = 'Active Gen ' + matched.gen;
+    if (resDaysLeft) resDaysLeft.textContent = 'Current Frontline Tier';
   }
 }
 
-calculateState();
+loadExternalHeroData();
 </script>
 
 </body>
