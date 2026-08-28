@@ -27,7 +27,7 @@ void main() {
       // Test State 1 (Oldest Server -> Gen 16)
       final state1Calc = StateAgeService.calculateFromStateNumber(1);
       expect(state1Calc.currentGeneration, 16);
-      expect(state1Calc.activeHeroes.contains('Seigel (Infantry Shield)'), true);
+      expect(state1Calc.activeHeroes.contains('Seigel (Infantry)'), true);
 
       // Test Day 45 (Gen 2)
       final gen2Calc = StateAgeService.calculateFromDays(45);

@@ -25,22 +25,22 @@ class StateAgeService {
   };
 
   static final Map<int, List<String>> generationHeroes = {
-    1: ['Jeronimo', 'Natalia', 'Molly', 'Zinman'],
-    2: ['Flint (Tank)', 'Alonso (DPS)', 'Philly (Healer)'],
-    3: ['Mia (Marksman)', 'Logan (Infantry)', 'Greg (Lancer)'],
-    4: ['Lynn (Marksman)', 'Hector (Infantry)', 'Ahmose (Lancer)'],
-    5: ['Gwen (Marksman)', 'Norah (Lancer)', 'Wayne (Infantry)'],
-    6: ['Renee (Lancer)', 'Hendrik (Marksman)'],
-    7: ['Bradley (Infantry)', 'Edith (Marksman)', 'Gordon (Lancer)'],
-    8: ['Sonya (Marksman)', 'Reina (Lancer)', 'Gatot (Infantry)'],
-    9: ['Magnus (Infantry)', 'Blanche (Marksman)', 'Luke (Lancer)'],
-    10: ['Xylona (Marksman)', 'Fred (Lancer)', 'Gregory (Infantry)'],
-    11: ['Rufus (Lancer)', 'Nicole (Marksman)', 'Bern (Infantry)'],
-    12: ['Anson (Infantry)', 'Eleanor (Marksman)', 'Lloyd (Lancer)'],
-    13: ['Freyja (Marksman)', 'Eric (Lancer)', 'Morgan (Infantry)'],
-    14: ['Kai (Infantry)', 'Varg (Lancer)', 'Evelyn (Marksman)'],
-    15: ['Alistair (Lancer)', 'Astrid (Marksman)', 'Cedric (Infantry)'],
-    16: ['Seigel (Infantry Shield)', 'Aisling (Marksman Burst)', 'Ursar (Lancer Support)'],
+    1: ['Jeronimo (Inf)', 'Natalia (Lan)', 'Molly (Mark)', 'Zinman (Mark)'],
+    2: ['Flint (Inf)', 'Philly (Lan)', 'Alonso (Mark)'],
+    3: ['Logan (Inf)', 'Greg (Lan)', 'Mia (Mark)'],
+    4: ['Ahmose (Inf)', 'Reina (Lan)', 'Lynn (Mark)'],
+    5: ['Hector (Inf)', 'Norah (Lan)', 'Gwen (Mark)'],
+    6: ['Wayne (Inf)', 'Wu Ming (Lan)', 'Renee (Mark)'],
+    7: ['Bradley (Inf)', 'Gordon (Lan)', 'Edith (Mark)'],
+    8: ['Gatot (Inf)', 'Sonya (Lan)', 'Hendrik (Mark)'],
+    9: ['Magnus (Inf)', 'Fred (Lan)', 'Xura (Mark)'],
+    10: ['Gregory (Inf)', 'Freya (Lan)', 'Blanchette (Mark)'],
+    11: ['Eleonora (Inf)', 'Lloyd (Lan)', 'Rufus (Mark)'],
+    12: ['Hervor (Inf)', 'Karol (Lan)', 'Ligeia (Mark)'],
+    13: ['Gisela (Inf)', 'Flora (Lan)', 'Vulcanus (Mark)'],
+    14: ['Elif (Inf)', 'Dominic (Lan)', 'Cara (Mark)'],
+    15: ['Hank (Inf)', 'Estrella (Lan)', 'Viveca (Mark)'],
+    16: ['Seigel (Infantry)', 'Ursar (Lancer)', 'Aisling (Marksman)'],
   };
 
   /// Calculates State Age and Generation from a State Number (1 - 1500+)

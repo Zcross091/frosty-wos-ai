@@ -469,17 +469,29 @@
   <!-- Hero Codex -->
   <section id="codex">
     <div class="section-head">
-      <div class="kicker">Hero Archives</div>
-      <h2>Interactive Generation & Hero Codex</h2>
-      <p>Tactical evaluations, troop affinities, and investment ratings across every Whiteout Survival generation.</p>
+      <div class="kicker">Official Hero Archives</div>
+      <h2>Interactive Generation & Hero Codex (Gen 0 – 16+)</h2>
+      <p>Verified roster, troop affinities, and release generations sourced directly from the official Whiteout Survival archives.</p>
     </div>
     <div class="codex-list">
-      <div class="codex-row"><span class="gen">Gen 16 (Endgame)</span><span class="heroes">Seigel · Aisling · Ursar</span></div>
-      <div class="codex-row"><span class="gen">Gen 7</span><span class="heroes">Bradley · Edith</span></div>
-      <div class="codex-row"><span class="gen">Gen 4</span><span class="heroes">Lynn · Hector</span></div>
-      <div class="codex-row"><span class="gen">Gen 2</span><span class="heroes">Flint · Alonso · Philly</span></div>
-      <div class="codex-row"><span class="gen">Gen 1</span><span class="heroes">Jeronimo · Natalia · Molly</span></div>
-      <div class="codex-row"><span class="gen">Epic / F2P Core</span><span class="heroes">Jessie · Sergey · Patrick · Bahiti</span></div>
+      <div class="codex-row"><span class="gen">Gen 16 (Endgame)</span><span class="heroes">🔷 Seigel (Inf) · 🔶 Ursar (Lan) · 🔴 Aisling (Mark)</span></div>
+      <div class="codex-row"><span class="gen">Gen 15</span><span class="heroes">🔷 Hank (Inf) · 🔶 Estrella (Lan) · 🔴 Viveca (Mark)</span></div>
+      <div class="codex-row"><span class="gen">Gen 14</span><span class="heroes">🔷 Elif (Inf) · 🔶 Dominic (Lan) · 🔴 Cara (Mark)</span></div>
+      <div class="codex-row"><span class="gen">Gen 13</span><span class="heroes">🔷 Gisela (Inf) · 🔶 Flora (Lan) · 🔴 Vulcanus (Mark)</span></div>
+      <div class="codex-row"><span class="gen">Gen 12</span><span class="heroes">🔷 Hervor (Inf) · 🔶 Karol (Lan) · 🔴 Ligeia (Mark)</span></div>
+      <div class="codex-row"><span class="gen">Gen 11</span><span class="heroes">🔷 Eleonora (Inf) · 🔶 Lloyd (Lan) · 🔴 Rufus (Mark)</span></div>
+      <div class="codex-row"><span class="gen">Gen 10</span><span class="heroes">🔷 Gregory (Inf) · 🔶 Freya (Lan) · 🔴 Blanchette (Mark)</span></div>
+      <div class="codex-row"><span class="gen">Gen 9</span><span class="heroes">🔷 Magnus (Inf) · 🔶 Fred (Lan) · 🔴 Xura (Mark)</span></div>
+      <div class="codex-row"><span class="gen">Gen 8</span><span class="heroes">🔷 Gatot (Inf) · 🔶 Sonya (Lan) · 🔴 Hendrik (Mark)</span></div>
+      <div class="codex-row"><span class="gen">Gen 7</span><span class="heroes">🔷 Bradley (Inf) · 🔶 Gordon (Lan) · 🔴 Edith (Mark)</span></div>
+      <div class="codex-row"><span class="gen">Gen 6</span><span class="heroes">🔷 Wayne (Inf) · 🔶 Wu Ming (Lan) · 🔴 Renee (Mark)</span></div>
+      <div class="codex-row"><span class="gen">Gen 5</span><span class="heroes">🔷 Hector (Inf) · 🔶 Norah (Lan) · 🔴 Gwen (Mark)</span></div>
+      <div class="codex-row"><span class="gen">Gen 4</span><span class="heroes">🔷 Ahmose (Inf) · 🔶 Reina (Lan) · 🔴 Lynn (Mark)</span></div>
+      <div class="codex-row"><span class="gen">Gen 3</span><span class="heroes">🔷 Logan (Inf) · 🔶 Greg (Lan) · 🔴 Mia (Mark)</span></div>
+      <div class="codex-row"><span class="gen">Gen 2</span><span class="heroes">🔷 Flint (Inf) · 🔶 Philly (Lan) · 🔴 Alonso (Mark)</span></div>
+      <div class="codex-row"><span class="gen">Gen 1</span><span class="heroes">🔷 Jeronimo (Inf) · 🔶 Natalia (Lan) · 🔴 Molly & Zinman (Mark)</span></div>
+      <div class="codex-row"><span class="gen">Epic Core (F2P)</span><span class="heroes">🔷 Sergey & Patrick · 🔶 Jessie & Seo-yoon · 🔴 Bahiti & Gina</span></div>
+      <div class="codex-row"><span class="gen">Rare (Gen 0 Growth)</span><span class="heroes">🔷 Smith & Eugene (Inf) · 🔶 Charlie (Lan) · 🔴 Cloris (Mark)</span></div>
     </div>
   </section>
 
@@ -1036,22 +1048,22 @@ function sendCustomQuery() {
 
 /* ---------- State Age & Generation Database (Gen 1 - 16+) ---------- */
 const generationRoadmap = [
-  { gen: 16, unlockDay: 1080, heroes: "Seigel (Infantry) · Aisling (Marksman) · Ursar (Lancer)", advice: "Endgame generation. Focus 100% on Seigel for Absolute Permafrost damage reduction and Aisling for lethal counter-burst." },
-  { gen: 15, unlockDay: 960,  heroes: "Alistair (Lancer) · Astrid (Marksman) · Cedric (Infantry)", advice: "State 260–330 tier. Invest generic mythic shards into Cedric for frontline shielding and Astrid for sustained Bear Trap DPS." },
-  { gen: 14, unlockDay: 900,  heroes: "Kai (Infantry) · Varg (Lancer) · Evelyn (Marksman)", advice: "Prioritize Kai for defense wall resilience. Evelyn is a top-tier rally joiner." },
-  { gen: 13, unlockDay: 830,  heroes: "Freyja (Marksman) · Eric (Lancer) · Morgan (Infantry)", advice: "Freyja provides exceptional backline burst. Save secondary shards for Gen 14." },
-  { gen: 12, unlockDay: 760,  heroes: "Anson (Infantry) · Eleanor (Marksman) · Lloyd (Lancer)", advice: "Anson is a premier castle anchor. Eleanor dominates Bear Trap damage races." },
-  { gen: 11, unlockDay: 690,  heroes: "Rufus (Lancer) · Nicole (Marksman) · Bern (Infantry)", advice: "Rufus brings heavy flank penetration. Build Nicole for high lethality PvE." },
-  { gen: 10, unlockDay: 620,  heroes: "Xylona (Marksman) · Fred (Lancer) · Gregory (Infantry)", advice: "Gregory provides massive troop HP buffs. Xylona is essential for high-end rally damage." },
-  { gen: 9,  unlockDay: 550,  heroes: "Magnus (Infantry) · Blanche (Marksman) · Luke (Lancer)", advice: "Magnus is a durable frontline wall. Save mythic shards for Gen 10." },
-  { gen: 8,  unlockDay: 480,  heroes: "Sonya (Marksman) · Reina (Lancer) · Gatot (Infantry)", advice: "Sonya dominates Bear Trap rankings. Reina is a deadly flank disruptor." },
-  { gen: 7,  unlockDay: 400,  heroes: "Bradley (Infantry) · Edith (Marksman) · Gordon (Lancer)", advice: "Invest all generic mythic shards into Bradley (Infantry) for frontline fortress tanking." },
-  { gen: 6,  unlockDay: 320,  heroes: "Renee (Lancer) · Hendrik (Marksman)", advice: "Hendrik is a solid marksman carry. Start hoarding general shards for Gen 7 Bradley." },
-  { gen: 5,  unlockDay: 250,  heroes: "Gwen (Marksman) · Norah (Lancer) · Wayne (Infantry)", advice: "Gwen is premier Lucky Wheel marksman carry. Norah is excellent for flank burst." },
-  { gen: 4,  unlockDay: 180,  heroes: "Lynn (Marksman) · Hector (Infantry) · Ahmose (Lancer)", advice: "Lynn is the primary Lucky Wheel carry for Bear Trap. Build to 4★ minimum." },
-  { gen: 3,  unlockDay: 120,  heroes: "Mia (Marksman) · Logan (Infantry) · Greg (Lancer)", advice: "Mia on Lucky Wheel is essential for Bear Trap damage spikes. Logan is top arena tank." },
-  { gen: 2,  unlockDay: 40,   heroes: "Flint (Infantry) · Alonso (Marksman) · Philly (Lancer)", advice: "Spin Lucky Wheel for Flint to 3-4★. Save mythic general shards for Alonso." },
-  { gen: 1,  unlockDay: 0,    heroes: "Jeronimo (Infantry) · Natalia (Lancer) · Molly (Marksman)", advice: "Early game core. Use Sergey as defense tank and Jessie as #1 rally joiner (+25% Dmg)." }
+  { gen: 16, unlockDay: 1080, heroes: "Seigel (Inf) · Ursar (Lan) · Aisling (Mark)", advice: "Endgame generation. Focus 100% on Seigel for Absolute Permafrost damage reduction and Aisling for lethal counter-burst." },
+  { gen: 15, unlockDay: 960,  heroes: "Hank (Inf) · Estrella (Lan) · Viveca (Mark)", advice: "State 260–330 tier. Hank is a premier Lucky Wheel tank. Build Viveca for sustained Marksman damage." },
+  { gen: 14, unlockDay: 900,  heroes: "Elif (Inf) · Dominic (Lan) · Cara (Mark)", advice: "Cara is top Lucky Wheel carry. Elif provides heavy defense wall resilience." },
+  { gen: 13, unlockDay: 830,  heroes: "Gisela (Inf) · Flora (Lan) · Vulcanus (Mark)", advice: "Gisela is a formidable Lucky Wheel tank. Vulcanus provides explosive backline burst." },
+  { gen: 12, unlockDay: 760,  heroes: "Hervor (Inf) · Karol (Lan) · Ligeia (Mark)", advice: "Ligeia on Lucky Wheel dominates Bear Trap rankings. Hervor is a premier rally anchor." },
+  { gen: 11, unlockDay: 690,  heroes: "Eleonora (Inf) · Lloyd (Lan) · Rufus (Mark)", advice: "Eleonora is the primary Lucky Wheel tank. Rufus brings heavy armor penetration." },
+  { gen: 10, unlockDay: 620,  heroes: "Gregory (Inf) · Freya (Lan) · Blanchette (Mark)", advice: "Blanchette on Lucky Wheel is essential for high lethality PvE. Gregory provides massive troop HP buffs." },
+  { gen: 9,  unlockDay: 550,  heroes: "Magnus (Inf) · Fred (Lan) · Xura (Mark)", advice: "Magnus is a durable Lucky Wheel frontline wall. Fred provides devastating lancer flanking." },
+  { gen: 8,  unlockDay: 480,  heroes: "Gatot (Inf) · Sonya (Lan) · Hendrik (Mark)", advice: "Hendrik on Lucky Wheel is premier marksman carry. Gatot provides immense rally resilience." },
+  { gen: 7,  unlockDay: 400,  heroes: "Bradley (Inf) · Gordon (Lan) · Edith (Mark)", advice: "Invest generic mythic shards into Bradley (Infantry) for frontline fortress tanking. Edith eliminates enemy backlines." },
+  { gen: 6,  unlockDay: 320,  heroes: "Wayne (Inf) · Wu Ming (Lan) · Renee (Mark)", advice: "Renee on Lucky Wheel is premier marksman damage dealer. Wayne is a solid garrison defender." },
+  { gen: 5,  unlockDay: 250,  heroes: "Hector (Inf) · Norah (Lan) · Gwen (Mark)", advice: "Hector is a top-tier Lucky Wheel tank. Norah is excellent for flank burst." },
+  { gen: 4,  unlockDay: 180,  heroes: "Ahmose (Inf) · Reina (Lan) · Lynn (Mark)", advice: "Lynn on Lucky Wheel is the primary carry for Bear Trap. Ahmose is an impenetrable frontline wall." },
+  { gen: 3,  unlockDay: 120,  heroes: "Logan (Inf) · Greg (Lan) · Mia (Mark)", advice: "Mia on Lucky Wheel is essential for Bear Trap damage spikes. Logan is top arena tank." },
+  { gen: 2,  unlockDay: 40,   heroes: "Flint (Inf) · Philly (Lan) · Alonso (Mark)", advice: "Spin Lucky Wheel for Flint to 3-4★. Save mythic general shards for Alonso." },
+  { gen: 1,  unlockDay: 0,    heroes: "Jeronimo (Inf) · Natalia (Lan) · Molly & Zinman (Mark)", advice: "Early game core. Use Sergey as defense tank and Jessie as #1 rally joiner (+25% Dmg)." }
 ];
 
 function stateToDays(stateNum) {
