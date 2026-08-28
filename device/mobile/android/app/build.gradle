@@ -17,7 +17,7 @@ def flutterVersionName = localProperties.getProperty('flutter.versionName') ?: '
 
 android {
     namespace "com.statecraft.frosty_wos_ai"
-    compileSdkVersion 34
+    compileSdk = 36
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
