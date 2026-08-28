@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initHeroCodex();
   initFormationCalculator();
   initCopyButtons();
+  initReleaseUpdatePopup();
 });
 
 /* ==========================================================================
@@ -530,4 +531,91 @@ function initCopyButtons() {
       }, 2000);
     });
   });
+}
+
+/* ==========================================================================
+   6. GitHub Release In-Browser Update Pop-Up
+   ========================================================================== */
+function initReleaseUpdatePopup() {
+  const GITHUB_RELEASE_API = 'https://api.github.com/repos/Zcross091/frosty-wos-ai/releases/latest';
+
+  fetch(GITHUB_RELEASE_API)
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      if (!data || !data.tag_name) return;
+
+      const latestTag = data.tag_name;
+      const releaseName = data.name || `Frosty Release ${latestTag}`;
+      const releaseUrl = data.html_url || 'https://github.com/Zcross091/frosty-wos-ai/releases';
+
+      // Check if user dismissed this specific release
+      if (localStorage.getItem('dismissed_release') === latestTag) return;
+
+      // Find APK download URL if present
+      let apkUrl = releaseUrl;
+      if (data.assets && data.assets.length > 0) {
+        const apkAsset = data.assets.find((a) => a.name && a.name.endsWith('.apk'));
+        if (apkAsset) apkUrl = apkAsset.browser_download_url;
+      }
+
+      // Create stylish pop-up element
+      const popup = document.createElement('div');
+      popup.id = 'release-popup';
+      popup.style.cssText = `
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        max-width: 380px;
+        background: rgba(15, 25, 44, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1.5px solid #00F0FF;
+        border-radius: 18px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0, 240, 255, 0.25), 0 4px 12px rgba(0,0,0,0.6);
+        z-index: 99999;
+        font-family: 'Outfit', sans-serif;
+        color: #ffffff;
+        animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      `;
+
+      popup.innerHTML = `
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(0, 240, 255, 0.15); border: 1px solid #00F0FF; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+              🚀
+            </div>
+            <div>
+              <div style="font-weight: 800; font-size: 15px; color: #ffffff;">New Release Available!</div>
+              <div style="font-size: 12px; color: #00F0FF; font-weight: 600;">${latestTag}</div>
+            </div>
+          </div>
+          <button id="close-release-popup" style="background: none; border: none; color: #94A3B8; cursor: pointer; font-size: 18px; line-height: 1; padding: 2px;">✕</button>
+        </div>
+
+        <p style="font-size: 13px; color: #CBD5E1; line-height: 1.4; margin: 0 0 14px 0;">
+          ${releaseName} is now live with updated Whiteout Survival hero archives and mobile app improvements.
+        </p>
+
+        <div style="display: flex; gap: 8px;">
+          <a href="${apkUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; text-align: center; background: #00F0FF; color: #060B13; font-weight: 700; font-size: 12.5px; padding: 9px 14px; border-radius: 10px; text-decoration: none; display: inline-block;">
+            📱 Download APK
+          </a>
+          <a href="${releaseUrl}" target="_blank" rel="noopener noreferrer" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #ffffff; font-weight: 600; font-size: 12.5px; padding: 9px 12px; border-radius: 10px; text-decoration: none; display: inline-block;">
+            View Notes
+          </a>
+        </div>
+      `;
+
+      document.body.appendChild(popup);
+
+      document.getElementById('close-release-popup').addEventListener('click', () => {
+        localStorage.setItem('dismissed_release', latestTag);
+        popup.style.opacity = '0';
+        popup.style.transform = 'translateY(15px)';
+        popup.style.transition = 'all 0.3s ease';
+        setTimeout(() => popup.remove(), 300);
+      });
+    })
+    .catch(() => {});
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/ai_service.dart';
+import '../services/update_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -224,6 +225,13 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
 
+            _buildActionTile(
+              icon: Icons.system_update_rounded,
+              title: 'Check for Updates',
+              subtitle: 'Check GitHub releases for latest Frosty app APK update',
+              color: const Color(0xFF00F0FF),
+              onTap: () => UpdateService.checkForUpdates(context, manualCheck: true),
+            ),
             _buildActionTile(
               icon: Icons.bug_report_rounded,
               title: 'Post / Report Issues',

@@ -6,6 +6,7 @@ import 'screens/hero_codex_screen.dart';
 import 'screens/formations_screen.dart';
 import 'screens/settings_screen.dart';
 import 'services/ai_service.dart';
+import 'services/update_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,6 +55,15 @@ class MainNavigationShell extends StatefulWidget {
 
 class _MainNavigationShellState extends State<MainNavigationShell> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Check for new releases on GitHub automatically on startup
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      UpdateService.checkForUpdates(context);
+    });
+  }
 
   final List<Widget> _screens = const [
     ChatScreen(),
