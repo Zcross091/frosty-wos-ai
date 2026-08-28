@@ -21,6 +21,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _showApiKeyDialog(BuildContext context, AIService aiService) {
+    final backendController = TextEditingController(text: aiService.backendUrl);
     final geminiController = TextEditingController(text: aiService.geminiKey);
     final groqController = TextEditingController(text: aiService.groqKey);
     final ollamaHostController = TextEditingController(text: aiService.ollamaHost);
@@ -38,7 +39,7 @@ class SettingsScreen extends StatelessWidget {
             children: [
               Text('🔑 ', style: TextStyle(fontSize: 18)),
               Text(
-                'Custom AI Keys & Endpoints',
+                'AI Endpoints & Keys',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -53,10 +54,21 @@ class SettingsScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
+                  controller: backendController,
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  decoration: const InputDecoration(
+                    labelText: 'Frosty Central Server URL',
+                    labelStyle: TextStyle(color: Color(0xFF00F0FF), fontSize: 12, fontWeight: FontWeight.bold),
+                    hintText: 'http://your-server-ip:8000',
+                    hintStyle: TextStyle(color: Color(0xFF64748B), fontSize: 11),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
                   controller: geminiController,
                   style: const TextStyle(color: Colors.white, fontSize: 13),
                   decoration: const InputDecoration(
-                    labelText: 'Google Gemini API Key',
+                    labelText: 'Google Gemini API Key (Direct)',
                     labelStyle: TextStyle(color: Color(0xFF38BDF8), fontSize: 12),
                     hintText: 'AQ... or AIzaSy...',
                     hintStyle: TextStyle(color: Color(0xFF64748B), fontSize: 11),
@@ -67,7 +79,7 @@ class SettingsScreen extends StatelessWidget {
                   controller: groqController,
                   style: const TextStyle(color: Colors.white, fontSize: 13),
                   decoration: const InputDecoration(
-                    labelText: 'Groq API Key',
+                    labelText: 'Groq API Key (Direct)',
                     labelStyle: TextStyle(color: Color(0xFF38BDF8), fontSize: 12),
                     hintText: 'gsk_...',
                     hintStyle: TextStyle(color: Color(0xFF64748B), fontSize: 11),
@@ -99,6 +111,7 @@ class SettingsScreen extends StatelessWidget {
               ),
               onPressed: () {
                 aiService.updateSettings(
+                  backendUrl: backendController.text,
                   geminiKey: geminiController.text,
                   groqKey: groqController.text,
                   ollamaHost: ollamaHostController.text,
@@ -106,7 +119,7 @@ class SettingsScreen extends StatelessWidget {
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('✅ Custom AI configuration saved!'),
+                    content: Text('✅ Central Backend & AI settings saved!'),
                     backgroundColor: Color(0xFF22C55E),
                   ),
                 );

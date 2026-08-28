@@ -9,13 +9,14 @@ class AIService extends ChangeNotifier {
   // Configurable API keys via build-time environment or user SharedPreferences
   static const String envGeminiKey = String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
   static const String envGroqKey = String.fromEnvironment('GROQ_API_KEY', defaultValue: '');
+  static const String envBackendUrl = String.fromEnvironment('BACKEND_URL', defaultValue: 'http://10.0.2.2:8000');
 
   String _geminiKey = envGeminiKey;
   String _groqKey = envGroqKey;
+  String _backendUrl = envBackendUrl;
   String _ollamaHost = 'http://localhost:11434';
   String _ollamaModel = 'llama3.2:1b';
-  String _selectedProvider = 'auto'; // 'auto', 'gemini', 'groq', 'ollama', 'offline'
-
+  String _selectedProvider = 'auto'; // 'auto', 'backend', 'gemini', 'groq', 'ollama', 'offline'
 
   bool _isGenerating = false;
   bool get isGenerating => _isGenerating;
@@ -48,6 +49,7 @@ class AIService extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       _geminiKey = prefs.getString('custom_gemini_key') ?? envGeminiKey;
       _groqKey = prefs.getString('custom_groq_key') ?? envGroqKey;
+      _backendUrl = prefs.getString('custom_backend_url') ?? envBackendUrl;
       _ollamaHost = prefs.getString('custom_ollama_host') ?? 'http://localhost:11434';
       _ollamaModel = prefs.getString('custom_ollama_model') ?? 'llama3.2:1b';
       _selectedProvider = prefs.getString('selected_ai_provider') ?? 'auto';
@@ -58,6 +60,7 @@ class AIService extends ChangeNotifier {
   Future<void> updateSettings({
     String? geminiKey,
     String? groqKey,
+    String? backendUrl,
     String? ollamaHost,
     String? ollamaModel,
     String? provider,
@@ -70,6 +73,10 @@ class AIService extends ChangeNotifier {
     if (groqKey != null) {
       _groqKey = groqKey.trim();
       await prefs.setString('custom_groq_key', _groqKey);
+    }
+    if (backendUrl != null) {
+      _backendUrl = backendUrl.trim();
+      await prefs.setString('custom_backend_url', _backendUrl);
     }
     if (ollamaHost != null) {
       _ollamaHost = ollamaHost.trim();
@@ -89,6 +96,7 @@ class AIService extends ChangeNotifier {
   String get currentProvider => _selectedProvider;
   String get geminiKey => _geminiKey;
   String get groqKey => _groqKey;
+  String get backendUrl => _backendUrl;
   String get ollamaHost => _ollamaHost;
 
   /// Main message submission handler
@@ -112,7 +120,11 @@ class AIService extends ChangeNotifier {
     String modelUsed = 'Offline Tactical Core';
 
     try {
-      if (_selectedProvider == 'gemini') {
+      if (_selectedProvider == 'backend') {
+        final result = await _callBackend(cleanText);
+        botAnswer = result['text']!;
+        modelUsed = result['model']!;
+      } else if (_selectedProvider == 'gemini') {
         final result = await _callGemini(cleanText);
         botAnswer = result['text']!;
         modelUsed = result['model']!;
@@ -129,29 +141,57 @@ class AIService extends ChangeNotifier {
         modelUsed = 'Offline Tactical Core';
       } else {
         // --- AUTO CASCADE FAILOVER ---
-        // 1. Try Gemini
+        // 1. Try Central Backend REST Server (ChromaDB RAG + Server LLMs)
+        bool backendSuccess = false;
         try {
-          final result = await _callGemini(cleanText).timeout(const Duration(seconds: 10));
-          botAnswer = result['text']!;
-          modelUsed = result['model']!;
-        } catch (_) {
-          // 2. Fallback to Groq
-          try {
-            final result = await _callGroq(cleanText).timeout(const Duration(seconds: 10));
+          final result = await _callBackend(cleanText).timeout(const Duration(seconds: 8));
+          if (result['text']!.isNotEmpty) {
             botAnswer = result['text']!;
             modelUsed = result['model']!;
-          } catch (_) {
-            // 3. Fallback to Ollama
+            backendSuccess = true;
+          }
+        } catch (_) {
+          backendSuccess = false;
+        }
+
+        if (!backendSuccess) {
+          // 2. Try Direct Gemini (if user configured key)
+          if (_geminiKey.isNotEmpty) {
             try {
-              final result = await _callOllama(cleanText).timeout(const Duration(seconds: 5));
+              final result = await _callGemini(cleanText).timeout(const Duration(seconds: 8));
               botAnswer = result['text']!;
               modelUsed = result['model']!;
-            } catch (_) {
-              // 4. Fallback to Offline Tactical Core
-              botAnswer = _generateOfflineFallback(cleanText);
-              modelUsed = 'Offline Tactical Core';
-            }
+              backendSuccess = true;
+            } catch (_) {}
           }
+        }
+
+        if (!backendSuccess) {
+          // 3. Try Direct Groq (if user configured key)
+          if (_groqKey.isNotEmpty) {
+            try {
+              final result = await _callGroq(cleanText).timeout(const Duration(seconds: 8));
+              botAnswer = result['text']!;
+              modelUsed = result['model']!;
+              backendSuccess = true;
+            } catch (_) {}
+          }
+        }
+
+        if (!backendSuccess) {
+          // 4. Try Local Ollama
+          try {
+            final result = await _callOllama(cleanText).timeout(const Duration(seconds: 5));
+            botAnswer = result['text']!;
+            modelUsed = result['model']!;
+            backendSuccess = true;
+          } catch (_) {}
+        }
+
+        if (!backendSuccess) {
+          // 5. Ultimate Fallback: Rich Offline Tactical Knowledge Synthesizer
+          botAnswer = _generateOfflineFallback(cleanText);
+          modelUsed = 'Offline Tactical Core';
         }
       }
     } catch (e) {
@@ -173,6 +213,40 @@ class AIService extends ChangeNotifier {
       _messages.add(botMessage);
       notifyListeners();
     }
+  }
+
+  // --- 0. Central Backend Server Provider ---
+  Future<Map<String, String>> _callBackend(String prompt) async {
+    if (_backendUrl.isEmpty) throw Exception('Backend URL not configured');
+
+    String cleanUrl = _backendUrl.trim();
+    if (cleanUrl.endsWith('/')) {
+      cleanUrl = cleanUrl.substring(0, cleanUrl.length - 1);
+    }
+    final uri = cleanUrl.endsWith('/api/chat') ? Uri.parse(cleanUrl) : Uri.parse('$cleanUrl/api/chat');
+
+    final payload = {
+      'query': prompt,
+      'history': _messages
+          .where((m) => m.id != 'welcome_1')
+          .map((m) => {'role': m.isUser ? 'user' : 'assistant', 'content': m.content})
+          .toList(),
+    };
+
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(payload),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      return {
+        'text': (data['text'] ?? data['response'] ?? '') as String,
+        'model': (data['model'] ?? 'Frosty Central Server') as String,
+      };
+    }
+    throw Exception('Backend HTTP ${response.statusCode}');
   }
 
   void clearConversation() {

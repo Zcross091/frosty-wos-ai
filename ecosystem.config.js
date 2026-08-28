@@ -1,19 +1,29 @@
 module.exports = {
   apps: [
     {
-      name: 'frosty-wos-ai',
+      name: 'frosty-discord-bot',
       script: 'bot.py',
-      // If using python virtual environment on Linux/Oracle cloud:
-      // interpreter: './.venv/bin/python3',
       interpreter: 'python3',
       instances: 1,
       autorestart: true,
       watch: false,
       max_memory_restart: '800M',
       restart_delay: 4000,
-      max_restarts: 10,
       env: {
-        NODE_ENV: 'production',
+        PYTHONUNBUFFERED: '1'
+      }
+    },
+    {
+      name: 'frosty-api-server',
+      script: 'server.py',
+      interpreter: 'python3',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '600M',
+      restart_delay: 3000,
+      env: {
+        PORT: '8000',
         PYTHONUNBUFFERED: '1'
       }
     }
