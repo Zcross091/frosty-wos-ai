@@ -145,7 +145,7 @@ class AIService extends ChangeNotifier {
         // 1. Try Central Backend REST Server (ChromaDB RAG + Server LLMs)
         bool backendSuccess = false;
         try {
-          final result = await _callBackend(cleanText).timeout(const Duration(seconds: 60));
+          final result = await _callBackend(cleanText).timeout(const Duration(seconds: 120));
           if (result['text']!.isNotEmpty) {
             botAnswer = result['text']!;
             modelUsed = result['model']!;
@@ -159,7 +159,7 @@ class AIService extends ChangeNotifier {
           // 2. Try Direct Gemini (if user configured key)
           if (_geminiKey.isNotEmpty) {
             try {
-              final result = await _callGemini(cleanText).timeout(const Duration(seconds: 45));
+              final result = await _callGemini(cleanText).timeout(const Duration(seconds: 90));
               botAnswer = result['text']!;
               modelUsed = result['model']!;
               backendSuccess = true;
@@ -171,7 +171,7 @@ class AIService extends ChangeNotifier {
           // 3. Try Direct Groq (if user configured key)
           if (_groqKey.isNotEmpty) {
             try {
-              final result = await _callGroq(cleanText).timeout(const Duration(seconds: 45));
+              final result = await _callGroq(cleanText).timeout(const Duration(seconds: 90));
               botAnswer = result['text']!;
               modelUsed = result['model']!;
               backendSuccess = true;
@@ -182,7 +182,7 @@ class AIService extends ChangeNotifier {
         if (!backendSuccess) {
           // 4. Try Local Ollama
           try {
-            final result = await _callOllama(cleanText).timeout(const Duration(seconds: 15));
+            final result = await _callOllama(cleanText).timeout(const Duration(seconds: 45));
             botAnswer = result['text']!;
             modelUsed = result['model']!;
             backendSuccess = true;
@@ -251,7 +251,7 @@ class AIService extends ChangeNotifier {
         'X-Frosty-Signature': signature,
       },
       body: jsonPayload,
-    ).timeout(const Duration(seconds: 60));
+    ).timeout(const Duration(seconds: 120));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
@@ -280,7 +280,7 @@ class AIService extends ChangeNotifier {
 
   // --- 1. Google Gemini Provider ---
   Future<Map<String, String>> _callGemini(String prompt) async {
-    const modelsToTry = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.5-pro', 'gemini-3.6-flash'];
 
     final systemInstruction = _buildSystemPrompt(prompt);
 
@@ -305,7 +305,7 @@ class AIService extends ChangeNotifier {
           url,
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode(payload),
-        ).timeout(const Duration(seconds: 45));
+        ).timeout(const Duration(seconds: 90));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
@@ -358,7 +358,7 @@ class AIService extends ChangeNotifier {
             'Content-Type': 'application/json',
           },
           body: jsonEncode(payload),
-        ).timeout(const Duration(seconds: 45));
+        ).timeout(const Duration(seconds: 90));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
@@ -395,7 +395,7 @@ class AIService extends ChangeNotifier {
       url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(payload),
-    ).timeout(const Duration(seconds: 20));
+    ).timeout(const Duration(seconds: 45));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
