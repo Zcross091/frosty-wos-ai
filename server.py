@@ -35,8 +35,12 @@ ENFORCE_APP_HANDSHAKE = os.getenv("ENFORCE_APP_HANDSHAKE", "true").lower() in ["
 ai_engine = AIEngine()
 knowledge_base = KnowledgeBase()
 
-# --- Rate Limiter Storage: {ip: [timestamp1, timestamp2]} ---
+# --- Rate Limiter & Active Users Storage ---
+SERVER_START_TIME = time.time()
 ip_request_history: Dict[str, List[float]] = defaultdict(list)
+active_devices: Dict[str, float] = {}  # {client_hash: last_seen_epoch}
+total_requests_served = 0
+total_guardrail_filtered = 0
 RATE_LIMIT_WINDOW = 60.0  # seconds
 RATE_LIMIT_MAX_REQ = 25   # requests per window
 
@@ -195,15 +199,44 @@ class FrostyAPIHandler(BaseHTTPRequestHandler):
                 "knowledge_chunks": chunk_count
             }
             self.wfile.write(json.dumps(response).encode("utf-8"))
+        elif parsed.path in ["/api/stats", "/stats"]:
+            self._set_cors_headers(200)
+            now = time.time()
+            active_1h = sum(1 for t in active_devices.values() if (now - t) <= 3600)
+            active_24h = sum(1 for t in active_devices.values() if (now - t) <= 86400)
+            active_7d = sum(1 for t in active_devices.values() if (now - t) <= 604800)
+            uptime_seconds = int(now - SERVER_START_TIME)
+
+            response = {
+                "status": "online",
+                "service": "Frosty Tactical AI Server",
+                "uptime_hours": round(uptime_seconds / 3600, 2),
+                "uptime_human": f"{uptime_seconds // 3600}h {(uptime_seconds % 3600) // 60}m",
+                "active_mobile_users": {
+                    "last_1_hour": active_1h,
+                    "last_24_hours": active_24h,
+                    "last_7_days": active_7d
+                },
+                "total_tactical_queries_served": total_requests_served,
+                "zero_token_guardrail_blocked": total_guardrail_filtered,
+                "active_model": ai_engine.get_active_model_name(),
+                "knowledge_chunks": knowledge_base.collection.count() if knowledge_base.collection else 0
+            }
+            self.wfile.write(json.dumps(response, indent=2).encode("utf-8"))
         else:
             self._set_cors_headers(404)
             self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
 
     def do_POST(self):
+        global total_requests_served, total_guardrail_filtered
         parsed = urlparse(self.path)
         client_ip = self.client_address[0]
 
         if parsed.path == "/api/chat":
+            # Track active client
+            client_hash = hashlib.sha256(client_ip.encode("utf-8")).hexdigest()[:12]
+            active_devices[client_hash] = time.time()
+
             # 1. Rate Limiting Check
             if not check_rate_limit(client_ip):
                 logger.warning(f"⛔ Rate limit exceeded for IP {client_ip}")
@@ -250,6 +283,7 @@ class FrostyAPIHandler(BaseHTTPRequestHandler):
                 # 3. Zero-Token WOS Relevance Recognizer (Saves 100% LLM tokens on non-WOS queries)
                 is_wos, reason = is_wos_relevant(query)
                 if not is_wos:
+                    total_guardrail_filtered += 1
                     logger.info(f"🛡️ Non-WOS query filtered from {client_ip}: '{query[:60]}...' ({reason})")
                     self._set_cors_headers(400)
                     self.wfile.write(json.dumps({
@@ -258,6 +292,8 @@ class FrostyAPIHandler(BaseHTTPRequestHandler):
                         "reason": reason
                     }).encode("utf-8"))
                     return
+
+                total_requests_served += 1
 
                 history = data.get("history", [])
 

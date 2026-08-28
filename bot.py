@@ -333,6 +333,24 @@ async def slash_reindex(interaction: discord.Interaction, local_only: bool = Tru
         await interaction.followup.send(embed=embed)
 
 
+@bot.tree.command(name="status", description="Display live Discord servers, total users reached, active AI model, and RAM.")
+async def slash_status(interaction: discord.Interaction):
+    process = psutil.Process(os.getpid())
+    ram = process.memory_info().rss / 1024 / 1024
+    total_guilds = len(bot.guilds)
+    total_members = sum(g.member_count for g in bot.guilds if g.member_count)
+
+    embed = discord.Embed(title="📊 Frosty AI — Live Analytics & Health", color=FROSTY_COLOR)
+    embed.add_field(name="🌐 Discord Servers", value=f"**{total_guilds}** Active Guilds", inline=True)
+    embed.add_field(name="👥 Total Chiefs Reached", value=f"**{total_members:,}** Members", inline=True)
+    embed.add_field(name="⚡ Tactical Engine", value=f"`{ai_engine.get_active_model_name()}`", inline=True)
+    embed.add_field(name="📚 Database Chunks", value=f"`{knowledge_base.get_count()} chunks`", inline=True)
+    embed.add_field(name="💾 Bot Memory", value=f"`{ram:.1f} MB`", inline=True)
+    embed.add_field(name="📡 Gateway Ping", value=f"`{bot.latency * 1000:.1f} ms`", inline=True)
+    embed.set_footer(text="Mobile & Web API: Check http://<server-ip>:8000/api/stats for active app users")
+    await interaction.response.send_message(embed=embed)
+
+
 @bot.tree.command(name="help", description="Show Frosty AI commands and strategic capabilities.")
 async def slash_help(interaction: discord.Interaction):
     embed = discord.Embed(
@@ -346,7 +364,7 @@ async def slash_help(interaction: discord.Interaction):
     embed.add_field(name="🐻 `/bear` or `!bear`", value="Instant Bear Trap guide (10/10/80 ratio, Jessie/Seo-yoon joiner damage buffs).", inline=False)
     embed.add_field(name="📅 `/event [name]` or `!event`", value="Walkthroughs for Crazy Joe, Foundry Battle, Frostfire Mine, and SvS.", inline=False)
     embed.add_field(name="📚 `/expert [name]` or `!expert`", value="Dawn Academy expert advice and breakpoint pausing guide.", inline=False)
-    embed.add_field(name="📊 `/status` or `!status`", value="Check active AI model, latency, RAM usage, and database stats.", inline=False)
+    embed.add_field(name="📊 `/status` or `!status`", value="Check live Discord servers, total members reached, AI model, and RAM usage.", inline=False)
     embed.set_footer(text="Frosty AI • Powered by Google Gemini & ChromaDB")
     await interaction.response.send_message(embed=embed)
 
@@ -406,10 +424,15 @@ async def prefix_expert(ctx, *, expert_name: str):
 async def prefix_status(ctx):
     process = psutil.Process(os.getpid())
     ram = process.memory_info().rss / 1024 / 1024
+    total_guilds = len(bot.guilds)
+    total_members = sum(g.member_count for g in bot.guilds if g.member_count)
+
     embed = discord.Embed(title="📊 Frosty Stats", color=FROSTY_COLOR)
+    embed.add_field(name="🌐 Servers", value=f"**{total_guilds}**", inline=True)
+    embed.add_field(name="👥 Members", value=f"**{total_members:,}**", inline=True)
     embed.add_field(name="Engine", value=f"`{ai_engine.get_active_model_name()}`", inline=True)
     embed.add_field(name="Database", value=f"`{knowledge_base.get_count()} chunks`", inline=True)
-    embed.add_field(name="RAM Usage", value=f"`{ram:.2f} MB`", inline=True)
+    embed.add_field(name="RAM Usage", value=f"`{ram:.1f} MB`", inline=True)
     embed.add_field(name="Ping", value=f"`{bot.latency * 1000:.1f} ms`", inline=True)
     await ctx.send(embed=embed)
 
