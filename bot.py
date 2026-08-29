@@ -74,6 +74,14 @@ class FrostyActionView(discord.ui.View):
         self.question = question
         self.original_answer = original_answer
 
+        # 4th Button: Direct Link to Download Latest Mobile App
+        self.add_item(discord.ui.Button(
+            label="📱 Get Mobile App",
+            style=discord.ButtonStyle.link,
+            url="https://github.com/Zcross091/frosty-wos-ai/releases/latest",
+            emoji="📥"
+        ))
+
     @discord.ui.button(label="🔄 Regenerate", style=discord.ButtonStyle.secondary, emoji="⚡")
     async def regenerate_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.original_user.id:
