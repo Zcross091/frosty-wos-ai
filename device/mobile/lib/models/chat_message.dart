@@ -15,6 +15,9 @@ class ChatMessage {
     this.latencySeconds,
   });
 
+  /// Compatibility getter for content
+  String get text => content;
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'content': content,

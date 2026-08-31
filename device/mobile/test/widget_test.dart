@@ -1,6 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:frosty_wos_ai/main.dart';
+import 'package:frosty_wos_ai/models/chat_message.dart';
 import 'package:frosty_wos_ai/models/hero_profile.dart';
-import 'package:frosty_wos_ai/models/state_calculation.dart';
 import 'package:frosty_wos_ai/services/knowledge_service.dart';
 import 'package:frosty_wos_ai/services/state_age_service.dart';
 
@@ -23,6 +25,18 @@ void main() {
       expect(jessie!.generation, 0);
     });
 
+    test('ChatMessage content and text alias integrity', () {
+      final msg = ChatMessage(
+        id: '1',
+        content: 'Tactical advice',
+        isUser: false,
+        timestamp: DateTime.now(),
+        modelUsed: 'Frosty Core',
+      );
+      expect(msg.content, 'Tactical advice');
+      expect(msg.text, 'Tactical advice');
+    });
+
     test('State Age Calculator computes Generation accurately', () {
       // Test State 1 (Oldest Server -> Gen 16)
       final state1Calc = StateAgeService.calculateFromStateNumber(1);
@@ -33,7 +47,14 @@ void main() {
       final gen2Calc = StateAgeService.calculateFromDays(45);
       expect(gen2Calc.currentGeneration, 2);
       expect(gen2Calc.nextGeneration, 3);
-      expect(gen2Calc.daysUntilNextGen, 75); // 120 - 45 = 75
+      expect(gen2Calc.daysUntilNextGen, 75);
+    });
+
+    testWidgets('FrostyApp UI renders without runtime exceptions', (WidgetTester tester) async {
+      await tester.pumpWidget(const FrostyApp());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Frosty Tactical Oracle'), findsOneWidget);
     });
   });
 }

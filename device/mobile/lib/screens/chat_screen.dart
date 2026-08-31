@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
+import '../models/chat_message.dart';
 import '../services/ai_service.dart';
 import '../widgets/typing_indicator.dart';
 
@@ -336,7 +337,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildMessageBubble(dynamic msg) {
+  Widget _buildMessageBubble(ChatMessage msg) {
     final isUser = msg.isUser;
 
     return Align(
