@@ -48,38 +48,48 @@ class _SpatialBackgroundState extends State<SpatialBackground>
   @override
   Widget build(BuildContext context) {
     return Stack(
+      fit: StackFit.expand,
       children: [
-        // 1. Deep Space Obsidian Base with Radial Depth
-        Container(
-          decoration: const BoxDecoration(
-            gradient: RadialGradient(
-              center: Alignment(0, -0.4),
-              radius: 1.3,
-              colors: [
-                Color(0xFF0C172C), // Luminous Deep Ice Blue
-                Color(0xFF060B14), // Obsidian Slate
-                Color(0xFF03060B), // Pitch Void
-              ],
-              stops: [0.0, 0.55, 1.0],
+        // 1. Solid Obsidian Background Base
+        const Positioned.fill(
+          child: ColoredBox(color: Color(0xFF040812)),
+        ),
+
+        // 2. Luminous Radial Depth
+        Positioned.fill(
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment(0, -0.3),
+                radius: 1.2,
+                colors: [
+                  Color(0xFF0D1C34), // Rich Ice Navy
+                  Color(0xFF060B14), // Obsidian Slate
+                  Color(0xFF03060B), // Pitch Void
+                ],
+                stops: [0.0, 0.6, 1.0],
+              ),
             ),
           ),
         ),
 
-        // 2. Ambient Floating Glowing Orbs
+        // 3. Ambient Floating Glowing Orbs
         Positioned(
           top: -60,
           right: -40,
-          child: Container(
-            width: 220,
-            height: 220,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  const Color(0xFF00F0FF).withOpacity(0.18),
-                  const Color(0xFF0088FF).withOpacity(0.05),
-                  Colors.transparent,
-                ],
+          child: IgnorePointer(
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF00F0FF).withOpacity(0.18),
+                    const Color(0xFF0088FF).withOpacity(0.05),
+                    Colors.transparent,
+                  ],
+                ),
               ),
             ),
           ),
@@ -87,35 +97,43 @@ class _SpatialBackgroundState extends State<SpatialBackground>
         Positioned(
           bottom: 120,
           left: -60,
-          child: Container(
-            width: 240,
-            height: 240,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  const Color(0xFF8B5CF6).withOpacity(0.14),
-                  const Color(0xFFEC4899).withOpacity(0.04),
-                  Colors.transparent,
-                ],
+          child: IgnorePointer(
+            child: Container(
+              width: 260,
+              height: 260,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF8B5CF6).withOpacity(0.14),
+                    const Color(0xFFEC4899).withOpacity(0.04),
+                    Colors.transparent,
+                  ],
+                ),
               ),
             ),
           ),
         ),
 
-        // 3. Animated Frost Particle Canvas
-        AnimatedBuilder(
-          animation: _controller,
-          builder: (context, _) {
-            return CustomPaint(
-              size: Size.infinite,
-              painter: _FrostParticlePainter(particles: _particles, progress: _controller.value),
-            );
-          },
+        // 4. Animated Frost Particle Canvas
+        Positioned.fill(
+          child: IgnorePointer(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, _) {
+                return CustomPaint(
+                  size: Size.infinite,
+                  painter: _FrostParticlePainter(particles: _particles, progress: _controller.value),
+                );
+              },
+            ),
+          ),
         ),
 
-        // 4. Content Layer
-        widget.child,
+        // 5. Content Layer
+        Positioned.fill(
+          child: widget.child,
+        ),
       ],
     );
   }

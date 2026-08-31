@@ -298,7 +298,7 @@ class AIService extends ChangeNotifier {
               ]
             }
           ],
-          'generationConfig': {'temperature': 0.6, 'maxOutputTokens': 1500}
+          'generationConfig': {'temperature': 0.6, 'maxOutputTokens': 4096}
         };
 
         final response = await http.post(
@@ -348,7 +348,7 @@ class AIService extends ChangeNotifier {
             {'role': 'user', 'content': prompt}
           ],
           'temperature': 0.6,
-          'max_tokens': 1500,
+          'max_tokens': 4096,
         };
 
         final response = await http.post(

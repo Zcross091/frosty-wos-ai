@@ -185,9 +185,12 @@ class AIEngine:
                 full_text = f"{system_prompt}\n\nUser Question: {user_message}"
                 payload = {
                     "contents": [{"parts": [{"text": full_text}]}],
-                    "generationConfig": {"temperature": temperature}
+                    "generationConfig": {
+                        "temperature": temperature,
+                        "maxOutputTokens": 4096
+                    }
                 }
-                res = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15.0)
+                res = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=45.0)
                 if res.status_code == 200:
                     data = res.json()
                     candidates = data.get("candidates", [])
@@ -242,9 +245,10 @@ class AIEngine:
                 payload = {
                     "model": model_name,
                     "messages": messages,
-                    "temperature": temperature
+                    "temperature": temperature,
+                    "max_tokens": 4096
                 }
-                res = requests.post(url, headers=headers, json=payload, timeout=15.0)
+                res = requests.post(url, headers=headers, json=payload, timeout=45.0)
                 if res.status_code == 200:
                     data = res.json()
                     return data["choices"][0]["message"]["content"], f"Groq ({model_name})"
@@ -259,7 +263,8 @@ class AIEngine:
                     completion = self._groq_client.chat.completions.create(
                         model=model_name,
                         messages=messages,
-                        temperature=temperature
+                        temperature=temperature,
+                        max_tokens=4096
                     )
                     return completion.choices[0].message.content, f"Groq ({model_name})"
             except Exception as e:
@@ -303,13 +308,10 @@ class AIEngine:
             dossier_part = system_prompt.split("=== OFFICIAL HERO DOSSIER:")[1]
             hero_title = dossier_part.split("===")[0].strip()
             hero_content = dossier_part.split("===")[1] if "===" in dossier_part else dossier_part
-            if "---" in hero_content:
-                hero_content = hero_content.split("---")[0]
-            
             clean_hero = hero_content.strip()
             output = (
                 f"### 🛡️ Frosty Tactical Dossier: {hero_title}\n\n"
-                f"{clean_hero[:3000]}\n\n"
+                f"{clean_hero}\n\n"
                 f"---\n"
                 f"💡 **Chief's Tip:** *Extracted directly from Frosty's verified Whiteout Survival master archives.*"
             )
@@ -320,13 +322,10 @@ class AIEngine:
             ev_part = system_prompt.split("=== OFFICIAL EVENT GUIDE:")[1]
             ev_title = ev_part.split("===")[0].strip()
             ev_content = ev_part.split("===")[1] if "===" in ev_part else ev_part
-            if "---" in ev_content:
-                ev_content = ev_content.split("---")[0]
-            
             clean_ev = ev_content.strip()
             output = (
                 f"### 🎯 Frosty Event Master Guide: {ev_title}\n\n"
-                f"{clean_ev[:3000]}\n\n"
+                f"{clean_ev}\n\n"
                 f"---\n"
                 f"💡 **Chief's Tip:** *Extracted directly from Frosty's verified Whiteout Survival master archives.*"
             )
@@ -337,19 +336,14 @@ class AIEngine:
             gen_part = system_prompt.split("=== OFFICIAL GENERATION DOSSIER:")[1]
             gen_title = gen_part.split("===")[0].strip()
             gen_content = gen_part.split("===")[1] if "===" in gen_part else gen_part
-            if "---" in gen_content:
-                gen_content = gen_content.split("---")[0]
-            
             clean_gen = gen_content.strip()
             output = (
                 f"### 👑 Frosty Generation Master Guide: {gen_title}\n\n"
-                f"{clean_gen[:3200]}\n\n"
+                f"{clean_gen}\n\n"
                 f"---\n"
                 f"💡 **Chief's Tip:** *Extracted directly from Frosty's verified Whiteout Survival master archives.*"
             )
             return output, "Frosty Local Tactical Core"
-
-
 
         # 1. Lineup / Formation query
         if any(w in q for w in ["lineup", "formation", "ratio", "troops", "frontline", "deputy", "squad"]):
@@ -412,7 +406,7 @@ class AIEngine:
 
         output = (
             f"### ❄️ Frosty Tactical Advisory\n\n"
-            f"{clean_context[:2500]}\n\n"
+            f"{clean_context}\n\n"
             f"---\n"
             f"💡 **Tactical Verdict:** *Synthesized directly from Frosty's Whiteout Survival strategy archives.*"
         )

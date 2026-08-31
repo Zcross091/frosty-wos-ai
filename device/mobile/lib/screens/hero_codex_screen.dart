@@ -15,8 +15,13 @@ class _HeroCodexScreenState extends State<HeroCodexScreen> {
   final TextEditingController _searchController = TextEditingController();
   int _selectedGen = 16;
   String _searchQuery = '';
+  bool _isSyncing = false;
 
-  final List<int> _availableGens = [16, 7, 4, 2, 1, 0];
+  @override
+  void initState() {
+    super.initState();
+    _syncLive();
+  }
 
   @override
   void dispose() {
@@ -24,8 +29,21 @@ class _HeroCodexScreenState extends State<HeroCodexScreen> {
     super.dispose();
   }
 
+  Future<void> _syncLive() async {
+    setState(() => _isSyncing = true);
+    await KnowledgeService.syncWithWebsite();
+    if (mounted) {
+      setState(() => _isSyncing = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final availableGens = KnowledgeService.getAvailableGenerations();
+    if (!availableGens.contains(_selectedGen) && availableGens.isNotEmpty) {
+      _selectedGen = availableGens.first;
+    }
+
     List<HeroProfile> displayedHeroes;
 
     if (_searchQuery.trim().isNotEmpty) {
@@ -41,9 +59,9 @@ class _HeroCodexScreenState extends State<HeroCodexScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF040812),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF070D18).withOpacity(0.85),
+        backgroundColor: const Color(0xFF070D18),
         elevation: 0,
         title: const Row(
           children: [
@@ -53,13 +71,29 @@ class _HeroCodexScreenState extends State<HeroCodexScreen> {
               style: TextStyle(
                 fontFamily: 'Outfit',
                 fontWeight: FontWeight.bold,
-                fontSize: 18,
+                fontSize: 17,
                 color: Colors.white,
                 letterSpacing: 0.3,
               ),
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: _isSyncing
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00F0FF)),
+                    ),
+                  )
+                : const Icon(Icons.sync_rounded, color: Color(0xFF00F0FF)),
+            tooltip: 'Sync with Website Repository',
+            onPressed: _isSyncing ? null : _syncLive,
+          ),
+        ],
       ),
       body: SpatialBackground(
         child: Column(
@@ -84,7 +118,7 @@ class _HeroCodexScreenState extends State<HeroCodexScreen> {
                     hintText: 'Search hero by name, skill, or troop type...',
                     hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
                     filled: true,
-                    fillColor: const Color(0xFF0F192C).withOpacity(0.85),
+                    fillColor: const Color(0xFF0F192C),
                     prefixIcon: const Icon(Icons.search, color: Color(0xFF00F0FF), size: 20),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
@@ -117,15 +151,15 @@ class _HeroCodexScreenState extends State<HeroCodexScreen> {
             // Generation Selector Chips (when not searching)
             if (_searchQuery.isEmpty)
               Container(
-                height: 50,
-                padding: const EdgeInsets.symmetric(vertical: 4),
+                height: 52,
+                padding: const EdgeInsets.symmetric(vertical: 6),
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _availableGens.length,
+                  itemCount: availableGens.length,
                   itemBuilder: (context, index) {
-                    final gen = _availableGens[index];
+                    final gen = availableGens[index];
                     final isSelected = gen == _selectedGen;
                     final label = gen == 0 ? '⭐ Epic Core' : 'Gen $gen';
 
@@ -135,19 +169,19 @@ class _HeroCodexScreenState extends State<HeroCodexScreen> {
                         onTap: () => setState(() => _selectedGen = gen),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                           decoration: BoxDecoration(
                             gradient: isSelected
                                 ? const LinearGradient(
                                     colors: [Color(0xFF00F0FF), Color(0xFF0284C7)],
                                   )
                                 : null,
-                            color: isSelected ? null : const Color(0xFF0F192C).withOpacity(0.8),
+                            color: isSelected ? null : const Color(0xFF0F192C),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: isSelected
                                   ? const Color(0xFF00F0FF)
-                                  : const Color(0xFF38BDF8).withOpacity(0.2),
+                                  : const Color(0xFF38BDF8).withOpacity(0.25),
                             ),
                             boxShadow: isSelected
                                 ? [
@@ -162,9 +196,9 @@ class _HeroCodexScreenState extends State<HeroCodexScreen> {
                             child: Text(
                               label,
                               style: TextStyle(
-                                color: isSelected ? const Color(0xFF040914) : const Color(0xFFE2E8F0),
-                                fontSize: 12.5,
+                                color: isSelected ? const Color(0xFF040812) : const Color(0xFFE2E8F0),
                                 fontWeight: FontWeight.bold,
+                                fontSize: 12.5,
                                 fontFamily: 'Outfit',
                               ),
                             ),
@@ -176,20 +210,29 @@ class _HeroCodexScreenState extends State<HeroCodexScreen> {
                 ),
               ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
 
-            // Heroes 3D Cards Stream
+            // Hero Cards Grid / List
             Expanded(
               child: displayedHeroes.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No heroes found matching your search.',
-                        style: TextStyle(color: Color(0xFF94A3B8)),
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.search_off_rounded, size: 54, color: Color(0xFF64748B)),
+                          const SizedBox(height: 12),
+                          Text(
+                            _searchQuery.isNotEmpty
+                                ? 'No heroes found matching "$_searchQuery"'
+                                : 'No heroes recorded for Gen $_selectedGen yet.',
+                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+                          ),
+                        ],
                       ),
                     )
                   : ListView.builder(
                       physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       itemCount: displayedHeroes.length,
                       itemBuilder: (context, index) {
                         return HeroCard(hero: displayedHeroes[index]);

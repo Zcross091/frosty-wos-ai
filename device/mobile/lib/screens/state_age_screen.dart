@@ -74,9 +74,9 @@ class _StateAgeScreenState extends State<StateAgeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF040812),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF070D18).withOpacity(0.85),
+        backgroundColor: const Color(0xFF070D18),
         elevation: 0,
         title: const Row(
           children: [

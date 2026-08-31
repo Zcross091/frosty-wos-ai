@@ -7,6 +7,7 @@ import 'screens/formations_screen.dart';
 import 'screens/settings_screen.dart';
 import 'services/ai_service.dart';
 import 'services/update_service.dart';
+import 'services/knowledge_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,6 +61,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   @override
   void initState() {
     super.initState();
+    // Synchronize latest hero roster from website repository
+    KnowledgeService.syncWithWebsite();
+
     // Check for new releases on GitHub automatically on startup
     WidgetsBinding.instance.addPostFrameCallback((_) {
       UpdateService.checkForUpdates(context);

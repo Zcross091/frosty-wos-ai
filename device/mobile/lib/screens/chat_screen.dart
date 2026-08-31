@@ -59,9 +59,9 @@ class _ChatScreenState extends State<ChatScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF040812),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF070D18).withOpacity(0.85),
+        backgroundColor: const Color(0xFF070D18),
         elevation: 0,
         title: Row(
           children: [
@@ -209,34 +209,25 @@ class _ChatScreenState extends State<ChatScreen> {
           maxWidth: MediaQuery.of(context).size.width * 0.88,
         ),
         decoration: BoxDecoration(
-          gradient: isUser
-              ? const LinearGradient(
-                  colors: [Color(0xFF0369A1), Color(0xFF0284C7)],
-                )
-              : LinearGradient(
-                  colors: [
-                    const Color(0xFF132238).withOpacity(0.88),
-                    const Color(0xFF0A1220).withOpacity(0.95),
-                  ],
-                ),
+          color: isUser
+              ? const Color(0xFF0284C7)
+              : const Color(0xFF0F1A2E),
           borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(20),
-            topRight: const Radius.circular(20),
-            bottomLeft: Radius.circular(isUser ? 20 : 4),
-            bottomRight: Radius.circular(isUser ? 4 : 20),
+            topLeft: const Radius.circular(18),
+            topRight: const Radius.circular(18),
+            bottomLeft: Radius.circular(isUser ? 18 : 4),
+            bottomRight: Radius.circular(isUser ? 4 : 18),
           ),
           border: Border.all(
             color: isUser
                 ? const Color(0xFF38BDF8)
-                : const Color(0xFF00F0FF).withOpacity(0.35),
+                : const Color(0xFF00F0FF).withOpacity(0.4),
             width: 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: isUser
-                  ? const Color(0xFF0284C7).withOpacity(0.3)
-                  : const Color(0xFF00F0FF).withOpacity(0.1),
-              blurRadius: 16,
+              color: Colors.black.withOpacity(0.4),
+              blurRadius: 12,
               offset: const Offset(0, 4),
             ),
           ],
@@ -259,7 +250,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           msg.modelUsed ?? 'Frosty Oracle',
                           style: const TextStyle(
                             color: Color(0xFF00F0FF),
-                            fontSize: 11,
+                            fontSize: 11.5,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.4,
                           ),
@@ -287,22 +278,27 @@ class _ChatScreenState extends State<ChatScreen> {
                   ],
                 ),
                 const SizedBox(height: 6),
-                const Divider(color: Colors.white10, height: 1),
+                const Divider(color: Colors.white12, height: 1),
                 const SizedBox(height: 8),
               ],
 
-              // Markdown Content
+              // Markdown Content with Explicit High-Contrast Text Styles
               MarkdownBody(
                 data: msg.text,
+                selectable: true,
                 styleSheet: MarkdownStyleSheet(
                   p: const TextStyle(
-                    color: Color(0xFFF1F5F9),
+                    color: Color(0xFFF8FAFC), // Crisp White-Slate
                     fontSize: 13.5,
-                    height: 1.45,
+                    height: 1.5,
                   ),
                   strong: const TextStyle(
-                    color: Color(0xFF00F0FF),
+                    color: Color(0xFF00F0FF), // Neon Frost Cyan
                     fontWeight: FontWeight.bold,
+                  ),
+                  em: const TextStyle(
+                    color: Color(0xFFE2E8F0),
+                    fontStyle: FontStyle.italic,
                   ),
                   h1: const TextStyle(
                     color: Colors.white,
@@ -321,13 +317,30 @@ class _ChatScreenState extends State<ChatScreen> {
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
-                  listBullet: const TextStyle(color: Color(0xFF00F0FF)),
+                  listBullet: const TextStyle(
+                    color: Color(0xFF00F0FF),
+                    fontSize: 14,
+                  ),
                   code: const TextStyle(
-                    backgroundColor: Color(0xFF060B13),
-                    color: Color(0xFF38BDF8),
+                    backgroundColor: Color(0xFF060B14),
+                    color: Color(0xFF00F0FF),
                     fontFamily: 'monospace',
                     fontSize: 12,
                   ),
+                  blockquote: const TextStyle(
+                    color: Color(0xFF94A3B8),
+                    fontSize: 13,
+                  ),
+                  blockquoteDecoration: BoxDecoration(
+                    color: const Color(0xFF060B14),
+                    borderRadius: BorderRadius.circular(6),
+                    border: const Border(
+                      left: BorderSide(color: Color(0xFF00F0FF), width: 3),
+                    ),
+                  ),
+                  tableBody: const TextStyle(color: Color(0xFFF8FAFC), fontSize: 12.5),
+                  tableHead: const TextStyle(color: Color(0xFF00F0FF), fontWeight: FontWeight.bold, fontSize: 13),
+                  tableBorder: TableBorder.all(color: Colors.white24, width: 0.8),
                 ),
               ),
             ],

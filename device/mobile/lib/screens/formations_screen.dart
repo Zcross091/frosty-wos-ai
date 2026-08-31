@@ -69,7 +69,7 @@ class _FormationsScreenState extends State<FormationsScreen> {
     final marCount = ((_marchCapacity * (active['mar'] as int)) / 100).round();
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF040812),
       body: SpatialBackground(
         child: SafeArea(
           child: CustomScrollView(
