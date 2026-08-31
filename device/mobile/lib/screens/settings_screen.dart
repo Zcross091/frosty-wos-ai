@@ -301,40 +301,44 @@ class SettingsScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: const Color(0xFF38BDF8).withOpacity(0.2)),
               ),
-              child: Column(
-                children: [
-                  ListTile(
-                    title: const Text('Primary Provider Mode', style: TextStyle(color: Colors.white, fontSize: 14)),
-                    subtitle: Text(
-                      'Current: ${aiService.currentProvider.toUpperCase()}',
-                      style: const TextStyle(color: Color(0xFF00F0FF), fontSize: 12),
+              child: Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                child: Column(
+                  children: [
+                    ListTile(
+                      title: const Text('Primary Provider Mode', style: TextStyle(color: Colors.white, fontSize: 14)),
+                      subtitle: Text(
+                        'Current: ${aiService.currentProvider.toUpperCase()}',
+                        style: const TextStyle(color: Color(0xFF00F0FF), fontSize: 12),
+                      ),
+                      trailing: DropdownButton<String>(
+                        value: aiService.currentProvider,
+                        dropdownColor: const Color(0xFF0F192C),
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        underline: const SizedBox(),
+                        items: const [
+                          DropdownMenuItem(value: 'auto', child: Text('Auto (Gemini -> Groq -> Local)')),
+                          DropdownMenuItem(value: 'gemini', child: Text('Gemini Only')),
+                          DropdownMenuItem(value: 'groq', child: Text('Groq Only')),
+                          DropdownMenuItem(value: 'ollama', child: Text('Local Ollama')),
+                          DropdownMenuItem(value: 'offline', child: Text('Offline Core Only')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) aiService.updateSettings(provider: val);
+                        },
+                      ),
                     ),
-                    trailing: DropdownButton<String>(
-                      value: aiService.currentProvider,
-                      dropdownColor: const Color(0xFF0F192C),
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
-                      underline: const SizedBox(),
-                      items: const [
-                        DropdownMenuItem(value: 'auto', child: Text('Auto (Gemini -> Groq -> Local)')),
-                        DropdownMenuItem(value: 'gemini', child: Text('Gemini Only')),
-                        DropdownMenuItem(value: 'groq', child: Text('Groq Only')),
-                        DropdownMenuItem(value: 'ollama', child: Text('Local Ollama')),
-                        DropdownMenuItem(value: 'offline', child: Text('Offline Core Only')),
-                      ],
-                      onChanged: (val) {
-                        if (val != null) aiService.updateSettings(provider: val);
-                      },
+                    const Divider(height: 1, color: Color(0xFF1E293B)),
+                    ListTile(
+                      leading: const Icon(Icons.key_rounded, color: Color(0xFF00F0FF)),
+                      title: const Text('Custom API Keys & Hosts', style: TextStyle(color: Colors.white, fontSize: 14)),
+                      subtitle: const Text('Enter custom Gemini, Groq, or Ollama LAN IP', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                      trailing: const Icon(Icons.chevron_right, color: Color(0xFF64748B)),
+                      onTap: () => _showApiKeyDialog(context, aiService),
                     ),
-                  ),
-                  const Divider(height: 1, color: Color(0xFF1E293B)),
-                  ListTile(
-                    leading: const Icon(Icons.key_rounded, color: Color(0xFF00F0FF)),
-                    title: const Text('Custom API Keys & Hosts', style: TextStyle(color: Colors.white, fontSize: 14)),
-                    subtitle: const Text('Enter custom Gemini, Groq, or Ollama LAN IP', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                    trailing: const Icon(Icons.chevron_right, color: Color(0xFF64748B)),
-                    onTap: () => _showApiKeyDialog(context, aiService),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 
@@ -367,34 +371,38 @@ class SettingsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFF38BDF8).withOpacity(0.18)),
       ),
-      child: ListTile(
-        leading: Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: color.withOpacity(0.4)),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: ListTile(
+          leading: Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: color.withOpacity(0.4)),
+            ),
+            child: Icon(icon, color: color, size: 20),
           ),
-          child: Icon(icon, color: color, size: 20),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
+          title: Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: const TextStyle(
-            color: Color(0xFF94A3B8),
-            fontSize: 11.5,
+          subtitle: Text(
+            subtitle,
+            style: const TextStyle(
+              color: Color(0xFF94A3B8),
+              fontSize: 11.5,
+            ),
           ),
+          trailing: const Icon(Icons.open_in_new_rounded, color: Color(0xFF64748B), size: 18),
+          onTap: onTap,
         ),
-        trailing: const Icon(Icons.open_in_new_rounded, color: Color(0xFF64748B), size: 18),
-        onTap: onTap,
       ),
     );
   }
