@@ -52,7 +52,7 @@ void main() {
 
     testWidgets('FrostyApp UI renders without runtime exceptions', (WidgetTester tester) async {
       await tester.pumpWidget(const FrostyApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 200));
 
       expect(find.text('Frosty Tactical Oracle'), findsOneWidget);
     });

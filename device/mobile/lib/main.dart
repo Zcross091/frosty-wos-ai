@@ -11,14 +11,7 @@ import 'services/knowledge_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AIService()),
-      ],
-      child: const FrostyApp(),
-    ),
-  );
+  runApp(const FrostyApp());
 }
 
 class FrostyApp extends StatelessWidget {
@@ -26,26 +19,31 @@ class FrostyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Frosty WOS AI',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF040812),
-        canvasColor: const Color(0xFF040812),
-        cardColor: const Color(0xFF0F192C),
-        dialogBackgroundColor: const Color(0xFF0F192C),
-        primaryColor: const Color(0xFF00F0FF),
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF00F0FF),
-          secondary: Color(0xFF0284C7),
-          tertiary: Color(0xFFF59E0B),
-          surface: Color(0xFF0F192C),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AIService()),
+      ],
+      child: MaterialApp(
+        title: 'Frosty WOS AI',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          brightness: Brightness.dark,
+          scaffoldBackgroundColor: const Color(0xFF040812),
+          canvasColor: const Color(0xFF040812),
+          cardColor: const Color(0xFF0F192C),
+          dialogBackgroundColor: const Color(0xFF0F192C),
+          primaryColor: const Color(0xFF00F0FF),
+          colorScheme: const ColorScheme.dark(
+            primary: Color(0xFF00F0FF),
+            secondary: Color(0xFF0284C7),
+            tertiary: Color(0xFFF59E0B),
+            surface: Color(0xFF0F192C),
+          ),
+          fontFamily: 'Outfit',
+          useMaterial3: true,
         ),
-        fontFamily: 'Outfit',
-        useMaterial3: true,
+        home: const MainNavigationShell(),
       ),
-      home: const MainNavigationShell(),
     );
   }
 }
