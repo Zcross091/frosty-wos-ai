@@ -95,7 +95,8 @@ class _HeroCodexScreenState extends State<HeroCodexScreen> {
           ),
         ],
       ),
-      body: SpatialBackground(
+      body: Container(
+        color: const Color(0xFF040812),
         child: Column(
           children: [
             // Search Bar

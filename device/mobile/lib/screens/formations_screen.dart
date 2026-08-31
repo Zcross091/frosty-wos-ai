@@ -70,7 +70,8 @@ class _FormationsScreenState extends State<FormationsScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF040812),
-      body: SpatialBackground(
+      body: Container(
+        color: const Color(0xFF040812),
         child: SafeArea(
           child: CustomScrollView(
             physics: const BouncingScrollPhysics(),

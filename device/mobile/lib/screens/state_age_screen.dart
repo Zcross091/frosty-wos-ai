@@ -94,7 +94,8 @@ class _StateAgeScreenState extends State<StateAgeScreen> {
           ],
         ),
       ),
-      body: SpatialBackground(
+      body: Container(
+        color: const Color(0xFF040812),
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.all(16),

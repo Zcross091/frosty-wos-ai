@@ -4,7 +4,6 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
 import '../services/ai_service.dart';
 import '../widgets/typing_indicator.dart';
-import '../widgets/spatial_background.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -118,13 +117,15 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      body: SpatialBackground(
+      body: Container(
+        color: const Color(0xFF040812),
         child: Column(
           children: [
             // Quick Suggestion Chips Carousel
             Container(
               height: 52,
               padding: const EdgeInsets.symmetric(vertical: 8),
+              color: const Color(0xFF070D18),
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
@@ -139,7 +140,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0F192C).withOpacity(0.85),
+                          color: const Color(0xFF0F192C),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: const Color(0xFF00F0FF).withOpacity(0.35),
@@ -147,8 +148,8 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF00F0FF).withOpacity(0.08),
-                              blurRadius: 8,
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 6,
                             ),
                           ],
                         ),
@@ -170,28 +171,165 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
 
-            const Divider(height: 1, color: Colors.white10),
+            const Divider(height: 1, color: Color(0xFF1E293B)),
 
-            // Messages Stream
+            // Messages Stream or Empty State
             Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                itemCount: aiService.messages.length + (aiService.isGenerating ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == aiService.messages.length) {
-                    return const FrostyTypingIndicator();
-                  }
+              child: aiService.messages.isEmpty && !aiService.isGenerating
+                  ? _buildEmptyState(aiService)
+                  : ListView.builder(
+                      controller: _scrollController,
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.all(16),
+                      itemCount: aiService.messages.length + (aiService.isGenerating ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index == aiService.messages.length) {
+                          return const FrostyTypingIndicator();
+                        }
 
-                  final msg = aiService.messages[index];
-                  return _buildMessageBubble(msg);
-                },
-              ),
+                        final msg = aiService.messages[index];
+                        return _buildMessageBubble(msg);
+                      },
+                    ),
             ),
 
-            // Floating Glassmorphic Input Dock
+            // Floating Input Dock
             _buildInputBar(aiService),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(AIService aiService) {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(height: 20),
+          Container(
+            width: 76,
+            height: 76,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF0A1424),
+              border: Border.all(color: const Color(0xFF00F0FF).withOpacity(0.4), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00F0FF).withOpacity(0.2),
+                  blurRadius: 20,
+                ),
+              ],
+            ),
+            child: const Center(
+              child: Text('❄️', style: TextStyle(fontSize: 36)),
+            ),
+          ),
+          const SizedBox(height: 18),
+          const Text(
+            'Frosty Tactical Command',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontFamily: 'Outfit',
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Ask any question regarding Whiteout Survival formations, heroes, Bear Trap, or event guides.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13.5,
+              color: Color(0xFF94A3B8),
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Recommended Strategic Inquiries:',
+              style: TextStyle(
+                color: Color(0xFF00F0FF),
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Outfit',
+                letterSpacing: 0.3,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildPromptCard(
+            aiService,
+            '🐻 Best Bear Trap Lineup & Joiner Buffs',
+            'Optimal 10/10/80 ratio and top 4 joiner hero buffs (Jessie +25%, Seo-yoon +20%).',
+            'What is the optimal Bear Trap troop ratio and who are the best rally leader and joiner heroes?',
+          ),
+          const SizedBox(height: 10),
+          _buildPromptCard(
+            aiService,
+            '👑 Generation 16 Hero Breakdown',
+            'Full breakdown of Seigel (Infantry), Ursar (Lancer), and Aisling (Marksman).',
+            'Give a full tactical evaluation of Generation 16 heroes (Seigel, Ursar, Aisling) and F2P advice.',
+          ),
+          const SizedBox(height: 10),
+          _buildPromptCard(
+            aiService,
+            '⚔️ Standard PvP 50/20/30 Formation Doctrine',
+            'Why 50% infantry is mandatory and how to structure your 3-hero squad.',
+            'Explain the 50/20/30 formation in Whiteout Survival and why Infantry frontline is essential.',
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPromptCard(AIService aiService, String title, String subtitle, String query) {
+    return GestureDetector(
+      onTap: () => _send(aiService, query),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0F192C),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFF00F0FF).withOpacity(0.25), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Outfit',
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF00F0FF)),
           ],
         ),
       ),
@@ -209,9 +347,7 @@ class _ChatScreenState extends State<ChatScreen> {
           maxWidth: MediaQuery.of(context).size.width * 0.88,
         ),
         decoration: BoxDecoration(
-          color: isUser
-              ? const Color(0xFF0284C7)
-              : const Color(0xFF0F1A2E),
+          color: isUser ? const Color(0xFF0284C7) : const Color(0xFF0F1A2E),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(18),
             topRight: const Radius.circular(18),
@@ -288,12 +424,12 @@ class _ChatScreenState extends State<ChatScreen> {
                 selectable: true,
                 styleSheet: MarkdownStyleSheet(
                   p: const TextStyle(
-                    color: Color(0xFFF8FAFC), // Crisp White-Slate
+                    color: Color(0xFFF8FAFC),
                     fontSize: 13.5,
                     height: 1.5,
                   ),
                   strong: const TextStyle(
-                    color: Color(0xFF00F0FF), // Neon Frost Cyan
+                    color: Color(0xFF00F0FF),
                     fontWeight: FontWeight.bold,
                   ),
                   em: const TextStyle(
@@ -353,9 +489,9 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildInputBar(AIService aiService) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF070D18).withOpacity(0.92),
-        border: const Border(top: BorderSide(color: Colors.white10)),
+      decoration: const BoxDecoration(
+        color: Color(0xFF070D18),
+        border: Border(top: BorderSide(color: Color(0xFF1E293B))),
       ),
       child: SafeArea(
         top: false,
@@ -396,13 +532,13 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF00F0FF).withOpacity(0.4),
-                    blurRadius: 10,
+                    color: const Color(0xFF00F0FF).withOpacity(0.35),
+                    blurRadius: 8,
                   ),
                 ],
               ),
               child: IconButton(
-                icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                icon: const Icon(Icons.send_rounded, color: Color(0xFF040812), size: 20),
                 onPressed: () => _send(aiService, _textController.text),
               ),
             ),

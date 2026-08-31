@@ -32,13 +32,15 @@ class FrostyApp extends StatelessWidget {
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF040812),
+        canvasColor: const Color(0xFF040812),
+        cardColor: const Color(0xFF0F192C),
+        dialogBackgroundColor: const Color(0xFF0F192C),
         primaryColor: const Color(0xFF00F0FF),
         colorScheme: const ColorScheme.dark(
           primary: Color(0xFF00F0FF),
           secondary: Color(0xFF0284C7),
           tertiary: Color(0xFFF59E0B),
           surface: Color(0xFF0F192C),
-          background: Color(0xFF040812),
         ),
         fontFamily: 'Outfit',
         useMaterial3: true,
