@@ -339,11 +339,11 @@ class SettingsScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 30),
-            const Center(
+            Center(
               child: Text(
-                'Frosty WOS AI Mobile • Version 1.0.0 (MIT License)\nMade by StateCraft',
+                'Frosty WOS AI Tactical Companion • Made by StateCraft\nLicensed under MIT • Open Source GitHub Edition',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Color(0xFF64748B), fontSize: 11.5),
+                style: const TextStyle(color: Color(0xFF64748B), fontSize: 11.5),
               ),
             ),
             const SizedBox(height: 10),

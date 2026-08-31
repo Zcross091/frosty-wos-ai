@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 class UpdateService {
   static const String currentVersion =
       String.fromEnvironment('APP_VERSION', defaultValue: '1.0.0');
+  static String latestVersionTag = '';
   static const String githubApiUrl =
       'https://api.github.com/repos/Zcross091/frosty-wos-ai/releases/latest';
 
@@ -24,6 +25,7 @@ class UpdateService {
         final data = jsonDecode(response.body);
         final rawTag = data['tag_name'] as String? ?? '';
         final cleanTag = rawTag.toLowerCase().replaceAll('v', '').split('+').first.trim();
+        latestVersionTag = cleanTag;
         final releaseName = data['name'] as String? ?? 'New Frosty Release';
         final releaseBody = data['body'] as String? ?? 'A new version of Frosty WOS AI is now available.';
         final htmlUrl = data['html_url'] as String? ?? 'https://github.com/Zcross091/frosty-wos-ai/releases';
