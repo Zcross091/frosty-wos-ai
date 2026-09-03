@@ -5,11 +5,14 @@ Interactive UI Buttons, Rich Embeds, and Multi-Turn Conversation Memory.
 """
 
 import os
+import re
+import json
 import time
 import asyncio
 import logging
 import psutil
-from typing import Optional, List, Dict, Tuple
+from datetime import datetime, timezone, timedelta
+from typing import Optional, List, Dict, Tuple, Any
 
 import discord
 from discord import app_commands
@@ -35,6 +38,19 @@ FROSTY_COLOR = discord.Color.from_rgb(0, 210, 255)      # #00D2FF Frosty Cyan
 SUCCESS_COLOR = discord.Color.from_rgb(46, 204, 113)    # Emerald Green
 WARN_COLOR = discord.Color.from_rgb(241, 196, 15)       # Amber Gold
 ERROR_COLOR = discord.Color.from_rgb(231, 76, 60)       # Ruby Red
+
+# Active Alliance Timers Cache {guild_id or channel_id: list of timer dicts} (Max 5 per context)
+ACTIVE_TIMERS: Dict[int, List[Dict[str, Any]]] = {}
+_timer_counter = 1
+
+# Active Whiteout Survival Promo Codes (Easy to update and poll)
+ACTIVE_GIFT_CODES = [
+    {"code": "WOS2026", "rewards": "1000 Gems, 5x 1h Speedups, 10x Gold Keys, 500k Meat/Wood"},
+    {"code": "STATEOFPOWER", "rewards": "500 Gems, 10x Advanced Wild Marks, 20x Chief Charm Guides"},
+    {"code": "DC300K", "rewards": "1500 Gems, 20x Mythic Shards, 10x 1h Speedups"},
+    {"code": "FROSTYTACTICS", "rewards": "Exclusive Frosty Avatar Frame, 300 Gems, 5x Stamina Potions"},
+    {"code": "BEARHUNT2026", "rewards": "800 Gems, 100x Stamina, 10x March Speedups"},
+]
 
 # Initialize Core Services
 ai_engine = AIEngine()
@@ -148,6 +164,42 @@ async def expert_autocomplete(interaction: discord.Interaction, current: str) ->
     return [app_commands.Choice(name=m, value=m) for m in matches[:25]]
 
 
+# --- Timer Loop (Alliance Countdowns) ---
+@tasks.loop(seconds=15)
+async def check_timers():
+    try:
+        await bot.wait_until_ready()
+        now_utc = datetime.now(timezone.utc)
+        for key, timers in list(ACTIVE_TIMERS.items()):
+            expired = [t for t in timers if t["target_time"] <= now_utc]
+            for t in expired:
+                try:
+                    channel = bot.get_channel(t["channel_id"])
+                    if channel:
+                        embed = discord.Embed(
+                            title=f"🚨 ALLIANCE EVENT ALERT: {t['event'].upper()}",
+                            description=f"🔔 Attention Chiefs! **{t['event']}** is starting **NOW**!\n\n• **Event:** `{t['event']}`\n• **Set By:** <@{t['user_id']}>\n• **Time (UTC):** `{t['target_time'].strftime('%Y-%m-%d %H:%M UTC')}`",
+                            color=WARN_COLOR
+                        )
+                        if "bear" in t["event"].lower():
+                            embed.add_field(name="🐻 Bear Trap Strategy", value="• Set **Jessie / Jader / Seo-yoon** as 1st joiner heroes (+25% Damage)!\n• Use **10/10/80** troop ratio (heavy Marksman) for max damage.", inline=False)
+                        elif "foundry" in t["event"].lower():
+                            embed.add_field(name="🗺️ Foundry Battle Strategy", value="• Capture Boiler Room & Arsenal first!\n• Intercept enemy transport trucks on bottom lane.", inline=False)
+                        elif "canyon" in t["event"].lower():
+                            embed.add_field(name="🏜️ Canyon Clash Strategy", value="• Control central canyon nodes and secure resource transports!", inline=False)
+                        elif "svs" in t["event"].lower():
+                            embed.add_field(name="⚔️ SVS Battle Phase Strategy", value="• Defend Sunfire Castle and attack enemy turrets!\n• Activate War Buffs and Shield unjoined cities.", inline=False)
+                        elif "fortress" in t["event"].lower():
+                            embed.add_field(name="🏰 Fortress Battle Strategy", value="• Coordinate rally leaders with highest lethality!\n• Rotate garrison reinforcement troops.", inline=False)
+
+                        await channel.send(content=f"🔔 <@{t['user_id']}> **@here**", embed=embed)
+                except Exception as ex:
+                    logger.error(f"Error executing timer alert: {ex}")
+                timers.remove(t)
+    except Exception as e:
+        logger.debug(f"Timer loop notice: {e}")
+
+
 # --- Activity Loop ---
 @tasks.loop(minutes=3)
 async def rotate_presence():
@@ -186,6 +238,8 @@ async def on_ready():
 
     if not rotate_presence.is_running():
         rotate_presence.start()
+    if not check_timers.is_running():
+        check_timers.start()
 
 
 # --- Core Response Generator ---
@@ -506,6 +560,385 @@ async def slash_state(interaction: discord.Interaction, state_or_days: str):
     await interaction.followup.send(embed=embed)
 
 
+# --- Utility Calculation Helpers ---
+FC_BUILDING_TABLE = {
+    1: (600, 0, 350, 0, 8),
+    2: (1200, 0, 700, 0, 12),
+    3: (2000, 0, 1150, 0, 16),
+    4: (3200, 0, 1800, 0, 22),
+    5: (4800, 0, 2700, 0, 30),
+    6: (2500, 180, 1400, 100, 40),
+    7: (3500, 320, 1950, 180, 52),
+    8: (5000, 550, 2800, 300, 65),
+    9: (7000, 850, 3900, 480, 80),
+    10: (10000, 1300, 5500, 720, 100),
+}
+
+CHARM_TABLE = {
+    1: (10, 0, 2.5, 7000),
+    2: (25, 5, 5.5, 17500),
+    3: (50, 15, 9.0, 35000),
+    4: (90, 30, 14.0, 63000),
+    5: (150, 55, 20.5, 105000),
+    6: (240, 95, 28.5, 168000),
+    7: (360, 150, 38.0, 252000),
+    8: (520, 230, 50.0, 364000),
+    9: (720, 340, 64.5, 504000),
+    10: (980, 490, 82.0, 686000),
+    11: (1300, 680, 105.0, 910000),
+}
+
+SVS_RATES = {
+    "fc": {"name": "Fire Crystals", "rate": 2000, "unit": "FC", "best_day": "Day 1 (City Construction) & Day 5 (Power Boost)"},
+    "rfc": {"name": "Refined Fire Crystals", "rate": 30000, "unit": "RFC", "best_day": "Day 1 (City Construction) & Day 5 (Power Boost)"},
+    "speedup_min": {"name": "Speedups (Minutes)", "rate": 30, "unit": "mins", "best_day": "Day 1 (Building), Day 2 (Research), Day 5 (All)"},
+    "speedup_hr": {"name": "Speedups (Hours)", "rate": 1800, "unit": "hrs", "best_day": "Day 1 (Building), Day 2 (Research), Day 5 (All)"},
+    "fc_shard": {"name": "FC Shards (Helios Research)", "rate": 1000, "unit": "shards", "best_day": "Day 2 (Research Day) & Day 5 (Power Boost)"},
+    "lucky_wheel": {"name": "Lucky Wheel Spins", "rate": 4000, "unit": "spins", "best_day": "Day 2 (Research Day)"},
+    "hero_shard": {"name": "Mythic Hero Shards", "rate": 6000, "unit": "shards", "best_day": "Day 2 (Research Day)"},
+    "expert_sigil": {"name": "Dawn Expert Sigils", "rate": 6000, "unit": "sigils", "best_day": "Day 2 (Research Day)"},
+    "polar_terror": {"name": "Polar Terror Rallies", "rate": 30000, "unit": "rallies", "best_day": "Day 3 (Beast Slay) — Best F2P Points!"},
+    "mithril": {"name": "Mithril (Exclusive Gear)", "rate": 144000, "unit": "mithril", "best_day": "Day 4 (Hero Dev) & Day 5 (Power Boost) — Highest Value!"},
+    "t10_train": {"name": "T10 Troops Trained", "rate": 60, "unit": "troops", "best_day": "Day 4 (Hero Dev / Troops)"},
+    "t11_train": {"name": "T11 Troops Trained", "rate": 75, "unit": "troops", "best_day": "Day 4 (Hero Dev / Troops)"},
+}
+
+
+def calculate_fc_cost(building_type: str, start_lvl: int, target_lvl: int) -> Dict[str, Any]:
+    is_furnace = "furnace" in building_type.lower() or "embassy" in building_type.lower() or "command" in building_type.lower()
+    total_fc = 0
+    total_rfc = 0
+    total_days = 0
+
+    for lvl in range(max(1, start_lvl + 1), min(11, target_lvl + 1)):
+        row = FC_BUILDING_TABLE.get(lvl, (0, 0, 0, 0, 0))
+        if is_furnace:
+            total_fc += row[0]
+            total_rfc += row[1]
+        else:
+            total_fc += row[2]
+            total_rfc += row[3]
+        total_days += row[4]
+
+    svs_pts = (total_fc * 2000) + (total_rfc * 30000)
+    return {
+        "building": "Furnace / Embassy / Command Center" if is_furnace else "Troop Camp (Inf/Lan/Mar)",
+        "from": start_lvl,
+        "to": target_lvl,
+        "fc": total_fc,
+        "rfc": total_rfc,
+        "days": total_days,
+        "svs_pts": svs_pts
+    }
+
+
+def calculate_charms_cost(start_lvl: int, target_lvl: int) -> Dict[str, Any]:
+    total_guides = 0
+    total_designs = 0
+    total_svs = 0
+    total_boost = 0.0
+
+    for lvl in range(max(1, start_lvl + 1), min(12, target_lvl + 1)):
+        row = CHARM_TABLE.get(lvl, (0, 0, 0.0, 0))
+        total_guides += row[0]
+        total_designs += row[1]
+        total_boost += row[2]
+        total_svs += row[3]
+
+    return {
+        "from": start_lvl,
+        "to": target_lvl,
+        "guides": total_guides,
+        "designs": total_designs,
+        "boost": total_boost,
+        "svs_pts": total_svs
+    }
+
+
+def calculate_transfer_passes(power_m: float) -> Tuple[int, str]:
+    if power_m < 30:
+        return 1, "Ordinary Transfer"
+    elif power_m < 50:
+        return 2, "Ordinary Transfer"
+    elif power_m < 75:
+        return 3, "Ordinary Transfer"
+    elif power_m < 100:
+        return 5, "Ordinary Transfer"
+    elif power_m < 130:
+        return 8, "Ordinary Transfer"
+    elif power_m < 170:
+        return 12, "Ordinary Transfer"
+    elif power_m < 220:
+        return 18, "Ordinary Transfer"
+    elif power_m < 280:
+        return 25, "Ordinary Transfer"
+    elif power_m < 350:
+        return 35, "High Power Transfer"
+    elif power_m < 450:
+        return 50, "High Power Transfer"
+    elif power_m < 600:
+        return 65, "Top Tier Transfer"
+    else:
+        return 80, "Whale Transfer (Requires State President Leading Invite)"
+
+
+def parse_utc_time_or_duration(time_str: str) -> Optional[datetime]:
+    now_utc = datetime.now(timezone.utc)
+    s = time_str.strip().lower()
+
+    if "in " in s or "h" in s or "m" in s or "d" in s:
+        hours, minutes, days = 0, 0, 0
+        h_match = re.search(r'(\d+)\s*h', s)
+        m_match = re.search(r'(\d+)\s*m', s)
+        d_match = re.search(r'(\d+)\s*d', s)
+        if h_match: hours = int(h_match.group(1))
+        if m_match: minutes = int(m_match.group(1))
+        if d_match: days = int(d_match.group(1))
+
+        if hours > 0 or minutes > 0 or days > 0:
+            return now_utc + timedelta(days=days, hours=hours, minutes=minutes)
+
+    clean = s.replace("utc", "").strip()
+    try:
+        parts = clean.split(":")
+        if len(parts) >= 2:
+            hr = int(parts[0])
+            mn = int(parts[1])
+            target = now_utc.replace(hour=hr, minute=mn, second=0, microsecond=0)
+            if target <= now_utc:
+                target += timedelta(days=1)
+            return target
+    except Exception:
+        pass
+
+    return None
+
+
+# ==========================================
+# 💎 UTILITY SLASH COMMANDS
+# ==========================================
+
+@bot.tree.command(name="fc", description="Calculate Fire Crystal (FC & RFC) costs, speedups, and SvS points.")
+@app_commands.describe(
+    building="Type of building to upgrade",
+    from_level="Current FC level (0 for Lv 30, or 1 to 9)",
+    to_level="Target FC level (1 to 10)"
+)
+@app_commands.choices(building=[
+    app_commands.Choice(name="Furnace / Embassy / Command Center", value="furnace"),
+    app_commands.Choice(name="Troop Camp (Infantry / Lancer / Marksman)", value="camp"),
+])
+async def slash_fc(interaction: discord.Interaction, building: app_commands.Choice[str], from_level: int, to_level: int):
+    if from_level >= to_level:
+        await interaction.response.send_message("❌ Target level must be greater than current level.", ephemeral=True)
+        return
+
+    res = calculate_fc_cost(building.value, from_level, to_level)
+    embed = discord.Embed(
+        title=f"💎 Fire Crystal Upgrade Calculator — {res['building']}",
+        description=f"Upgrade Plan: **FC {res['from']} ➔ FC {res['to']}**",
+        color=FROSTY_COLOR
+    )
+    embed.add_field(name="Regular Fire Crystals (FC)", value=f"💎 **{res['fc']:,} FC**", inline=True)
+    if res['rfc'] > 0:
+        embed.add_field(name="Refined Fire Crystals (RFC)", value=f"🔮 **{res['rfc']:,} RFC**", inline=True)
+    embed.add_field(name="Base Build Time", value=f"⏱️ **~{res['days']} Days**", inline=True)
+    embed.add_field(name="SvS City Construction Points", value=f"🏆 **{res['svs_pts']:,} Points** *(Day 1 / Day 5)*", inline=False)
+    embed.set_footer(text="💡 Tip: Start construction on SvS Day 1 for maximum score contribution.")
+    await interaction.response.send_message(embed=embed)
+
+
+@bot.tree.command(name="charms", description="Calculate Chief Charms materials, guides, and SvS points.")
+@app_commands.describe(
+    from_level="Current Charm level (0 for unequipped, or 1 to 10)",
+    to_level="Target Charm level (1 to 11)"
+)
+async def slash_charms(interaction: discord.Interaction, from_level: int, to_level: int):
+    if from_level >= to_level:
+        await interaction.response.send_message("❌ Target level must be greater than current level.", ephemeral=True)
+        return
+
+    res = calculate_charms_cost(from_level, to_level)
+    embed = discord.Embed(
+        title="🛡️ Chief Charms Upgrade Calculator (Per Slot)",
+        description=f"Upgrade Plan: **Level {res['from']} ➔ Level {res['to']}**",
+        color=FROSTY_COLOR
+    )
+    embed.add_field(name="Charm Guides", value=f"📜 **{res['guides']:,} Guides**", inline=True)
+    embed.add_field(name="Charm Designs", value=f"✨ **{res['designs']:,} Designs**", inline=True)
+    embed.add_field(name="Total Combat Boost", value=f"⚡ **+{res['boost']:.1f}% Lethality/HP**", inline=True)
+    embed.add_field(name="SvS Prep Points", value=f"🏆 **{res['svs_pts']:,} Points** *(70 pts / score)*", inline=False)
+    embed.set_footer(text="💡 Tip: Charm score earns points on SvS Day 1, Day 3, and Day 4.")
+    await interaction.response.send_message(embed=embed)
+
+
+@bot.tree.command(name="svs", description="Calculate SvS prep phase points and find the highest-value day.")
+@app_commands.describe(
+    activity="Select activity",
+    amount="Quantity of items or hours"
+)
+@app_commands.choices(activity=[
+    app_commands.Choice(name="💎 Fire Crystals used (FC)", value="fc"),
+    app_commands.Choice(name="🔮 Refined Fire Crystals (RFC)", value="rfc"),
+    app_commands.Choice(name="⏱️ General / Build Speedups (Hours)", value="speedup_hr"),
+    app_commands.Choice(name="📜 FC Shards (Helios Research)", value="fc_shard"),
+    app_commands.Choice(name="🎡 Lucky Wheel Spins", value="lucky_wheel"),
+    app_commands.Choice(name="👑 Mythic Hero Shards", value="hero_shard"),
+    app_commands.Choice(name="🐻 Polar Terror Rallies", value="polar_terror"),
+    app_commands.Choice(name="🗡️ Mithril (Exclusive Gear)", value="mithril"),
+    app_commands.Choice(name="⚔️ T10 Troop Training", value="t10_train"),
+    app_commands.Choice(name="⚡ T11 Troop Training", value="t11_train"),
+])
+async def slash_svs(interaction: discord.Interaction, activity: app_commands.Choice[str], amount: int):
+    info = SVS_RATES.get(activity.value, {"name": activity.name, "rate": 1, "unit": "units", "best_day": "Day 5"})
+    pts = amount * info["rate"]
+
+    embed = discord.Embed(
+        title="🏆 SvS Prep Phase Points Calculator",
+        description=f"**Activity:** `{info['name']}`\n**Quantity:** `{amount:,} {info['unit']}`",
+        color=SUCCESS_COLOR
+    )
+    embed.add_field(name="Total SvS Points Earned", value=f"🌟 **{pts:,} Points**", inline=False)
+    embed.add_field(name="Optimal Day to Use", value=f"📅 **{info['best_day']}**", inline=False)
+    embed.set_footer(text="Frosty AI • State vs State Tactical Intelligence")
+    await interaction.response.send_message(embed=embed)
+
+
+@bot.tree.command(name="transfer", description="Calculate required State Transfer Passes based on Chief Power.")
+@app_commands.describe(power_millions="Your Chief Power in Millions (e.g. 150 for 150M Power)")
+async def slash_transfer(interaction: discord.Interaction, power_millions: float):
+    passes, tier = calculate_transfer_passes(power_millions)
+    embed = discord.Embed(
+        title="🚀 State Transfer Pass Calculator",
+        description=f"**Chief Power:** `{power_millions:.1f}M Power`\n**Transfer Tier:** `{tier}`",
+        color=FROSTY_COLOR
+    )
+    embed.add_field(name="Required Transfer Passes", value=f"🎫 **{passes} Passes**", inline=False)
+    embed.add_field(
+        name="Transfer Requirements",
+        value="• Furnace Lv 25 minimum\n• Empty Infirmary & no active marches\n• 30-Day Transfer cooldown satisfied\n• Target state must have open quota in your state bracket",
+        inline=False
+    )
+    embed.set_footer(text="Check transfer.foxfiver.com for live state group brackets.")
+    await interaction.response.send_message(embed=embed)
+
+
+@bot.tree.command(name="codes", description="View active Whiteout Survival gift codes and redemption link.")
+async def slash_codes(interaction: discord.Interaction):
+    embed = discord.Embed(
+        title="🎁 Whiteout Survival Active Gift Codes",
+        description="Redeem these codes for free Gems, Speedups, Gold Keys, and Stamina:",
+        color=SUCCESS_COLOR
+    )
+    for c in ACTIVE_GIFT_CODES:
+        embed.add_field(name=f"🔑 `{c['code']}`", value=f"Rewards: {c['rewards']}", inline=False)
+
+    view = discord.ui.View()
+    view.add_item(discord.ui.Button(
+        label="🌐 Redeem Codes Portal",
+        url="https://wos-giftcode.centurygame.com/",
+        style=discord.ButtonStyle.link,
+        emoji="🎁"
+    ))
+    await interaction.response.send_message(embed=embed, view=view)
+
+
+@bot.tree.command(name="timer", description="Manage UTC alliance countdown timers (up to 5 active).")
+@app_commands.describe(
+    action="Set, View, or Delete a timer",
+    event="Select event (for 'set')",
+    time_utc="Time in UTC (e.g. 19:00 UTC, or 'in 2h 30m', '45m')",
+    timer_id="Timer ID (for 'delete')"
+)
+@app_commands.choices(
+    action=[
+        app_commands.Choice(name="Set Timer", value="set"),
+        app_commands.Choice(name="List Active Timers", value="list"),
+        app_commands.Choice(name="Delete Timer", value="delete"),
+    ],
+    event=[
+        app_commands.Choice(name="Foundry Battle", value="Foundry Battle"),
+        app_commands.Choice(name="Canyon Clash", value="Canyon Clash"),
+        app_commands.Choice(name="SVS Battle Phase", value="SVS Battle Phase"),
+        app_commands.Choice(name="Bear Trap", value="Bear Trap"),
+        app_commands.Choice(name="Fortress Battle", value="Fortress Battle"),
+    ]
+)
+async def slash_timer(
+    interaction: discord.Interaction,
+    action: app_commands.Choice[str],
+    event: Optional[app_commands.Choice[str]] = None,
+    time_utc: Optional[str] = None,
+    timer_id: Optional[int] = None
+):
+    global _timer_counter
+    key = interaction.guild_id or interaction.channel_id
+    if key not in ACTIVE_TIMERS:
+        ACTIVE_TIMERS[key] = []
+
+    timers = ACTIVE_TIMERS[key]
+
+    if action.value == "set":
+        if not event or not time_utc:
+            await interaction.response.send_message("❌ Please specify both `event` and `time_utc` (e.g. `19:00 UTC` or `in 2h 30m`).", ephemeral=True)
+            return
+
+        if len(timers) >= 5:
+            await interaction.response.send_message("⚠️ Maximum limit of **5 active timers** reached for this server/channel. Delete an old timer first.", ephemeral=True)
+            return
+
+        target_dt = parse_utc_time_or_duration(time_utc)
+        if not target_dt:
+            await interaction.response.send_message("❌ Invalid time format. Examples: `19:00 UTC`, `in 2h 30m`, `45m`.", ephemeral=True)
+            return
+
+        new_t = {
+            "id": _timer_counter,
+            "event": event.value,
+            "target_time": target_dt,
+            "channel_id": interaction.channel_id,
+            "user_id": interaction.user.id
+        }
+        _timer_counter += 1
+        timers.append(new_t)
+
+        ts_unix = int(target_dt.timestamp())
+        embed = discord.Embed(
+            title=f"⏰ Alliance Timer Created — #{new_t['id']}",
+            description=f"**Event:** `{new_t['event']}`\n**Target Time:** <t:{ts_unix}:F> (<t:{ts_unix}:R>)\n**Set By:** {interaction.user.mention}",
+            color=SUCCESS_COLOR
+        )
+        embed.set_footer(text=f"Active timers: {len(timers)}/5 • Alerts will mention @here when timer expires")
+        await interaction.response.send_message(embed=embed)
+
+    elif action.value == "list":
+        if not timers:
+            await interaction.response.send_message("ℹ️ No active alliance timers in this server. Use `/timer set` to create one!", ephemeral=True)
+            return
+
+        embed = discord.Embed(title="⏰ Active Alliance Timers", color=FROSTY_COLOR)
+        for t in timers:
+            ts = int(t["target_time"].timestamp())
+            embed.add_field(
+                name=f"#{t['id']} — {t['event']}",
+                value=f"• Starts: <t:{ts}:F>\n• Countdown: <t:{ts}:R>\n• Creator: <@{t['user_id']}>",
+                inline=False
+            )
+        await interaction.response.send_message(embed=embed)
+
+    elif action.value == "delete":
+        if timer_id is None:
+            await interaction.response.send_message("❌ Please provide the `timer_id` to delete.", ephemeral=True)
+            return
+
+        found = next((t for t in timers if t["id"] == timer_id), None)
+        if found:
+            timers.remove(found)
+            await interaction.response.send_message(f"✅ Timer **#{timer_id}** (`{found['event']}`) deleted successfully.")
+        else:
+            await interaction.response.send_message(f"❌ Timer **#{timer_id}** not found.", ephemeral=True)
+
+
 @bot.tree.command(name="help", description="Show Frosty AI commands and strategic capabilities.")
 async def slash_help(interaction: discord.Interaction):
     embed = discord.Embed(
@@ -514,13 +947,16 @@ async def slash_help(interaction: discord.Interaction):
         color=FROSTY_COLOR
     )
     embed.add_field(name="⚔️ `/wos [question]` or `!wos`", value="Ask any strategic question (e.g. *'what is a hero lineup'*, *'Flint vs Jeronimo'*).", inline=False)
-    embed.add_field(name="⏱️ `/state [number]` or `!state`", value="Check your server age, unlocked features (FC, Pets, SvS), and next milestone countdown.", inline=False)
-    embed.add_field(name="👑 `/hero [name]` or `!hero`", value="Get detailed skill breakdowns, gear recommendations, and evaluations for any hero.", inline=False)
-    embed.add_field(name="🛡️ `/lineup [mode] [gen]` or `!lineup`", value="Get recommended 3-hero formations and troop ratios (50/20/30, 4-1-1).", inline=False)
-    embed.add_field(name="🐻 `/bear` or `!bear`", value="Instant Bear Trap guide (10/10/80 ratio, Jessie/Seo-yoon joiner damage buffs).", inline=False)
-    embed.add_field(name="📅 `/event [name]` or `!event`", value="Walkthroughs for Crazy Joe, Foundry Battle, Frostfire Mine, and SvS.", inline=False)
-    embed.add_field(name="📚 `/expert [name]` or `!expert`", value="Dawn Academy expert advice and breakpoint pausing guide.", inline=False)
-    embed.add_field(name="📊 `/status` or `!status`", value="Check live Discord servers, total members reached, AI model, and RAM usage.", inline=False)
+    embed.add_field(name="💎 `/fc [building] [from] [to]` or `!fc`", value="Fire Crystal (FC & RFC) upgrade calculator & SvS points.", inline=True)
+    embed.add_field(name="🛡️ `/charms [from] [to]` or `!charms`", value="Chief Charms material cost, guides, and combat boosts.", inline=True)
+    embed.add_field(name="🏆 `/svs [activity] [amount]` or `!svs`", value="Calculate SvS prep phase points & find the best day.", inline=True)
+    embed.add_field(name="⏰ `/timer [set/list/delete]` or `!timer`", value="Set up to 5 UTC alliance countdowns (Foundry, Canyon, SvS, Bear, Fortress).", inline=True)
+    embed.add_field(name="🚀 `/transfer [power]` or `!transfer`", value="State Transfer Pass calculator & eligibility rules.", inline=True)
+    embed.add_field(name="🎁 `/codes` or `!codes`", value="Active Whiteout Survival gift codes & redemption portal.", inline=True)
+    embed.add_field(name="⏱️ `/state [number]` or `!state`", value="Server age, unlocked features (FC, Pets, SvS), and milestones.", inline=True)
+    embed.add_field(name="👑 `/hero [name]` or `!hero`", value="Hero skill breakdowns, exclusive gear, and tier evaluations.", inline=True)
+    embed.add_field(name="🐻 `/bear` or `!bear`", value="Bear Trap rally leader setups & Jessie joiner damage buffs.", inline=True)
+    embed.add_field(name="📊 `/status` or `!status`", value="Bot system health, latency, AI engine, and indexed archives.", inline=True)
     embed.set_footer(text="Frosty AI • Powered by Google Gemini & ChromaDB")
     await interaction.response.send_message(embed=embed)
 
@@ -536,135 +972,160 @@ async def prefix_wos(ctx, *, question: str):
         await ctx.send(embed=embed, view=view)
 
 
-@bot.command(name="state")
-async def prefix_state(ctx, *, state_or_days: str = "750"):
-    async with ctx.typing():
-        raw = state_or_days.lower().replace("state", "").replace("s", "").replace("d", "").replace("days", "").strip()
-        val = int(raw) if raw.isdigit() else 750
-        is_days = "d" in state_or_days.lower() or "day" in state_or_days.lower()
+@bot.command(name="fc")
+async def prefix_fc(ctx, *, args: str = "furnace 0 5"):
+    parts = args.strip().split()
+    b_type = "furnace"
+    from_lvl, to_lvl = 0, 5
+    if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
+        from_lvl, to_lvl = int(parts[0]), int(parts[1])
+    elif len(parts) >= 3:
+        b_type = parts[0]
+        from_lvl = int(parts[1]) if parts[1].isdigit() else 0
+        to_lvl = int(parts[2]) if parts[2].isdigit() else 5
 
-        t = calculate_state_telemetry(val, is_state_number=not is_days)
+    res = calculate_fc_cost(b_type, from_lvl, to_lvl)
+    embed = discord.Embed(
+        title=f"💎 Fire Crystal Upgrade Calculator — {res['building']}",
+        description=f"Upgrade Plan: **FC {res['from']} ➔ FC {res['to']}**",
+        color=FROSTY_COLOR
+    )
+    embed.add_field(name="Regular Fire Crystals (FC)", value=f"💎 **{res['fc']:,} FC**", inline=True)
+    if res['rfc'] > 0:
+        embed.add_field(name="Refined Fire Crystals (RFC)", value=f"🔮 **{res['rfc']:,} RFC**", inline=True)
+    embed.add_field(name="Base Build Time", value=f"⏱️ **~{res['days']} Days**", inline=True)
+    embed.add_field(name="SvS City Construction Points", value=f"🏆 **{res['svs_pts']:,} Points** *(Day 1 / Day 5)*", inline=False)
+    await ctx.send(embed=embed)
 
-        embed = discord.Embed(
-            title=f"⏱️ Whiteout Survival State Timeline — {'State #' + str(val) if not is_days else 'Server Day ' + str(val)}",
-            description=f"**Estimated Server Age:** `Day ~{t['age']}`\n**Current Active Generation:** `Generation {t['gen']}`",
-            color=FROSTY_COLOR
-        )
 
-        if t['recent_unlocked']:
-            embed.add_field(
-                name="✅ Recently Unlocked Features",
-                value="\n".join([f"• {item}" for item in t['recent_unlocked']]),
-                inline=False
-            )
+@bot.command(name="charms")
+async def prefix_charms(ctx, *, args: str = "0 5"):
+    parts = [int(p) for p in args.strip().split() if p.isdigit()]
+    from_lvl = parts[0] if len(parts) >= 1 else 0
+    to_lvl = parts[1] if len(parts) >= 2 else 5
 
-        if t['next_milestone']:
-            embed.add_field(
-                name="⏳ Next Major Milestone",
-                value=f"• **{t['next_milestone'][1]}**\n• Unlocks on **Day {t['next_milestone'][0]}** (*in ~{t['days_to_next']} days*)",
-                inline=False
-            )
+    res = calculate_charms_cost(from_lvl, to_lvl)
+    embed = discord.Embed(
+        title="🛡️ Chief Charms Upgrade Calculator (Per Slot)",
+        description=f"Upgrade Plan: **Level {res['from']} ➔ Level {res['to']}**",
+        color=FROSTY_COLOR
+    )
+    embed.add_field(name="Charm Guides", value=f"📜 **{res['guides']:,} Guides**", inline=True)
+    embed.add_field(name="Charm Designs", value=f"✨ **{res['designs']:,} Designs**", inline=True)
+    embed.add_field(name="Total Combat Boost", value=f"⚡ **+{res['boost']:.1f}% Lethality/HP**", inline=True)
+    embed.add_field(name="SvS Prep Points", value=f"🏆 **{res['svs_pts']:,} Points** *(70 pts / score)*", inline=False)
+    await ctx.send(embed=embed)
 
-        embed.add_field(
-            name="📜 Feature Progress",
-            value=f"**{t['unlocked_count']}/{t['total_count']}** verified timeline features unlocked.",
-            inline=False
-        )
-        embed.set_footer(text="💡 Tip: Check your Monument 'Kindling Embers' task for exact Day 1 launch date.")
+
+@bot.command(name="svs")
+async def prefix_svs(ctx, *, args: str = "fc 1000"):
+    parts = args.strip().split()
+    act = parts[0].lower() if parts else "fc"
+    amt = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 1000
+
+    info = SVS_RATES.get(act, SVS_RATES["fc"])
+    pts = amt * info["rate"]
+
+    embed = discord.Embed(
+        title="🏆 SvS Prep Phase Points Calculator",
+        description=f"**Activity:** `{info['name']}`\n**Quantity:** `{amt:,} {info['unit']}`",
+        color=SUCCESS_COLOR
+    )
+    embed.add_field(name="Total SvS Points Earned", value=f"🌟 **{pts:,} Points**", inline=False)
+    embed.add_field(name="Optimal Day to Use", value=f"📅 **{info['best_day']}**", inline=False)
+    await ctx.send(embed=embed)
+
+
+@bot.command(name="transfer")
+async def prefix_transfer(ctx, *, power: str = "150"):
+    raw = re.sub(r'[^0-9.]', '', power)
+    p_val = float(raw) if raw else 150.0
+    passes, tier = calculate_transfer_passes(p_val)
+    embed = discord.Embed(
+        title="🚀 State Transfer Pass Calculator",
+        description=f"**Chief Power:** `{p_val:.1f}M Power`\n**Transfer Tier:** `{tier}`",
+        color=FROSTY_COLOR
+    )
+    embed.add_field(name="Required Transfer Passes", value=f"🎫 **{passes} Passes**", inline=False)
+    embed.add_field(
+        name="Transfer Requirements",
+        value="• Furnace Lv 25 minimum\n• Empty Infirmary & no active marches\n• 30-Day Transfer cooldown satisfied",
+        inline=False
+    )
+    await ctx.send(embed=embed)
+
+
+@bot.command(name="codes")
+async def prefix_codes(ctx):
+    embed = discord.Embed(
+        title="🎁 Whiteout Survival Active Gift Codes",
+        description="Redeem these codes for free Gems, Speedups, Gold Keys, and Stamina:",
+        color=SUCCESS_COLOR
+    )
+    for c in ACTIVE_GIFT_CODES:
+        embed.add_field(name=f"🔑 `{c['code']}`", value=f"Rewards: {c['rewards']}", inline=False)
+    embed.set_footer(text="Redeem at https://wos-giftcode.centurygame.com/")
+    await ctx.send(embed=embed)
+
+
+@bot.command(name="timer")
+async def prefix_timer(ctx, *, args: str = "list"):
+    global _timer_counter
+    key = ctx.guild.id if ctx.guild else ctx.channel.id
+    if key not in ACTIVE_TIMERS:
+        ACTIVE_TIMERS[key] = []
+    timers = ACTIVE_TIMERS[key]
+
+    parts = args.strip().split(maxsplit=2)
+    sub = parts[0].lower() if parts else "list"
+
+    if sub in ["set", "add"] and len(parts) >= 3:
+        if len(timers) >= 5:
+            await ctx.send("⚠️ Maximum limit of 5 active timers reached.")
+            return
+
+        ev_name = parts[1]
+        t_str = parts[2]
+        target_dt = parse_utc_time_or_duration(t_str)
+        if not target_dt:
+            await ctx.send("❌ Invalid time format. Examples: `!timer set BearTrap in 2h 30m` or `!timer set Foundry 19:00 UTC`")
+            return
+
+        new_t = {
+            "id": _timer_counter,
+            "event": ev_name,
+            "target_time": target_dt,
+            "channel_id": ctx.channel.id,
+            "user_id": ctx.author.id
+        }
+        _timer_counter += 1
+        timers.append(new_t)
+        ts_unix = int(target_dt.timestamp())
+        await ctx.send(f"⏰ **Timer #{new_t['id']} set for {ev_name}** (<t:{ts_unix}:R> at <t:{ts_unix}:F>)!")
+
+    elif sub in ["delete", "remove", "del"] and len(parts) >= 2 and parts[1].isdigit():
+        t_id = int(parts[1])
+        found = next((t for t in timers if t["id"] == t_id), None)
+        if found:
+            timers.remove(found)
+            await ctx.send(f"✅ Timer **#{t_id}** deleted.")
+        else:
+            await ctx.send(f"❌ Timer **#{t_id}** not found.")
+
+    else:
+        if not timers:
+            await ctx.send("ℹ️ No active timers. Use `!timer set <event> <time>` (e.g. `!timer set BearTrap in 45m`).")
+            return
+        embed = discord.Embed(title="⏰ Active Alliance Timers", color=FROSTY_COLOR)
+        for t in timers:
+            ts = int(t["target_time"].timestamp())
+            embed.add_field(name=f"#{t['id']} — {t['event']}", value=f"• Starts: <t:{ts}:F>\n• Countdown: <t:{ts}:R>", inline=False)
         await ctx.send(embed=embed)
 
 
-@bot.command(name="hero")
-async def prefix_hero(ctx, *, hero_name: str):
-    async with ctx.typing():
-        query = f"Provide a complete tactical guide and evaluation for Hero: {hero_name}."
-        embed, view = await generate_frosty_response(ctx.channel.id, ctx.author, query)
-        await ctx.send(embed=embed, view=view)
-
-
-@bot.command(name="lineup")
-async def prefix_lineup(ctx, *, args: str = "Exploration"):
-    async with ctx.typing():
-        query = f"What is the optimal hero lineup and troop ratio for: {args}?"
-        embed, view = await generate_frosty_response(ctx.channel.id, ctx.author, query)
-        await ctx.send(embed=embed, view=view)
-
-
-@bot.command(name="bear")
-async def prefix_bear(ctx):
-    async with ctx.typing():
-        query = "Give a concise master guide for Bear Trap: troop ratios, rally leader heroes, and Jessie joiner damage buffs."
-        embed, view = await generate_frosty_response(ctx.channel.id, ctx.author, query)
-        await ctx.send(embed=embed, view=view)
-
-
-@bot.command(name="event")
-async def prefix_event(ctx, *, event_name: str):
-    async with ctx.typing():
-        query = f"Provide an in-depth master guide for event: {event_name}."
-        embed, view = await generate_frosty_response(ctx.channel.id, ctx.author, query)
-        await ctx.send(embed=embed, view=view)
-
-
-@bot.command(name="expert")
-async def prefix_expert(ctx, *, expert_name: str):
-    async with ctx.typing():
-        query = f"Provide a complete breakdown for Dawn Academy Expert: {expert_name}."
-        embed, view = await generate_frosty_response(ctx.channel.id, ctx.author, query)
-        await ctx.send(embed=embed, view=view)
-
-
-@bot.command(name="status")
-async def prefix_status(ctx):
-    process = psutil.Process(os.getpid())
-    ram = process.memory_info().rss / 1024 / 1024
-    total_guilds = len(bot.guilds)
-    total_members = sum(g.member_count for g in bot.guilds if g.member_count)
-
-    embed = discord.Embed(title="📊 Frosty Stats", color=FROSTY_COLOR)
-    embed.add_field(name="🌐 Servers", value=f"**{total_guilds}**", inline=True)
-    embed.add_field(name="👥 Members", value=f"**{total_members:,}**", inline=True)
-    embed.add_field(name="Engine", value=f"`{ai_engine.get_active_model_name()}`", inline=True)
-    embed.add_field(name="Database", value=f"`{knowledge_base.get_count()} chunks`", inline=True)
-    embed.add_field(name="RAM Usage", value=f"`{ram:.1f} MB`", inline=True)
-    embed.add_field(name="Ping", value=f"`{bot.latency * 1000:.1f} ms`", inline=True)
-    await ctx.send(embed=embed)
-
-
-@bot.command(name="reindex")
-async def prefix_reindex(ctx, local_only: str = "true"):
-    is_admin = ctx.author.id in ADMIN_USER_IDS or (ctx.author.guild_permissions.administrator if ctx.guild else False)
-    if not is_admin:
-        await ctx.send("❌ You need administrator permissions to reindex.")
-        return
-
-    is_local = local_only.lower() in ["true", "1", "yes", "local"]
-    async with ctx.typing():
-        loop = asyncio.get_running_loop()
-        try:
-            new_count = await loop.run_in_executor(None, run_full_reindex, is_local)
-            knowledge_base.reload_dynamic_entities()
-            await ctx.send(f"✨ **Re-indexing & Hero Sync Complete!** Database now contains `{new_count}` knowledge chunks across **Gen 0 to Gen {knowledge_base.max_generation}+** (`{len(knowledge_base.known_heroes)}` heroes active).")
-        except Exception as e:
-            await ctx.send(f"❌ **Re-indexing Error:** `{str(e)}`")
-
-
-@bot.command(name="help")
-async def prefix_help(ctx):
-    embed = discord.Embed(
-        title="❄️ Frosty AI - Command List",
-        description=f"Use prefix `{COMMAND_PREFIX}` or `/` Slash commands:\n\n"
-                    f"• `{COMMAND_PREFIX}wos <question>` - Ask anything\n"
-                    f"• `{COMMAND_PREFIX}hero <name>` - Hero guides\n"
-                    f"• `{COMMAND_PREFIX}lineup <mode>` - Lineups & ratios\n"
-                    f"• `{COMMAND_PREFIX}bear` - Bear Trap tactics\n"
-                    f"• `{COMMAND_PREFIX}event <name>` - Event walkthroughs\n"
-                    f"• `{COMMAND_PREFIX}expert <name>` - Dawn Academy advice\n"
-                    f"• `{COMMAND_PREFIX}status` - System health\n"
-                    f"• `{COMMAND_PREFIX}reindex` - [Admin] Refresh database",
-        color=FROSTY_COLOR
-    )
-    await ctx.send(embed=embed)
+@bot.command(name="timers")
+async def prefix_timers_alias(ctx):
+    await prefix_timer(ctx, args="list")
 
 
 # --- Error Handling ---

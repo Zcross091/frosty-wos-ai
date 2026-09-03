@@ -4,6 +4,7 @@ import 'screens/chat_screen.dart';
 import 'screens/state_age_screen.dart';
 import 'screens/hero_codex_screen.dart';
 import 'screens/formations_screen.dart';
+import 'screens/utilities_screen.dart';
 import 'screens/settings_screen.dart';
 import 'services/ai_service.dart';
 import 'services/update_service.dart';
@@ -61,7 +62,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   @override
   void initState() {
     super.initState();
-    // Synchronize latest hero roster from website repository
+    // Synchronize latest hero roster and timeline from website repository
     KnowledgeService.syncWithWebsite();
 
     // Check for new releases on GitHub automatically on startup
@@ -73,6 +74,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   final List<Widget> _screens = const [
     ChatScreen(),
     StateAgeScreen(),
+    UtilitiesScreen(),
     HeroCodexScreen(),
     FormationsScreen(),
     SettingsScreen(),
@@ -157,6 +159,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                       label: Text('State Age'),
                     ),
                     NavigationRailDestination(
+                      icon: Icon(Icons.calculate_outlined, color: Color(0xFF94A3B8)),
+                      selectedIcon: Icon(Icons.calculate_rounded, color: Color(0xFF00F0FF)),
+                      label: Text('Calculators'),
+                    ),
+                    NavigationRailDestination(
                       icon: Icon(Icons.menu_book_outlined, color: Color(0xFF94A3B8)),
                       selectedIcon: Icon(Icons.menu_book_rounded, color: Color(0xFF00F0FF)),
                       label: Text('Hero Codex'),
@@ -222,28 +229,33 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               },
               destinations: const [
                 NavigationDestination(
-                  icon: Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF94A3B8), size: 22),
-                  selectedIcon: Icon(Icons.chat_bubble_rounded, color: Color(0xFF00F0FF), size: 24),
+                  icon: Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF94A3B8), size: 20),
+                  selectedIcon: Icon(Icons.chat_bubble_rounded, color: Color(0xFF00F0FF), size: 22),
                   label: 'AI Oracle',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.timer_outlined, color: Color(0xFF94A3B8), size: 22),
-                  selectedIcon: Icon(Icons.timer_rounded, color: Color(0xFF00F0FF), size: 24),
-                  label: 'State Age',
+                  icon: Icon(Icons.timer_outlined, color: Color(0xFF94A3B8), size: 20),
+                  selectedIcon: Icon(Icons.timer_rounded, color: Color(0xFF00F0FF), size: 22),
+                  label: 'Timeline',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.menu_book_outlined, color: Color(0xFF94A3B8), size: 22),
-                  selectedIcon: Icon(Icons.menu_book_rounded, color: Color(0xFF00F0FF), size: 24),
+                  icon: Icon(Icons.calculate_outlined, color: Color(0xFF94A3B8), size: 20),
+                  selectedIcon: Icon(Icons.calculate_rounded, color: Color(0xFF00F0FF), size: 22),
+                  label: 'Tools',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.menu_book_outlined, color: Color(0xFF94A3B8), size: 20),
+                  selectedIcon: Icon(Icons.menu_book_rounded, color: Color(0xFF00F0FF), size: 22),
                   label: 'Codex',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.shield_outlined, color: Color(0xFF94A3B8), size: 22),
-                  selectedIcon: Icon(Icons.shield_rounded, color: Color(0xFF00F0FF), size: 24),
-                  label: 'Formations',
+                  icon: Icon(Icons.shield_outlined, color: Color(0xFF94A3B8), size: 20),
+                  selectedIcon: Icon(Icons.shield_rounded, color: Color(0xFF00F0FF), size: 22),
+                  label: 'Lineups',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.settings_outlined, color: Color(0xFF94A3B8), size: 22),
-                  selectedIcon: Icon(Icons.settings_rounded, color: Color(0xFF00F0FF), size: 24),
+                  icon: Icon(Icons.settings_outlined, color: Color(0xFF94A3B8), size: 20),
+                  selectedIcon: Icon(Icons.settings_rounded, color: Color(0xFF00F0FF), size: 22),
                   label: 'Settings',
                 ),
               ],
