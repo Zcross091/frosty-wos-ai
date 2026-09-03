@@ -567,6 +567,12 @@ def auto_sync_state_timeline_json(timeline_md_path: str = "./wos data/State_Time
             with open(output_path, "w", encoding="utf-8") as out:
                 json.dump(milestones, out, indent=2)
             logger.info(f"💾 Automatically synced {len(milestones)} state timeline milestones into {output_path}!")
+        return milestones
+    except Exception as e:
+        logger.error(f"Error in auto_sync_state_timeline_json: {e}")
+        return []
+
+
 def auto_sync_utility_data_json(util_md_path: str = "./wos data/Utility_Calculators.md", output_path: str = "utility_data.json") -> Dict:
     """
     Guarantees utility_data.json is kept up-to-date with any edits made to Utility_Calculators.md
