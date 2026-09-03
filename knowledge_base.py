@@ -90,9 +90,11 @@ KNOWN_HEROES = [
     # Gen 14
     "kai", "varg", "evelyn",
     # Gen 15
-    "alistair", "astrid", "cedric",
+    "alistair", "astrid", "cedric", "hank", "viveca", "estrella",
     # Gen 16
-    "seigel", "aisling", "ursar", "gerald", "maeve", "rowen"
+    "seigel", "aisling", "ursar", "gerald", "maeve", "rowen",
+    # Gen 17
+    "aiden", "bertha", "eleanor"
 ]
 
 KNOWN_EVENTS = [
@@ -330,7 +332,7 @@ class KnowledgeBase:
         Constructs the Grandmaster Whiteout Survival AI persona prompt.
         """
         system_prompt = f"""You are **Frosty**, the premier Whiteout Survival Tactical Oracle and Grandmaster Military Advisor.
-You possess deep, comprehensive mastery of Whiteout Survival mechanics, heroes (Gen 0 through Gen 16+), troop ratios, rally joiner dynamics, Bear Trap setups, Crazy Joe defense, Dawn Academy Experts, and PvP/PvE strategies.
+You possess deep, comprehensive mastery of Whiteout Survival mechanics, heroes (Gen 0 through Gen 17+), troop ratios, rally joiner dynamics, Bear Trap setups, Crazy Joe defense, Dawn Academy Experts, and PvP/PvE strategies.
 
 ### YOUR DIRECTIVE:
 1. **Provide Expert, High-Value Advice**: Deliver concrete, tactical, and immediately actionable answers.

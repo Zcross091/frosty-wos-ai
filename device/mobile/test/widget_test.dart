@@ -8,8 +8,18 @@ import 'package:frosty_wos_ai/services/state_age_service.dart';
 
 void main() {
   group('Frosty WOS AI Integrity Tests', () {
-    test('Offline Knowledge Service contains Gen 16 and Core Heroes', () {
+    test('Offline Knowledge Service contains Gen 17, Gen 16 and Core Heroes', () {
       expect(KnowledgeService.heroes.isNotEmpty, true);
+
+      final aiden = KnowledgeService.getHeroByName('Aiden');
+      expect(aiden, isNotNull);
+      expect(aiden!.generation, 17);
+      expect(aiden.troopType, TroopType.infantry);
+
+      final eleanor = KnowledgeService.getHeroByName('Eleanor');
+      expect(eleanor, isNotNull);
+      expect(eleanor!.generation, 17);
+      expect(eleanor.troopType, TroopType.marksman);
 
       final seigel = KnowledgeService.getHeroByName('Seigel');
       expect(seigel, isNotNull);
@@ -38,10 +48,10 @@ void main() {
     });
 
     test('State Age Calculator computes Generation accurately', () {
-      // Test State 1 (Oldest Server -> Gen 16)
+      // Test State 1 (Oldest Server -> Gen 17)
       final state1Calc = StateAgeService.calculateFromStateNumber(1);
-      expect(state1Calc.currentGeneration, 16);
-      expect(state1Calc.activeHeroes.contains('Seigel (Infantry)'), true);
+      expect(state1Calc.currentGeneration, 17);
+      expect(state1Calc.activeHeroes.contains('Aiden (Infantry)'), true);
 
       // Test Day 45 (Gen 2)
       final gen2Calc = StateAgeService.calculateFromDays(45);

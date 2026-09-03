@@ -1,8 +1,18 @@
 [
   {
+    "gen": 17,
+    "label": "Gen 17",
+    "unlockDay": 1240,
+    "infantry": "Aiden",
+    "lancer": "Bertha",
+    "marksman": "Eleanor",
+    "wheelHero": "Aiden (Infantry)",
+    "advice": "Aiden on Lucky Wheel is the #1 frontline Rage & Shield tank. Build Eleanor (Hall of Heroes) for Defense shred and Bertha for rally healing."
+  },
+  {
     "gen": 16,
     "label": "Gen 16",
-    "unlockDay": 1080,
+    "unlockDay": 1160,
     "infantry": "Seigel",
     "lancer": "Ursar",
     "marksman": "Aisling",

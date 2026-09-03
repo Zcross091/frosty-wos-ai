@@ -5544,3 +5544,54 @@ Adjust for your shard luck and spend level; Gen 16 continues the Infantry / Lanc
 
 
 
+### Gen 17
+
+• **Aiden** (Legendary Infantry / Combat)
+• **Bertha** (Legendary Lancer / Support & Control)
+• **Eleanor** (Legendary Marksman / Armor Shred & Burst)
+
+Unlocks when State is around Day 1240+ (~80 days after Gen 16).
+
+---
+
+#### 🛡️ Aiden (Gen 17 Infantry)
+• **Class:** Legendary Infantry / Frontline Kinetic Bastion
+• **Source:** Lucky Wheel (~Day 1240+) & Foundry Shop
+• **Stats:** Highest base Defense (39,850) and Health (598,000) with 2,450% Expedition Multiplier.
+• **Primary Skill (*Kinetic Aegis*):** Deploys an electromagnetic kinetic barrier absorbing 35% incoming squad damage and boosting squad Rage regeneration by +25%.
+• **Expedition Skill (*Bastion of Solitude*):** Grants +30% Infantry Health, +25% Defense, and increases squad-wide Attack by +20% when squad health is above 50%.
+• **Exclusive Gear (*Vanguard Bulwark*):** Converts 20% absorbed damage into explosive counter-shockwave dealing AoE damage to enemy frontlines.
+• **F2P vs P2W / Shard Advice:** #1 F2P priority for Gen 17 via Lucky Wheel. Build to 4★ minimum immediately.
+
+---
+
+#### 🐎 Bertha (Gen 17 Lancer)
+• **Class:** Legendary Lancer / Support DPS & Healer
+• **Source:** King of Icefield, State of Power, Hero Rally, Daily Deals & Foundry Shop
+• **Stats:** Attack 39,850, Defense 39,850, Health 398,500.
+• **Primary Skill (*Glacial Symphony*):** Traps target flank in frost snares, reducing enemy movement speed by 40% while amplifying squad Lethality by +25%.
+• **Expedition Skill (*Frostwarden's Hymn*):** Periodically heals wounded troops by 8% max squad HP every 6s and increases total Lancer damage by +30%.
+• **Exclusive Gear (*Winter's Grace*):** Boosts healing effectiveness by 35% and increases rally members' Lethality by +15%.
+• **F2P vs P2W / Shard Advice:** Premier support hero for large SvS rallies and Sunfire Castle defense. Acquire through King of Icefield and Daily Deals.
+
+---
+
+#### 🏹 Eleanor (Gen 17 Marksman)
+• **Class:** Legendary Marksman / Armor-Shred Artillery
+• **Source:** Hall of Heroes (Marks of Valor) & Foundry Shop
+• **Stats:** Highest base Attack (42,500) in Whiteout Survival history with 2,450% Expedition Multiplier.
+• **Primary Skill (*Shatterpoint Barrage*):** Fires armor-rending tungsten bolts that permanently strip 45% enemy Defense for 8s.
+• **Expedition Skill (*Rally Annihilator*):** +35% Marksman Lethality and +30% Attack for all backline troops.
+• **Exclusive Gear (*Cataclysm Longbow*):** Increases critical strike rate by +25% and ignores 40% of the target's damage reduction shields.
+• **F2P vs P2W / Shard Advice:** Primary Hall of Heroes (Marks of Valor) investment. Save all Marks of Valor for Eleanor.
+
+---
+
+📌 Gen 17 Overview – Generation 17
+• **Active Window:** Day 1240+
+• **F2P Build Order:** Aiden (Lucky Wheel) ➔ Eleanor (Hall of Heroes) ➔ Bertha (Events)
+• **Recommended Formation:** `Aiden (Infantry Lead) + Bertha (Lancer Deputy) + Eleanor (Marksman Deputy)` in a 50/20/30 or 40/20/40 ratio.
+
+
+
+

@@ -461,6 +461,50 @@ Edith operates alongside her giant mech companion, **Mr. Tin**. She is engineere
 • **Best Team:** `Edith (Infantry Tank) + Bradley (Marksman DPS) + Gordon (Lancer)`
 ''';
     }
+    if (q.contains('aiden')) {
+      return '''
+### 🛡️ Hero Dossier: Aiden — Generation 17 (Legendary Infantry)
+• **Role:** Frontline kinetic shield generator and squad Rage battery. #1 Lucky Wheel priority for Gen 17.
+• **Primary Skill (*Kinetic Aegis*):** Deploys an electromagnetic barrier absorbing 35% incoming damage and accelerating squad Rage by +25%.
+• **Expedition Skill (*Bastion of Solitude*):** +30% Infantry Health and +25% Defense. Grants +20% squad Attack when above 50% HP.
+• **Exclusive Gear (*Vanguard Bulwark*):** Converts absorbed damage into explosive counter-shockwaves dealing AoE burst.
+• **Tactical Verdict:** Priority #1 investment for Gen 17 states (~Day 1240+). Spin Lucky Wheel to 4★ minimum. Pair with `Bertha + Eleanor` in a `50/20/30` formation.
+''';
+    }
+
+    if (q.contains('eleanor')) {
+      return '''
+### 🏹 Hero Dossier: Eleanor — Generation 17 (Legendary Marksman)
+• **Role:** Heavy tungsten armor-shredding sniper. Highest base attack power in Whiteout Survival history.
+• **Primary Skill (*Shatterpoint Barrage*):** Strips 45% enemy Defense for 8s and deals massive 420% critical damage.
+• **Expedition Multiplier:** Apex `+2,450.00%` Expedition power.
+• **Exclusive Gear (*Cataclysm Longbow*):** Grants +25% crit rate and ignores 40% of target damage-reduction shields.
+• **Tactical Verdict:** Primary Hall of Heroes (Marks of Valor) investment for Gen 17. Spend all weekly Marks of Valor on Eleanor.
+''';
+    }
+
+    if (q.contains('bertha')) {
+      return '''
+### 🐎 Hero Dossier: Bertha — Generation 17 (Legendary Lancer)
+• **Role:** Frostwarden combat medic and lethality amplifier. Premier rally support for SvS and Sunfire Castle.
+• **Primary Skill (*Glacial Symphony*):** Freezes target flank, reducing enemy speed by 40% and amplifying squad Lethality by +25%.
+• **Expedition Skill (*Frostwarden's Hymn*):** Restores 8% max squad HP every 6s and increases total Lancer damage by +30%.
+• **Exclusive Gear (*Winter's Grace*):** Boosts healing by +35% and increases rally members' Lethality by +15%.
+• **Tactical Verdict:** Acquire via King of Icefield, State of Power, and Foundry Shop. Essential support for high-tier rallies.
+''';
+    }
+
+    if (q.contains('gen 17') || q.contains('generation 17')) {
+      return '''
+### 👑 Generation 17 Tactical Dossier
+• **Active Window:** ~Day 1,240+ of server age.
+• **🔷 Aiden (Infantry - Lucky Wheel):** Frontline kinetic shield & Rage battery. #1 F2P priority.
+• **🔶 Bertha (Lancer - Events/Foundry):** Team healer (8% HP/6s) and flank lethality buffer.
+• **🔴 Eleanor (Marksman - Hall of Heroes):** Shreds 45% enemy Defense with highest base Attack in game.
+• **Tactical Verdict:** Spin Lucky Wheel for Aiden ➔ Spend Marks of Valor for Eleanor ➔ Acquire Bertha from King of Icefield / Foundry Shop.
+''';
+    }
+
     if (q.contains('seigel')) {
       return '''
 ### 🛡️ Hero Dossier: Seigel — Generation 16 (Legendary Infantry)
@@ -697,7 +741,8 @@ Edith operates alongside her giant mech companion, **Mr. Tin**. She is engineere
 • **Gen 13 (Day 830):** `Gisela (Inf) · Flora (Lan) · Vulcanus (Mark)`
 • **Gen 14 (Day 900):** `Elif (Inf) · Dominic (Lan) · Cara (Mark)`
 • **Gen 15 (Day 960):** `Hank (Inf) · Estrella (Lan) · Viveca (Mark)`
-• **Gen 16 (Day 1080+):** `Seigel (Inf) · Ursar (Lan) · Aisling (Mark)`
+• **Gen 16 (Day 1160):** `Seigel (Inf) · Ursar (Lan) · Aisling (Mark)`
+• **Gen 17 (Day 1240+):** `Aiden (Inf) · Bertha (Lan) · Eleanor (Mark)`
 ''';
     }
 
@@ -715,13 +760,13 @@ Edith operates alongside her giant mech companion, **Mr. Tin**. She is engineere
 3. **Hero Investment:**
    • Prioritize your server generation's Lucky Wheel hero to 3–4★ before saving generic mythic shards.
 
-💡 *Ask me specifically about any hero (e.g. Seigel, Bradley, Flint), event (Crazy Joe, Bear Trap, SvS), or formation ratio for in-depth tactical math!*
+💡 *Ask me specifically about any hero (e.g. Aiden, Eleanor, Seigel, Bradley, Flint), event (Crazy Joe, Bear Trap, SvS), or formation ratio for in-depth tactical math!*
 ''';
   }
 
   String _buildSystemPrompt(String query) {
     return '''You are Frosty, the premier Whiteout Survival Tactical Oracle and Grandmaster Military Advisor.
-You possess complete mastery of Whiteout Survival mechanics, heroes (Gen 0 to Gen 16+), troop ratios (50/20/30, 10/10/80), Bear Trap rally joiner dynamics (Jessie +25% buff), Crazy Joe defense, and Dawn Academy Experts.
+You possess complete mastery of Whiteout Survival mechanics, heroes (Gen 0 to Gen 17+ including Aiden, Bertha, Eleanor), troop ratios (50/20/30, 10/10/80), Bear Trap rally joiner dynamics (Jessie +25% buff), Crazy Joe defense, and Dawn Academy Experts.
 
 Deliver concise, highly actionable, expert answers formatted in clean Markdown with bold bullet points, emojis, and a clear tactical verdict.''';
   }

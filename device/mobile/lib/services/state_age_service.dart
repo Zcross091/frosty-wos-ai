@@ -22,6 +22,7 @@ class StateAgeService {
     14: 960,
     15: 1040,
     16: 1160,
+    17: 1240,
   };
 
   static final Map<int, List<String>> generationHeroes = {
@@ -41,6 +42,7 @@ class StateAgeService {
     14: ['Elif (Inf)', 'Dominic (Lan)', 'Cara (Mark)'],
     15: ['Hank (Inf)', 'Estrella (Lan)', 'Viveca (Mark)'],
     16: ['Seigel (Infantry)', 'Ursar (Lancer)', 'Aisling (Marksman)'],
+    17: ['Aiden (Infantry)', 'Bertha (Lancer)', 'Eleanor (Marksman)'],
   };
 
   /// Calculates State Age and Generation from a State Number (1 - 1500+)
@@ -49,16 +51,16 @@ class StateAgeService {
     // Older states (1-200) opened ~3 days apart; newer states opened ~0.8 days apart
     double daysAgo;
     if (stateNumber <= 100) {
-      daysAgo = 1300 - (stateNumber * 2.5);
+      daysAgo = 1350 - (stateNumber * 2.5);
     } else if (stateNumber <= 500) {
-      daysAgo = 1050 - ((stateNumber - 100) * 1.5);
+      daysAgo = 1100 - ((stateNumber - 100) * 1.5);
     } else if (stateNumber <= 1000) {
-      daysAgo = 450 - ((stateNumber - 500) * 0.7);
+      daysAgo = 500 - ((stateNumber - 500) * 0.7);
     } else {
-      daysAgo = 100 - ((stateNumber - 1000) * 0.4);
+      daysAgo = 150 - ((stateNumber - 1000) * 0.4);
     }
 
-    int ageInDays = daysAgo.round().clamp(1, 1400);
+    int ageInDays = daysAgo.round().clamp(1, 1600);
     return _buildCalculation(ageInDays: ageInDays, stateNumber: stateNumber);
   }
 
@@ -71,12 +73,12 @@ class StateAgeService {
 
   /// Calculates State Age from direct day count input
   static StateCalculation calculateFromDays(int days) {
-    return _buildCalculation(ageInDays: days.clamp(0, 2000));
+    return _buildCalculation(ageInDays: days.clamp(0, 2500));
   }
 
   static StateCalculation _buildCalculation({required int ageInDays, int? stateNumber}) {
     int currentGen = 1;
-    for (int gen = 16; gen >= 1; gen--) {
+    for (int gen = 17; gen >= 1; gen--) {
       int unlockDay = generationUnlockDays[gen] ?? 0;
       if (ageInDays >= unlockDay) {
         currentGen = gen;
@@ -84,7 +86,7 @@ class StateAgeService {
       }
     }
 
-    int? nextGen = currentGen < 16 ? currentGen + 1 : null;
+    int? nextGen = currentGen < 17 ? currentGen + 1 : null;
     int? daysUntilNextGen;
     DateTime? nextGenDate;
 
@@ -108,25 +110,25 @@ class StateAgeService {
         'Target 3★ Flint when Gen 2 arrives for massive frontline spike.'
       ];
     } else if (currentGen == 2) {
-      tacticalAdvice = 'Max out Flint on Lucky Wheel. Alonso is top exploration marksman. Start saving for Gen 3 Mia.';
+      tacticalAdvice = 'Gen 2 Active. Flint is the essential F2P infantry tank via Lucky Wheel. Alonso shines in Arena.';
       roadmap = [
-        'Build Flint to 3-4★ on Lucky Wheel.',
-        'Pair Flint + Alonso + Philly for top PvP marches.',
-        'Keep Jessie ready as #1 joiner lead for Bear Trap (+25% Damage).'
+        'Spin Lucky Wheel for Flint until at least 3-4★.',
+        'Obtain Alonso from Hall of Heroes / King of Icefield.',
+        'Use Jessie + Flint + Alonso as top Bear Trap lead squad.'
       ];
-    } else if (currentGen <= 6) {
-      tacticalAdvice = 'Maintain 50/20/30 PvP troop ratios. Prioritize marksman carries (Lynn/Gwen) on the Lucky Wheel.';
+    } else if (currentGen == 3) {
+      tacticalAdvice = 'Gen 3 Active. Mia (Lucky Wheel) is an absolute must-have for Bear Trap and backline AoE stun.';
       roadmap = [
-        'Focus mythic general shards on the primary Lucky Wheel damage dealer.',
-        'Ensure castle garrison has at least 50% Infantry to absorb rally burst.',
-        'Check next generation countdown to avoid wasting generic shards right before a generation shift.'
+        'Max Mia from Lucky Wheel milestones.',
+        'Logan offers heavy garrison defense.',
+        'Save generic shards for Gen 4 Lynn if you are F2P.'
       ];
-    } else if (currentGen == 7) {
-      tacticalAdvice = 'Bradley & Edith represent the biggest PvP combat power spike. Bradley is top frontline stun tank.';
+    } else if (currentGen == 4) {
+      tacticalAdvice = 'Gen 4 Active. Lynn (Marksman) dominates Lucky Wheel and brings heavy armor penetration.';
       roadmap = [
-        'Invest generic mythic shards in Bradley until 4★ with Exclusive Gear.',
-        'Edith deals lethal armor-piercing damage directly to enemy backlines.',
-        'Ideal Squad: Bradley (Lead) + Edith + Gordon/Hector.'
+        'Invest Lucky Wheel tokens into Lynn.',
+        'Ahmose provides elite frontline damage reduction.',
+        'Transition your PvP marches to 50/20/30 ratios.'
       ];
     } else if (currentGen < 16) {
       tacticalAdvice = 'Endgame stat scaling is active. Focus on exclusive gear level 6+ and Dawn Academy experts.';
@@ -135,13 +137,21 @@ class StateAgeService {
         'Upgrade Dawn Academy Experts (Agnes/Cyrille/Holger) for troop stat multipliers.',
         'Always send Jessie as joiner 1 in Bear Trap (+25% damage buff).'
       ];
-    } else {
+    } else if (currentGen == 16) {
       tacticalAdvice = 'GENERATION 16 ACTIVE (Maximum Scaling: +2,131.70% Expedition Stats). Seigel is the invincible reflect tank.';
       roadmap = [
         'Seigel (Infantry): Reflects 25% damage and heals via Blacklight Halberd.',
         'Aisling (Marksman): Highest siege lethal multiplier in game history.',
         'Ursar (Lancer): Hall of Heroes Marks of Valor exclusive support.',
-        'Rally Formation: 10/10/80 for Bear Trap, 50/20/30 for PvP SvS battles.'
+        'Prepare shards and Lucky Wheel spins for Gen 17 Aiden (Day 1240+).'
+      ];
+    } else {
+      tacticalAdvice = 'GENERATION 17 ACTIVE (Apex 2,450% Multipliers). Aiden (Kinetic Aegis) & Eleanor (Armor Shred) dominate the meta.';
+      roadmap = [
+        'Aiden (Infantry): Spin Lucky Wheel to 4★ minimum for +25% squad Rage & 35% shield.',
+        'Eleanor (Marksman): Spend all weekly Marks of Valor in Hall of Heroes to strip 45% enemy defense.',
+        'Bertha (Lancer): Acquire via King of Icefield / Daily Deals for 8% periodic squad healing.',
+        'Apex Formation: 50/20/30 Aiden (Lead) + Bertha + Eleanor.'
       ];
     }
 
@@ -149,7 +159,7 @@ class StateAgeService {
       stateNumber: stateNumber,
       ageInDays: ageInDays,
       currentGeneration: currentGen,
-      currentGenLabel: 'Generation $currentGen (${currentGen == 16 ? 'Endgame Legendary' : 'Active'})',
+      currentGenLabel: 'Generation $currentGen (${currentGen >= 16 ? 'Endgame Legendary' : 'Active'})',
       activeHeroes: activeHeroes,
       nextGeneration: nextGen,
       daysUntilNextGen: daysUntilNextGen,
