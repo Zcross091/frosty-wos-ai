@@ -785,61 +785,205 @@ def parse_utc_time_or_duration(time_str: str) -> Optional[datetime]:
 
 
 # ==========================================
+# 💎 UTILITY DASHBOARDS & INTERACTIVE VIEWS
+# ==========================================
+
+def generate_progress_bar(from_lvl: int, to_lvl: int, max_lvl: int = 12, length: int = 14) -> str:
+    filled = max(0, min(length, int((to_lvl / max_lvl) * length)))
+    empty = length - filled
+    return f"`[{'█' * filled}{'░' * empty}]` **{(to_lvl / max_lvl * 100):.0f}%** *(Max: Lv {max_lvl})*"
+
+
+def build_fc_embed(building_type: str, from_lvl: int, to_lvl: int) -> discord.Embed:
+    res = calculate_fc_cost(building_type, from_lvl, to_lvl)
+    is_rfc = to_lvl >= 6
+    tier_label = "🔮 Refined Fire Crystal Tier (RFC 6-12+)" if is_rfc else "💎 Standard Fire Crystal Tier (FC 1-5)"
+
+    embed = discord.Embed(
+        title=f"💎 Fire Crystal Blueprint — {res['building']}",
+        description=f"**Target Progression:** FC **{from_lvl}** ➔ FC **{to_lvl}**\n"
+                    f"**Phase:** `{tier_label}`\n"
+                    f"**Progress:** {generate_progress_bar(from_lvl, to_lvl, max_lvl=12)}",
+        color=FROSTY_COLOR if not is_rfc else discord.Color.from_rgb(186, 85, 211)
+    )
+
+    embed.add_field(name="💎 Regular Fire Crystals", value=f"**{res['fc']:,} FC**", inline=True)
+    if res['rfc'] > 0:
+        embed.add_field(name="🔮 Refined Fire Crystals", value=f"**{res['rfc']:,} RFC**", inline=True)
+    else:
+        embed.add_field(name="🔮 Refined Fire Crystals", value="*None Required (FC 1-5)*", inline=True)
+
+    embed.add_field(name="⏱️ Base Construction Time", value=f"**~{res['days']} Days**", inline=True)
+    embed.add_field(
+        name="🏆 SvS City Construction Points",
+        value=f"⭐ **{res['svs_pts']:,} Points** *(Day 1 / Day 5)*\n"
+              f"• Regular FC: `{(res['fc'] * 2000):,} pts` (2,000 / FC)\n"
+              f"• Refined RFC: `{(res['rfc'] * 30000):,} pts` (30,000 / RFC)",
+        inline=False
+    )
+    embed.set_footer(text="💡 Tip: Use the interactive buttons below to switch building & tier presets instantly!")
+    return embed
+
+
+class FCCalculatorView(discord.ui.View):
+    def __init__(self, building: str = "furnace", from_lvl: int = 0, to_lvl: int = 5, author_id: Optional[int] = None):
+        super().__init__(timeout=180)
+        self.building = building
+        self.from_lvl = from_lvl
+        self.to_lvl = to_lvl
+        self.author_id = author_id
+
+    @discord.ui.button(label="🏛️ Furnace / Embassy", style=discord.ButtonStyle.primary, row=0)
+    async def btn_furnace(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.building = "furnace"
+        embed = build_fc_embed(self.building, self.from_lvl, self.to_lvl)
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="⚔️ Troop Camp", style=discord.ButtonStyle.secondary, row=0)
+    async def btn_camp(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.building = "camp"
+        embed = build_fc_embed(self.building, self.from_lvl, self.to_lvl)
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="FC 1-5", style=discord.ButtonStyle.success, row=1)
+    async def btn_fc1_5(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.from_lvl, self.to_lvl = 0, 5
+        embed = build_fc_embed(self.building, self.from_lvl, self.to_lvl)
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="FC 5-8", style=discord.ButtonStyle.success, row=1)
+    async def btn_fc5_8(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.from_lvl, self.to_lvl = 5, 8
+        embed = build_fc_embed(self.building, self.from_lvl, self.to_lvl)
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="FC 8-10", style=discord.ButtonStyle.success, row=1)
+    async def btn_fc8_10(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.from_lvl, self.to_lvl = 8, 10
+        embed = build_fc_embed(self.building, self.from_lvl, self.to_lvl)
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="FC 10-12", style=discord.ButtonStyle.success, row=1)
+    async def btn_fc10_12(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.from_lvl, self.to_lvl = 10, 12
+        embed = build_fc_embed(self.building, self.from_lvl, self.to_lvl)
+        await interaction.response.edit_message(embed=embed, view=self)
+
+
+def build_charms_embed(from_lvl: int, to_lvl: int, is_all_slots: bool = False) -> discord.Embed:
+    res = calculate_charms_cost(from_lvl, to_lvl)
+    multiplier = 6 if is_all_slots else 1
+    slot_label = "👑 Full Chief Set (All 6 Slots)" if is_all_slots else "🛡️ Single Slot Mode (1 Slot)"
+
+    guides = res['guides'] * multiplier
+    designs = res['designs'] * multiplier
+    boost = res['boost'] * multiplier
+    svs_pts = res['svs_pts'] * multiplier
+
+    embed = discord.Embed(
+        title="🛡️ Chief Charms Master Calculator",
+        description=f"**Target Progression:** Level **{from_lvl}** ➔ Level **{to_lvl}**\n"
+                    f"**Scope:** `{slot_label}`\n"
+                    f"**Progress:** {generate_progress_bar(from_lvl, to_lvl, max_lvl=12)}",
+        color=FROSTY_COLOR if not is_all_slots else WARN_COLOR
+    )
+
+    embed.add_field(name="📜 Charm Guides", value=f"**{guides:,} Guides**", inline=True)
+    embed.add_field(name="✨ Charm Designs", value=f"**{designs:,} Designs**", inline=True)
+    embed.add_field(name="⚡ Combat Stat Surge", value=f"**+{boost:.1f}%** Lethality & HP", inline=True)
+    embed.add_field(
+        name="🏆 SvS Prep Points Earned",
+        value=f"⭐ **{svs_pts:,} Points** *(Day 1, 3, 4)*\n• Charm Score: `{(svs_pts // 70):,} Score` (70 pts / score)",
+        inline=False
+    )
+    embed.set_footer(text="💡 Tip: Click 'Toggle 6-Slot Full Set' to see total costs for all 6 Chief Charms!")
+    return embed
+
+
+class CharmsCalculatorView(discord.ui.View):
+    def __init__(self, from_lvl: int = 0, to_lvl: int = 5, is_all_slots: bool = False, author_id: Optional[int] = None):
+        super().__init__(timeout=180)
+        self.from_lvl = from_lvl
+        self.to_lvl = to_lvl
+        self.is_all_slots = is_all_slots
+        self.author_id = author_id
+
+    @discord.ui.button(label="👑 Toggle 6-Slot Full Set", style=discord.ButtonStyle.primary, row=0)
+    async def btn_toggle_scope(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.is_all_slots = not self.is_all_slots
+        embed = build_charms_embed(self.from_lvl, self.to_lvl, self.is_all_slots)
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="Lv 1-5", style=discord.ButtonStyle.success, row=1)
+    async def btn_lv1_5(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.from_lvl, self.to_lvl = 0, 5
+        embed = build_charms_embed(self.from_lvl, self.to_lvl, self.is_all_slots)
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="Lv 5-8", style=discord.ButtonStyle.success, row=1)
+    async def btn_lv5_8(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.from_lvl, self.to_lvl = 5, 8
+        embed = build_charms_embed(self.from_lvl, self.to_lvl, self.is_all_slots)
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="Lv 8-10", style=discord.ButtonStyle.success, row=1)
+    async def btn_lv8_10(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.from_lvl, self.to_lvl = 8, 10
+        embed = build_charms_embed(self.from_lvl, self.to_lvl, self.is_all_slots)
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="Lv 10-12", style=discord.ButtonStyle.success, row=1)
+    async def btn_lv10_12(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.from_lvl, self.to_lvl = 10, 12
+        embed = build_charms_embed(self.from_lvl, self.to_lvl, self.is_all_slots)
+        await interaction.response.edit_message(embed=embed, view=self)
+
+
+# ==========================================
 # 💎 UTILITY SLASH COMMANDS
 # ==========================================
 
-@bot.tree.command(name="fc", description="Calculate Fire Crystal (FC & RFC) costs, speedups, and SvS points.")
+@bot.tree.command(name="fc", description="Interactive Fire Crystal (FC & RFC) upgrade calculator.")
 @app_commands.describe(
     building="Type of building to upgrade",
-    from_level="Current FC level (0 for Lv 30, or 1 to 9)",
-    to_level="Target FC level (1 to 10)"
+    from_level="Current FC level (0 for Lv 30, or 1 to 11)",
+    to_level="Target FC level (1 to 12)"
 )
 @app_commands.choices(building=[
     app_commands.Choice(name="Furnace / Embassy / Command Center", value="furnace"),
     app_commands.Choice(name="Troop Camp (Infantry / Lancer / Marksman)", value="camp"),
 ])
-async def slash_fc(interaction: discord.Interaction, building: app_commands.Choice[str], from_level: int, to_level: int):
-    if from_level >= to_level:
+async def slash_fc(interaction: discord.Interaction, building: Optional[app_commands.Choice[str]] = None, from_level: Optional[int] = None, to_level: Optional[int] = None):
+    b_val = building.value if building else "furnace"
+    f_val = from_level if from_level is not None else 0
+    t_val = to_level if to_level is not None else 5
+
+    if f_val >= t_val:
         await interaction.response.send_message("❌ Target level must be greater than current level.", ephemeral=True)
         return
 
-    res = calculate_fc_cost(building.value, from_level, to_level)
-    embed = discord.Embed(
-        title=f"💎 Fire Crystal Upgrade Calculator — {res['building']}",
-        description=f"Upgrade Plan: **FC {res['from']} ➔ FC {res['to']}**",
-        color=FROSTY_COLOR
-    )
-    embed.add_field(name="Regular Fire Crystals (FC)", value=f"💎 **{res['fc']:,} FC**", inline=True)
-    if res['rfc'] > 0:
-        embed.add_field(name="Refined Fire Crystals (RFC)", value=f"🔮 **{res['rfc']:,} RFC**", inline=True)
-    embed.add_field(name="Base Build Time", value=f"⏱️ **~{res['days']} Days**", inline=True)
-    embed.add_field(name="SvS City Construction Points", value=f"🏆 **{res['svs_pts']:,} Points** *(Day 1 / Day 5)*", inline=False)
-    embed.set_footer(text="💡 Tip: Start construction on SvS Day 1 for maximum score contribution.")
-    await interaction.response.send_message(embed=embed)
+    embed = build_fc_embed(b_val, f_val, t_val)
+    view = FCCalculatorView(building=b_val, from_lvl=f_val, to_lvl=t_val, author_id=interaction.user.id)
+    await interaction.response.send_message(embed=embed, view=view)
 
 
-@bot.tree.command(name="charms", description="Calculate Chief Charms materials, guides, and SvS points.")
+@bot.tree.command(name="charms", description="Interactive Chief Charms materials and combat boost calculator.")
 @app_commands.describe(
-    from_level="Current Charm level (0 for unequipped, or 1 to 10)",
-    to_level="Target Charm level (1 to 11)"
+    from_level="Current Charm level (0 for unequipped, or 1 to 11)",
+    to_level="Target Charm level (1 to 12)",
+    all_six_slots="Set to True to calculate materials for all 6 Chief gear slots"
 )
-async def slash_charms(interaction: discord.Interaction, from_level: int, to_level: int):
-    if from_level >= to_level:
+async def slash_charms(interaction: discord.Interaction, from_level: Optional[int] = None, to_level: Optional[int] = None, all_six_slots: bool = False):
+    f_val = from_level if from_level is not None else 0
+    t_val = to_level if to_level is not None else 5
+
+    if f_val >= t_val:
         await interaction.response.send_message("❌ Target level must be greater than current level.", ephemeral=True)
         return
 
-    res = calculate_charms_cost(from_level, to_level)
-    embed = discord.Embed(
-        title="🛡️ Chief Charms Upgrade Calculator (Per Slot)",
-        description=f"Upgrade Plan: **Level {res['from']} ➔ Level {res['to']}**",
-        color=FROSTY_COLOR
-    )
-    embed.add_field(name="Charm Guides", value=f"📜 **{res['guides']:,} Guides**", inline=True)
-    embed.add_field(name="Charm Designs", value=f"✨ **{res['designs']:,} Designs**", inline=True)
-    embed.add_field(name="Total Combat Boost", value=f"⚡ **+{res['boost']:.1f}% Lethality/HP**", inline=True)
-    embed.add_field(name="SvS Prep Points", value=f"🏆 **{res['svs_pts']:,} Points** *(70 pts / score)*", inline=False)
-    embed.set_footer(text="💡 Tip: Charm score earns points on SvS Day 1, Day 3, and Day 4.")
-    await interaction.response.send_message(embed=embed)
+    embed = build_charms_embed(f_val, t_val, is_all_slots=all_six_slots)
+    view = CharmsCalculatorView(from_lvl=f_val, to_lvl=t_val, is_all_slots=all_six_slots, author_id=interaction.user.id)
+    await interaction.response.send_message(embed=embed, view=view)
 
 
 @bot.tree.command(name="svs", description="Calculate SvS prep phase points and find the highest-value day.")
@@ -1248,45 +1392,35 @@ async def prefix_wos(ctx, *, question: str):
 async def prefix_fc(ctx, *, args: str = "furnace 0 5"):
     parts = args.strip().split()
     b_type = "furnace"
-    from_lvl, to_lvl = 0, 5
-    if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
-        from_lvl, to_lvl = int(parts[0]), int(parts[1])
-    elif len(parts) >= 3:
-        b_type = parts[0]
-        from_lvl = int(parts[1]) if parts[1].isdigit() else 0
-        to_lvl = int(parts[2]) if parts[2].isdigit() else 5
+    from_lvl = 0
+    to_lvl = 5
 
-    res = calculate_fc_cost(b_type, from_lvl, to_lvl)
-    embed = discord.Embed(
-        title=f"💎 Fire Crystal Upgrade Calculator — {res['building']}",
-        description=f"Upgrade Plan: **FC {res['from']} ➔ FC {res['to']}**",
-        color=FROSTY_COLOR
-    )
-    embed.add_field(name="Regular Fire Crystals (FC)", value=f"💎 **{res['fc']:,} FC**", inline=True)
-    if res['rfc'] > 0:
-        embed.add_field(name="Refined Fire Crystals (RFC)", value=f"🔮 **{res['rfc']:,} RFC**", inline=True)
-    embed.add_field(name="Base Build Time", value=f"⏱️ **~{res['days']} Days**", inline=True)
-    embed.add_field(name="SvS City Construction Points", value=f"🏆 **{res['svs_pts']:,} Points** *(Day 1 / Day 5)*", inline=False)
-    await ctx.send(embed=embed)
+    if parts:
+        if "camp" in parts[0].lower():
+            b_type = "camp"
+        if len(parts) >= 2 and parts[1].isdigit():
+            from_lvl = int(parts[1])
+        if len(parts) >= 3 and parts[2].isdigit():
+            to_lvl = int(parts[2])
+        elif len(parts) == 2 and parts[1].isdigit():
+            to_lvl = int(parts[1])
+            from_lvl = 0
+
+    embed = build_fc_embed(b_type, from_lvl, to_lvl)
+    view = FCCalculatorView(building=b_type, from_lvl=from_lvl, to_lvl=to_lvl, author_id=ctx.author.id)
+    await ctx.send(embed=embed, view=view)
 
 
 @bot.command(name="charms")
 async def prefix_charms(ctx, *, args: str = "0 5"):
     parts = [int(p) for p in args.strip().split() if p.isdigit()]
+    is_all = "all" in args.lower() or "6" in args.lower() and len(parts) < 2
     from_lvl = parts[0] if len(parts) >= 1 else 0
     to_lvl = parts[1] if len(parts) >= 2 else 5
 
-    res = calculate_charms_cost(from_lvl, to_lvl)
-    embed = discord.Embed(
-        title="🛡️ Chief Charms Upgrade Calculator (Per Slot)",
-        description=f"Upgrade Plan: **Level {res['from']} ➔ Level {res['to']}**",
-        color=FROSTY_COLOR
-    )
-    embed.add_field(name="Charm Guides", value=f"📜 **{res['guides']:,} Guides**", inline=True)
-    embed.add_field(name="Charm Designs", value=f"✨ **{res['designs']:,} Designs**", inline=True)
-    embed.add_field(name="Total Combat Boost", value=f"⚡ **+{res['boost']:.1f}% Lethality/HP**", inline=True)
-    embed.add_field(name="SvS Prep Points", value=f"🏆 **{res['svs_pts']:,} Points** *(70 pts / score)*", inline=False)
-    await ctx.send(embed=embed)
+    embed = build_charms_embed(from_lvl, to_lvl, is_all_slots=is_all)
+    view = CharmsCalculatorView(from_lvl=from_lvl, to_lvl=to_lvl, is_all_slots=is_all, author_id=ctx.author.id)
+    await ctx.send(embed=embed, view=view)
 
 
 @bot.command(name="svs")
