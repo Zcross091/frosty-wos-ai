@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Community Discussions & Q&A
+    url: https://github.com/Zcross091/frosty-wos-ai/discussions
+    about: Ask strategic questions, discuss lineups, or chat with other Chiefs!
+  - name: 🤖 Discord Community
+    url: https://discord.com/oauth2/authorize?client_id=1501632240466006108&permissions=347200&integration_type=0&scope=bot+applications.commands
+    about: Join and test Frosty AI live in Discord!

@@ -1,0 +1,51 @@
+name: 💡 Feature Request & Calculator Idea
+description: Suggest a new feature, game calculator, command, or UI enhancement
+title: "[FEATURE]: "
+labels: ["enhancement", "feature-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an awesome idea to make Frosty even better for Whiteout Survival Chiefs? Let us know below!
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: 🗂️ Feature Category
+      description: What category does this idea fall into?
+      options:
+        - 🧮 New Tactical Calculator (e.g. Dawn Academy, Pet Skills, Hero Gear)
+        - 🤖 Discord Bot Command or Slash Feature
+        - 📱 Mobile App Screen or Widget Enhancement
+        - 🛡️ Formation & Troop Ratio Preset
+        - ⏱️ State Timeline Milestone Addition
+        - 🎁 Gift Codes & Redemption Tracking
+        - 🚀 Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: feature_summary
+    attributes:
+      label: 💡 Feature Summary
+      description: Explain your idea and what problem it solves.
+      placeholder: E.g., Add a Pet Advancement Calculator that calculates required Pet food and serums...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 🛠️ Proposed Solution / Formula
+      description: How should this feature work? (Include any in-game formulas or reference values if available)
+      placeholder: Inputs needed, expected outputs, or formula reference...
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 🔄 Alternative Solutions
+      description: Any alternative solutions or features you have considered?
+    validations:
+      required: false

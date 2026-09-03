@@ -1,0 +1,62 @@
+name: 🐛 Bug Report
+description: Report an issue, calculation bug, or unexpected behavior in Frosty Bot or Mobile App
+title: "[BUG]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the details below to help us investigate and fix it quickly.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: 🎯 Affected Component
+      description: Which part of the Frosty ecosystem is experiencing the issue?
+      options:
+        - 🤖 Discord Bot (/wos, /state, /fc, /timer, etc.)
+        - 📱 Android Flutter Mobile App
+        - 🌐 3D Interactive Web Codex
+        - 🧠 Knowledge Base / Ingestion Engine (ChromaDB)
+        - ⚙️ GitHub Actions Automation Pipeline
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 📝 Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: E.g., The /fc calculator outputs incorrect Refined FC for FC 8...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 🔁 Steps to Reproduce
+      description: How can we reproduce the issue?
+      placeholder: |
+        1. Type command `/fc furnace 0 8`
+        2. View calculated RFC count
+        3. Observe discrepancy with in-game value
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: ✅ Expected Behavior
+      description: What did you expect to happen instead?
+      placeholder: Expected to see 550 RFC required for FC 8.
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: 💻 Environment / Device Details
+      description: Device model, Android OS version, or Discord server context if applicable.
+      placeholder: Android 14 / Discord Desktop v1.0.43
+    validations:
+      required: false

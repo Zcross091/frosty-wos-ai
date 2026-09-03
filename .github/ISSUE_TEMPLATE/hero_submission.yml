@@ -1,0 +1,58 @@
+name: 👑 Hero & Meta Data Submission
+description: Submit new hero statistics, generation unlocks, or strategic tier adjustments
+title: "[HERO DATA]: "
+labels: ["hero-data", "game-update"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help keep the Frosty Codex up-to-date with newly released Whiteout Survival heroes and meta balance changes!
+
+  - type: input
+    id: hero_name
+    attributes:
+      label: 👑 Hero Name
+      placeholder: E.g., Aiden, Eleanor, Rufus
+    validations:
+      required: true
+
+  - type: dropdown
+    id: generation
+    attributes:
+      label: 📅 Generation
+      options:
+        - Gen 16
+        - Gen 17
+        - Gen 18
+        - Gen 19
+        - Gen 20+
+        - Gen 0 (Core / Epic)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: troop_type
+    attributes:
+      label: ⚔️ Troop Class
+      options:
+        - 🛡️ Infantry
+        - 🏹 Marksman
+        - 🐎 Lancer
+    validations:
+      required: true
+
+  - type: textarea
+    id: skills
+    attributes:
+      label: 📜 Exploration & Expedition Skills Breakdown
+      placeholder: Describe the hero's active/passive skills and exclusive gear perks...
+    validations:
+      required: true
+
+  - type: textarea
+    id: rating
+    attributes:
+      label: 🌟 Evaluation & Meta Rating
+      placeholder: F2P vs P2W verdict, recommended pairings, and lineup recommendations...
+    validations:
+      required: false
