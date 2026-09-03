@@ -1040,6 +1040,89 @@ async def slash_reindex(interaction: discord.Interaction, local_only: bool = Tru
         await interaction.followup.send(f"❌ **Reindexing Error:** `{str(e)}`")
 
 
+async def broadcast_announcement_to_guilds(sender: discord.User | discord.Member, message_text: str) -> Tuple[int, int]:
+    """Broadcast an official announcement from the bot owner across all active guilds."""
+    success_count = 0
+    fail_count = 0
+
+    embed = discord.Embed(
+        title="📢 Frosty Official Announcement",
+        description=message_text,
+        color=FROSTY_COLOR,
+        timestamp=datetime.now(timezone.utc)
+    )
+    if sender.display_avatar:
+        embed.set_author(name=f"Announcement from {sender.display_name} (@{sender.name})", icon_url=sender.display_avatar.url)
+    else:
+        embed.set_author(name=f"Announcement from {sender.display_name} (@{sender.name})")
+    embed.set_footer(text="Frosty AI • Tactical Command Network")
+
+    for guild in bot.guilds:
+        target_channel = None
+
+        # Priority 1: Channel named announcements / updates / bot / general
+        preferred_names = ["announcements", "frosty-announcements", "frosty-bot", "bot-commands", "bot", "general", "chat"]
+        for name in preferred_names:
+            ch = discord.utils.find(lambda c: name in c.name.lower() and isinstance(c, discord.TextChannel), guild.text_channels)
+            if ch and ch.permissions_for(guild.me).send_messages:
+                target_channel = ch
+                break
+
+        # Priority 2: System channel if bot has write perms
+        if not target_channel and guild.system_channel and guild.system_channel.permissions_for(guild.me).send_messages:
+            target_channel = guild.system_channel
+
+        # Priority 3: First available text channel
+        if not target_channel:
+            for ch in guild.text_channels:
+                if ch.permissions_for(guild.me).send_messages:
+                    target_channel = ch
+                    break
+
+        if target_channel:
+            try:
+                await target_channel.send(embed=embed)
+                success_count += 1
+                await asyncio.sleep(0.35)  # Anti-rate-limit spacing
+            except Exception as e:
+                logger.warning(f"Could not send announcement to guild {guild.name}: {e}")
+                fail_count += 1
+        else:
+            fail_count += 1
+
+    return success_count, fail_count
+
+
+@bot.tree.command(name="sendmessage", description="[Owner Only] Broadcast an official announcement to all servers.")
+@app_commands.describe(message="The announcement message to broadcast across all Discord servers")
+async def slash_sendmessage(interaction: discord.Interaction, message: str):
+    if not is_authorized_admin(interaction.user):
+        await interaction.response.send_message(
+            f"⛔ **Access Denied:** Only the Supreme Commander (`{', '.join(AUTHORIZED_ADMIN_USERNAMES)}`) can broadcast announcements across servers.",
+            ephemeral=True
+        )
+        return
+
+    await interaction.response.defer(thinking=True, ephemeral=True)
+    success, fail = await broadcast_announcement_to_guilds(interaction.user, message)
+
+    res_embed = discord.Embed(
+        title="📢 Broadcast Transmission Complete",
+        description=f"Your message was broadcast across all active Discord servers!\n\n"
+                    f"• ✅ **Delivered to:** `{success}` servers\n"
+                    f"• ⚠️ **Skipped (No Perms):** `{fail}` servers\n"
+                    f"• 🌐 **Total Connected Servers:** `{len(bot.guilds)}`",
+        color=SUCCESS_COLOR
+    )
+    await interaction.followup.send(embed=res_embed, ephemeral=True)
+
+
+@bot.tree.command(name="broadcast", description="[Owner Only] Broadcast an official announcement to all servers.")
+@app_commands.describe(message="The announcement message to broadcast across all Discord servers")
+async def slash_broadcast_alias(interaction: discord.Interaction, message: str):
+    await slash_sendmessage(interaction, message)
+
+
 @bot.tree.command(name="help", description="Show Frosty AI commands and strategic capabilities.")
 async def slash_help(interaction: discord.Interaction):
     embed = discord.Embed(
@@ -1249,6 +1332,30 @@ async def prefix_reindex(ctx, local_only: str = "true"):
             await ctx.send(embed=embed)
         except Exception as e:
             await ctx.send(f"❌ **Reindexing Error:** `{str(e)}`")
+
+
+@bot.command(name="sendmessage")
+async def prefix_sendmessage(ctx, *, message: str):
+    if not is_authorized_admin(ctx.author):
+        await ctx.send(f"⛔ **Access Denied:** Only the Supreme Commander (`{', '.join(AUTHORIZED_ADMIN_USERNAMES)}`) can broadcast announcements across servers.")
+        return
+
+    async with ctx.typing():
+        success, fail = await broadcast_announcement_to_guilds(ctx.author, message)
+        res_embed = discord.Embed(
+            title="📢 Broadcast Transmission Complete",
+            description=f"Your message was broadcast across all active Discord servers!\n\n"
+                        f"• ✅ **Delivered to:** `{success}` servers\n"
+                        f"• ⚠️ **Skipped (No Perms):** `{fail}` servers\n"
+                        f"• 🌐 **Total Connected Servers:** `{len(bot.guilds)}`",
+            color=SUCCESS_COLOR
+        )
+        await ctx.send(embed=res_embed)
+
+
+@bot.command(name="broadcast")
+async def prefix_broadcast_alias(ctx, *, message: str):
+    await prefix_sendmessage(ctx, message=message)
 
 
 # --- Error Handling ---
