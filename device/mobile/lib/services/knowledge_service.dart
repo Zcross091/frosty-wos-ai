@@ -9,29 +9,73 @@ class KnowledgeService {
       'https://raw.githubusercontent.com/Zcross091/frosty-wos-ai/main/heroes_data.json';
   static const String _cacheKey = 'frosty_cached_heroes_json';
 
-  static List<HeroProfile> heroes = _buildDefaultHeroRoster();
+  static const String _timelineSyncUrl =
+      'https://raw.githubusercontent.com/Zcross091/frosty-wos-ai/main/state_timeline.json';
+  static const String _timelineCacheKey = 'frosty_cached_timeline_json';
 
-  /// Synchronize Hero Codex with live website heroes_data.json on app startup
+  static List<HeroProfile> heroes = _buildDefaultHeroRoster();
+  static List<Map<String, dynamic>> dynamicTimeline = [];
+
+  /// Synchronize Hero Codex and State Timeline with live website data on app startup
   static Future<void> syncWithWebsite() async {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      // 1. Check offline cached JSON first
+      // 1. Check offline cached heroes & timeline JSON first
       final cachedJson = prefs.getString(_cacheKey);
       if (cachedJson != null && cachedJson.isNotEmpty) {
         _parseAndMergeJson(cachedJson);
       }
 
-      // 2. Fetch latest online heroes_data.json from website repository
-      final response = await http.get(Uri.parse(_syncUrl)).timeout(const Duration(seconds: 10));
-      if (response.statusCode == 200) {
-        final body = utf8.decode(response.bodyBytes);
-        _parseAndMergeJson(body);
-        await prefs.setString(_cacheKey, body);
-        debugPrint('✅ KnowledgeService: Synced ${heroes.length} heroes from website JSON.');
+      final cachedTimeline = prefs.getString(_timelineCacheKey);
+      if (cachedTimeline != null && cachedTimeline.isNotEmpty) {
+        _parseTimelineJson(cachedTimeline);
+      }
+
+      // 2. Fetch latest online heroes_data.json
+      try {
+        final response = await http.get(Uri.parse(_syncUrl)).timeout(const Duration(seconds: 8));
+        if (response.statusCode == 200) {
+          final body = utf8.decode(response.bodyBytes);
+          _parseAndMergeJson(body);
+          await prefs.setString(_cacheKey, body);
+        }
+      } catch (_) {}
+
+      // 3. Fetch latest online state_timeline.json
+      try {
+        final tResponse = await http.get(Uri.parse(_timelineSyncUrl)).timeout(const Duration(seconds: 8));
+        if (tResponse.statusCode == 200) {
+          final tBody = utf8.decode(tResponse.bodyBytes);
+          _parseTimelineJson(tBody);
+          await prefs.setString(_timelineCacheKey, tBody);
+        }
+      } catch (_) {}
+
+      debugPrint('✅ KnowledgeService: Synced ${heroes.length} heroes & ${dynamicTimeline.length} timeline milestones.');
+    } catch (e) {
+      debugPrint('ℹ️ KnowledgeService sync notice: $e (using built-in offline master data)');
+    }
+  }
+
+  static void _parseTimelineJson(String jsonStr) {
+    try {
+      final List<dynamic> data = jsonDecode(jsonStr);
+      final List<Map<String, dynamic>> parsed = [];
+      for (final item in data) {
+        parsed.add({
+          'day': item['day'] ?? 0,
+          'title': item['title'] ?? '',
+          'category': item['category'] ?? 'Event',
+          'icon': item['icon'] ?? '📜',
+          'description': item['description'] ?? '',
+        });
+      }
+      if (parsed.isNotEmpty) {
+        dynamicTimeline = parsed;
       }
     } catch (e) {
-      debugPrint('ℹ️ KnowledgeService sync notice: $e (using built-in offline master roster)');
+      debugPrint('Error parsing timeline JSON: $e');
     }
   }
 

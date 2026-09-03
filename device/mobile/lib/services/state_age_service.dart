@@ -301,20 +301,32 @@ class StateAgeService {
     },
   ];
 
-  /// Calculates State Age and Generation from a State Number (1 - 1500+)
-  static StateCalculation calculateFromStateNumber(int stateNumber) {
-    double daysAgo;
-    if (stateNumber <= 100) {
-      daysAgo = 1350 - (stateNumber * 2.5);
+  /// Estimates the historical opening date of a State based on server rollout pace
+  static DateTime estimateStateLaunchDate(int stateNumber) {
+    double offsetDays = 0;
+    if (stateNumber <= 1) {
+      offsetDays = 0;
+    } else if (stateNumber <= 100) {
+      offsetDays = stateNumber * 1.0;
     } else if (stateNumber <= 500) {
-      daysAgo = 1100 - ((stateNumber - 100) * 1.5);
+      offsetDays = 100 + (stateNumber - 100) * 0.625;
     } else if (stateNumber <= 1000) {
-      daysAgo = 500 - ((stateNumber - 500) * 0.7);
+      offsetDays = 350 + (stateNumber - 500) * 0.70;
+    } else if (stateNumber <= 1500) {
+      offsetDays = 700 + (stateNumber - 1000) * 0.50;
+    } else if (stateNumber <= 2000) {
+      offsetDays = 950 + (stateNumber - 1500) * 0.40;
     } else {
-      daysAgo = 150 - ((stateNumber - 1000) * 0.4);
+      offsetDays = 1150 + (stateNumber - 2000) * 0.35;
     }
 
-    int ageInDays = daysAgo.round().clamp(1, 1600);
+    return state1LaunchDate.add(Duration(days: offsetDays.round()));
+  }
+
+  /// Calculates State Age and Generation from a State Number (1 - 2500+)
+  static StateCalculation calculateFromStateNumber(int stateNumber) {
+    final launchDate = estimateStateLaunchDate(stateNumber);
+    final ageInDays = DateTime.now().difference(launchDate).inDays.clamp(1, 3000);
     return _buildCalculation(ageInDays: ageInDays, stateNumber: stateNumber);
   }
 
@@ -327,7 +339,7 @@ class StateAgeService {
 
   /// Calculates State Age from direct day count input
   static StateCalculation calculateFromDays(int days) {
-    return _buildCalculation(ageInDays: days.clamp(0, 2500));
+    return _buildCalculation(ageInDays: days.clamp(0, 3000));
   }
 
   static StateCalculation _buildCalculation({required int ageInDays, int? stateNumber}) {
@@ -373,8 +385,11 @@ class StateAgeService {
       }
     }
 
-    // Build Milestones list
-    final List<StateMilestone> milestones = rawMilestones.map((raw) {
+    // Build Milestones list (using dynamic website timeline if available, otherwise fallback)
+    final List<Map<String, dynamic>> sourceMilestones =
+        KnowledgeService.dynamicTimeline.isNotEmpty ? KnowledgeService.dynamicTimeline : rawMilestones;
+
+    final List<StateMilestone> milestones = sourceMilestones.map((raw) {
       final int targetDay = raw['day'] as int;
       final bool isUnlocked = ageInDays >= targetDay;
       final int remaining = (targetDay - ageInDays).clamp(0, 9999);

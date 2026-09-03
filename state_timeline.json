@@ -1,0 +1,254 @@
+[
+  {
+    "day": 0,
+    "title": "Generation 1 Heroes",
+    "category": "Hero",
+    "icon": "👑",
+    "description": "Natalia, Jeronimo, Molly, Zinman. Early game core. Focus on Sergey (Tank) and Jessie (Rally Joiner +25% Dmg)."
+  },
+  {
+    "day": 14,
+    "title": "Tundra Territory Opens",
+    "category": "Map / Alliance",
+    "icon": "🗺️",
+    "description": "Alliance builds Level 4 banners towards the center of the map; high-yield resource nodes become gatherable."
+  },
+  {
+    "day": 34,
+    "title": "Arena Pool Expansion",
+    "category": "Arena",
+    "icon": "⚔️",
+    "description": "Arena opponent matchmaking expands across neighboring server brackets."
+  },
+  {
+    "day": 40,
+    "title": "Generation 2 Heroes (Flint / Alonso / Philly)",
+    "category": "Hero",
+    "icon": "🔥",
+    "description": "Flint (Lucky Wheel #1 Tank), Alonso (HoH / King of Icefield carry), Philly (Support healer)."
+  },
+  {
+    "day": 45,
+    "title": "Chief Gear & Charms T1",
+    "category": "Chief Gear",
+    "icon": "🛡️",
+    "description": "Polish Chief Gear to T1 and socket initial elemental charms for squad Attack/Defense boosts."
+  },
+  {
+    "day": 53,
+    "title": "First Sunfire Castle Battle",
+    "category": "Event",
+    "icon": "🏰",
+    "description": "First battle for the central Sunfire Castle and Supreme Presidency title."
+  },
+  {
+    "day": 54,
+    "title": "Pet Generation 1 & Beast Cage",
+    "category": "Pets",
+    "icon": "🐾",
+    "description": "Requires Furnace Lv 18. Construct Beast Cage to tame Cave Hyena, Arctic Wolf, and Musk Ox."
+  },
+  {
+    "day": 60,
+    "title": "Fire Crystal Age (FC 1–3)",
+    "category": "Fire Crystal",
+    "icon": "💎",
+    "description": "Requires Furnace Lv 30 & Monument task. Upgrade structures and troops to Fire Crystal 1, 2, and 3."
+  },
+  {
+    "day": 80,
+    "title": "State vs State (SvS) & King of Icefield",
+    "category": "Cross-Server",
+    "icon": "⚔️",
+    "description": "First cross-state war! 6-day preparation phase (Castle prep) followed by Battle Phase."
+  },
+  {
+    "day": 90,
+    "title": "Pet Generation 2 (Titan Roc & Giant Tapir)",
+    "category": "Pets",
+    "icon": "🦅",
+    "description": "Unlocks Titan Roc (March Speed) and Giant Tapir (Rally Defense)."
+  },
+  {
+    "day": 100,
+    "title": "State Transfer Event (Phase 1)",
+    "category": "Event",
+    "icon": "🚀",
+    "description": "Eligible players can purchase Transfer Passes and relocate to neighboring states in the same bracket."
+  },
+  {
+    "day": 120,
+    "title": "Generation 3 Heroes (Mia / Logan / Greg)",
+    "category": "Hero",
+    "icon": "🎯",
+    "description": "Mia (Lucky Wheel #1 Bear Trap burst carry), Logan (Arena/Garrison tank), Greg (Lancer flanker)."
+  },
+  {
+    "day": 140,
+    "title": "Pet Generation 3 (Snow Leopard & Giant Elk)",
+    "category": "Pets",
+    "icon": "🐆",
+    "description": "Unlocks Snow Leopard (Backline Lethality) and Giant Elk (Resource Gathering)."
+  },
+  {
+    "day": 150,
+    "title": "Fire Crystal 4–5 & Crystal Lab",
+    "category": "Fire Crystal",
+    "icon": "🔮",
+    "description": "Refine Fire Crystals into Refined Crystals to upgrade structures to FC 4 and FC 5."
+  },
+  {
+    "day": 180,
+    "title": "Generation 4 Heroes (Lynn / Ahmose / Reina)",
+    "category": "Hero",
+    "icon": "🏹",
+    "description": "Lynn (Lucky Wheel armor-piercing Marksman), Ahmose (Invincible shield tank), Reina (Lancer burst)."
+  },
+  {
+    "day": 200,
+    "title": "Pet Generation 4 (Cave Lion & Snow Ape)",
+    "category": "Pets",
+    "icon": "🦁",
+    "description": "Unlocks Cave Lion (Squad stun) and Snow Ape (Frontline damage mitigation)."
+  },
+  {
+    "day": 220,
+    "title": "Dawn / War Academy & T11 Troops",
+    "category": "Academy",
+    "icon": "🏛️",
+    "description": "Unlocks War Academy research. Train elite Tier 11 Infantry, Lancers, and Marksmen."
+  },
+  {
+    "day": 250,
+    "title": "Generation 5 Heroes (Hector / Norah / Gwen)",
+    "category": "Hero",
+    "icon": "🛡️",
+    "description": "Hector (Lucky Wheel #1 Fortress tank), Norah (Lancer flanker), Gwen (Marksman sniper)."
+  },
+  {
+    "day": 280,
+    "title": "Pet Generation 5 (Iron Rhino & Saber-tooth)",
+    "category": "Pets",
+    "icon": "🦏",
+    "description": "Unlocks Iron Rhino (Defense surge) and Saber-tooth (Critical strike power)."
+  },
+  {
+    "day": 300,
+    "title": "Fire Crystal 6–8 Age",
+    "category": "Fire Crystal",
+    "icon": "💎",
+    "description": "Upgrades structures and units to FC 6, FC 7, and FC 8. Massive health scaling."
+  },
+  {
+    "day": 320,
+    "title": "Generation 6 Heroes (Renee / Wayne / Wu Ming)",
+    "category": "Hero",
+    "icon": "⚔️",
+    "description": "Renee (Lucky Wheel marksman carry), Wayne (Garrison defender), Wu Ming (Lancer debuff)."
+  },
+  {
+    "day": 360,
+    "title": "Pet Generation 6 (Titan Beaver & Gorgon Viper)",
+    "category": "Pets",
+    "icon": "🐍",
+    "description": "Unlocks Titan Beaver (Rapid healing) and Gorgon Viper (Toxic rally debuffs)."
+  },
+  {
+    "day": 400,
+    "title": "Generation 7 Heroes (Bradley / Edith / Gordon)",
+    "category": "Hero",
+    "icon": "🎯",
+    "description": "Bradley (Lucky Wheel fortress stun lead), Edith (Backline assassin), Gordon (Lancer)."
+  },
+  {
+    "day": 450,
+    "title": "Chief Gear T4 & Legendary Charms",
+    "category": "Chief Gear",
+    "icon": "👑",
+    "description": "Apex Chief Gear tier granting massive squad Lethality and Damage Reduction."
+  },
+  {
+    "day": 480,
+    "title": "Generation 8 Heroes & Pet Gen 7",
+    "category": "Heroes / Pets",
+    "icon": "🛡️",
+    "description": "Hendrik (Lucky Wheel), Gatot, Sonya + Frostscale Chameleon (Camouflage evasion shield)."
+  },
+  {
+    "day": 500,
+    "title": "Fire Crystal 9–10 Age",
+    "category": "Fire Crystal",
+    "icon": "🔮",
+    "description": "Refined Crystal economy expansion; structure and unit mastery for FC 9 and FC 10."
+  },
+  {
+    "day": 550,
+    "title": "Generation 9 Heroes (Magnus / Fred / Xura)",
+    "category": "Hero",
+    "icon": "⚔️",
+    "description": "Magnus (Lucky Wheel), Fred (Lancer), Xura (Marksman)."
+  },
+  {
+    "day": 620,
+    "title": "Generation 10 Heroes (Blanchette / Gregory / Freya)",
+    "category": "Hero",
+    "icon": "🏹",
+    "description": "Blanchette (Lucky Wheel PvE sniper), Gregory (Infantry tank), Freya (Lancer)."
+  },
+  {
+    "day": 690,
+    "title": "Generation 11 Heroes (Eleonora / Lloyd / Rufus)",
+    "category": "Hero",
+    "icon": "🛡️",
+    "description": "Eleonora (Lucky Wheel), Rufus (Armor shred), Lloyd (Lancer)."
+  },
+  {
+    "day": 750,
+    "title": "Fire Crystal 11–12 & T12 Troops",
+    "category": "Fire Crystal",
+    "icon": "⚡",
+    "description": "Apex Tier 12 troops and Maximum Fire Crystal mastery."
+  },
+  {
+    "day": 760,
+    "title": "Generation 12 Heroes (Ligeia / Hervor / Karol)",
+    "category": "Hero",
+    "icon": "🎯",
+    "description": "Ligeia (Lucky Wheel Bear Trap carry), Hervor (Rally anchor), Karol (Lancer)."
+  },
+  {
+    "day": 830,
+    "title": "Generation 13 Heroes (Gisela / Flora / Vulcanus)",
+    "category": "Hero",
+    "icon": "🛡️",
+    "description": "Gisela (Lucky Wheel tank), Vulcanus (Explosive burst), Flora (Lancer)."
+  },
+  {
+    "day": 900,
+    "title": "Generation 14 Heroes (Cara / Elif / Dominic)",
+    "category": "Hero",
+    "icon": "🏹",
+    "description": "Cara (Lucky Wheel marksman), Elif (Defense wall), Dominic (Lancer)."
+  },
+  {
+    "day": 960,
+    "title": "Generation 15 Heroes (Hank / Estrella / Viveca)",
+    "category": "Hero",
+    "icon": "👑",
+    "description": "Hank (Lucky Wheel tank), Viveca (Marksman), Estrella (Lancer)."
+  },
+  {
+    "day": 1160,
+    "title": "Generation 16 Heroes (Seigel / Ursar / Aisling)",
+    "category": "Hero",
+    "icon": "🛡️",
+    "description": "Seigel (Lucky Wheel reflect tank), Aisling (Siege sniper), Ursar (HoH Lancer)."
+  },
+  {
+    "day": 1240,
+    "title": "Generation 17 Heroes (Aiden / Bertha / Eleanor)",
+    "category": "Hero",
+    "icon": "⚡",
+    "description": "Aiden (Lucky Wheel Rage battery), Eleanor (Hall of Heroes 45% Armor Shred), Bertha (Support Healer)."
+  }
+]

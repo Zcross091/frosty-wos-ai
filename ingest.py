@@ -497,6 +497,79 @@ def auto_sync_heroes_data_json(heroes_md_path: str = "./wos data/Heroes.md", out
             return sorted_gens
     except Exception as e:
         logger.warning(f"Error auto-syncing heroes_data.json: {e}")
+def auto_sync_state_timeline_json(timeline_md_path: str = "./wos data/State_Timeline.md", output_path: str = "state_timeline.json") -> List[Dict]:
+    """
+    Parses State_Timeline.md and generates state_timeline.json automatically.
+    Guarantees the mobile app and Discord bot telemetry always reflect the latest
+    indexed timeline milestones without manual code edits.
+    """
+    if not os.path.exists(timeline_md_path):
+        logger.warning(f"Timeline markdown not found at {timeline_md_path}")
+        return []
+
+    try:
+        with open(timeline_md_path, "r", encoding="utf-8", errors="replace") as f:
+            lines = f.readlines()
+
+        milestones = []
+        for line in lines:
+            if not line.strip().startswith("|") or "Milestone / Feature Unlock" in line or "|:---" in line:
+                continue
+
+            parts = [p.strip() for p in line.strip().split("|")[1:-1]]
+            if len(parts) >= 4:
+                day_str, title_str, cat_str, desc_str = parts[0], parts[1], parts[2], parts[3]
+                
+                # Extract integer day
+                day_match = re.search(r'\d+', day_str)
+                if not day_match:
+                    continue
+                day_val = int(day_match.group(0))
+
+                # Clean markdown formatting
+                clean_title = re.sub(r'[*_`]', '', title_str).strip()
+                clean_cat = re.sub(r'[*_`]', '', cat_str).strip()
+                clean_desc = re.sub(r'[*_`]', '', desc_str).strip()
+
+                # Icon selector
+                icon = "📜"
+                lower_title = clean_title.lower()
+                lower_cat = clean_cat.lower()
+                if "hero" in lower_cat or "hero" in lower_title:
+                    icon = "👑" if "gen 1" in lower_title or "gen 15" in lower_title else ("🔥" if "gen 2" in lower_title else "🏹")
+                elif "fire crystal" in lower_cat or "fire crystal" in lower_title:
+                    icon = "💎" if "11" in lower_title or "12" in lower_title else "🔮"
+                elif "pet" in lower_cat or "pet" in lower_title:
+                    icon = "🐾"
+                elif "gear" in lower_cat or "charm" in lower_title:
+                    icon = "🛡️"
+                elif "academy" in lower_cat or "troop" in lower_title:
+                    icon = "🏛️"
+                elif "sunfire" in lower_title or "castle" in lower_title:
+                    icon = "🏰"
+                elif "svs" in lower_title or "war" in lower_title:
+                    icon = "⚔️"
+                elif "transfer" in lower_title:
+                    icon = "🚀"
+
+                milestones.append({
+                    "day": day_val,
+                    "title": clean_title,
+                    "category": clean_cat,
+                    "icon": icon,
+                    "description": clean_desc
+                })
+
+        # Sort ascending by day
+        milestones.sort(key=lambda m: m["day"])
+
+        if milestones:
+            with open(output_path, "w", encoding="utf-8") as out:
+                json.dump(milestones, out, indent=2)
+            logger.info(f"💾 Automatically synced {len(milestones)} state timeline milestones into {output_path}!")
+            return milestones
+    except Exception as e:
+        logger.warning(f"Error auto-syncing state_timeline.json: {e}")
     return []
 
 
@@ -514,8 +587,9 @@ def run_full_reindex(local_only: bool = False, clean: bool = False) -> int:
     collection = client.get_or_create_collection(name=COLLECTION_NAME)
     logger.info(f"🚀 Starting ingestion into ChromaDB (Path: {DB_PATH})...")
 
-    # Step 1: Auto-generate fresh heroes_data.json for mobile app and web codex
+    # Step 1: Auto-generate fresh heroes_data.json and state_timeline.json for mobile app and web codex
     auto_sync_heroes_data_json()
+    auto_sync_state_timeline_json()
 
     # Step 2: Ingest local structured guides
     local_count = ingest_local_markdown_folder("./wos data", collection=collection)

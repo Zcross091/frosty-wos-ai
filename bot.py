@@ -345,69 +345,111 @@ async def slash_reindex(interaction: discord.Interaction, local_only: bool = Tru
         await interaction.followup.send(embed=embed)
 
 
+def estimate_state_launch_date(state_number: int) -> datetime:
+    """Estimates the historical launch date of a Whiteout Survival State."""
+    base_date = datetime(2023, 2, 14)
+    if state_number <= 1:
+        offset_days = 0.0
+    elif state_number <= 100:
+        offset_days = state_number * 1.0
+    elif state_number <= 500:
+        offset_days = 100.0 + (state_number - 100) * 0.625
+    elif state_number <= 1000:
+        offset_days = 350.0 + (state_number - 500) * 0.70
+    elif state_number <= 1500:
+        offset_days = 700.0 + (state_number - 1000) * 0.50
+    elif state_number <= 2000:
+        offset_days = 950.0 + (state_number - 1500) * 0.40
+    else:
+        offset_days = 1150.0 + (state_number - 2000) * 0.35
+
+    return base_date + timedelta(days=int(round(offset_days)))
+
+
 def calculate_state_telemetry(input_val: int, is_state_number: bool = True) -> Dict:
     """Calculates State Age, Generation, Active Heroes, Unlocked Features, and Next Milestone."""
     if is_state_number:
-        if input_val <= 100:
-            age = int(round(1350 - (input_val * 2.5)))
-        elif input_val <= 500:
-            age = int(round(1100 - ((input_val - 100) * 1.5)))
-        elif input_val <= 1000:
-            age = int(round(500 - ((input_val - 500) * 0.7)))
-        else:
-            age = int(round(150 - ((input_val - 1000) * 0.4)))
-        age = max(1, min(1600, age))
+        launch_date = estimate_state_launch_date(input_val)
+        age = (datetime.now() - launch_date).days
+        age = max(1, min(3000, age))
     else:
-        age = max(1, min(2500, input_val))
+        age = max(1, min(3000, input_val))
 
-    # Milestones definition
-    milestones = [
-        (0, "Gen 1 Heroes (Jeronimo, Natalia, Molly)", "Hero"),
-        (14, "Tundra Territory Opens", "Event"),
-        (40, "Gen 2 Heroes (Flint, Alonso, Philly)", "Hero"),
-        (45, "Chief Gear & Charms T1", "Gear"),
-        (53, "Sunfire Castle Battle", "Event"),
-        (54, "Pet Gen 1 & Beast Cage (Hyena, Wolf, Ox)", "Pet"),
-        (60, "Fire Crystal 1–3 Age (FC Troops)", "Fire Crystal"),
-        (80, "State vs State (SvS) & King of Icefield", "Event"),
-        (90, "Pet Gen 2 (Titan Roc, Giant Tapir)", "Pet"),
-        (100, "State Transfer Phase 1", "Event"),
-        (120, "Gen 3 Heroes (Mia, Logan, Greg)", "Hero"),
-        (140, "Pet Gen 3 (Snow Leopard, Giant Elk)", "Pet"),
-        (150, "Fire Crystal 4–5 & Crystal Lab", "Fire Crystal"),
-        (180, "Gen 4 Heroes (Lynn, Ahmose, Reina)", "Hero"),
-        (200, "Pet Gen 4 (Cave Lion, Snow Ape)", "Pet"),
-        (220, "War Academy & T11 Troops", "Academy"),
-        (250, "Gen 5 Heroes (Hector, Norah, Gwen)", "Hero"),
-        (280, "Pet Gen 5 (Iron Rhino, Saber-tooth)", "Pet"),
-        (300, "Fire Crystal 6–8 Age", "Fire Crystal"),
-        (320, "Gen 6 Heroes (Renee, Wayne, Wu Ming)", "Hero"),
-        (360, "Pet Gen 6 (Titan Beaver, Gorgon Viper)", "Pet"),
-        (400, "Gen 7 Heroes (Bradley, Edith, Gordon)", "Hero"),
-        (450, "Chief Gear T4 & Legendary Charms", "Gear"),
-        (480, "Gen 8 Heroes (Hendrik, Gatot, Sonya) & Pet Gen 7", "Hero"),
-        (500, "Fire Crystal 9–10 Age", "Fire Crystal"),
-        (550, "Gen 9 Heroes (Magnus, Fred, Xura)", "Hero"),
-        (620, "Gen 10 Heroes (Blanchette, Gregory, Freya)", "Hero"),
-        (690, "Gen 11 Heroes (Eleonora, Lloyd, Rufus)", "Hero"),
-        (750, "Fire Crystal 11–12 & T12 Troops", "Fire Crystal"),
-        (760, "Gen 12 Heroes (Ligeia, Hervor, Karol)", "Hero"),
-        (830, "Gen 13 Heroes (Gisela, Flora, Vulcanus)", "Hero"),
-        (900, "Gen 14 Heroes (Cara, Elif, Dominic)", "Hero"),
-        (960, "Gen 15 Heroes (Hank, Estrella, Viveca)", "Hero"),
-        (1160, "Gen 16 Heroes (Seigel, Ursar, Aisling)", "Hero"),
-        (1240, "Gen 17 Heroes (Aiden, Bertha, Eleanor)", "Hero"),
-    ]
+    # Dynamically load from state_timeline.json if present
+    milestones = []
+    if os.path.exists("state_timeline.json"):
+        try:
+            with open("state_timeline.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+                for item in data:
+                    milestones.append((item.get("day", 0), item.get("title", ""), item.get("category", "Event")))
+        except Exception:
+            pass
+
+    if not milestones:
+        # Fallback milestones
+        milestones = [
+            (0, "Gen 1 Heroes (Jeronimo, Natalia, Molly)", "Hero"),
+            (14, "Tundra Territory Opens", "Event"),
+            (40, "Gen 2 Heroes (Flint, Alonso, Philly)", "Hero"),
+            (45, "Chief Gear & Charms T1", "Gear"),
+            (53, "Sunfire Castle Battle", "Event"),
+            (54, "Pet Gen 1 & Beast Cage (Hyena, Wolf, Ox)", "Pet"),
+            (60, "Fire Crystal 1–3 Age (FC Troops)", "Fire Crystal"),
+            (80, "State vs State (SvS) & King of Icefield", "Event"),
+            (90, "Pet Gen 2 (Titan Roc, Giant Tapir)", "Pet"),
+            (100, "State Transfer Phase 1", "Event"),
+            (120, "Gen 3 Heroes (Mia, Logan, Greg)", "Hero"),
+            (140, "Pet Gen 3 (Snow Leopard, Giant Elk)", "Pet"),
+            (150, "Fire Crystal 4–5 & Crystal Lab", "Fire Crystal"),
+            (180, "Gen 4 Heroes (Lynn, Ahmose, Reina)", "Hero"),
+            (200, "Pet Gen 4 (Cave Lion, Snow Ape)", "Pet"),
+            (220, "War Academy & T11 Troops", "Academy"),
+            (250, "Gen 5 Heroes (Hector, Norah, Gwen)", "Hero"),
+            (280, "Pet Gen 5 (Iron Rhino, Saber-tooth)", "Pet"),
+            (300, "Fire Crystal 6–8 Age", "Fire Crystal"),
+            (320, "Gen 6 Heroes (Renee, Wayne, Wu Ming)", "Hero"),
+            (360, "Pet Gen 6 (Titan Beaver, Gorgon Viper)", "Pet"),
+            (400, "Gen 7 Heroes (Bradley, Edith, Gordon)", "Hero"),
+            (450, "Chief Gear T4 & Legendary Charms", "Gear"),
+            (480, "Gen 8 Heroes (Hendrik, Gatot, Sonya) & Pet Gen 7", "Hero"),
+            (500, "Fire Crystal 9–10 Age", "Fire Crystal"),
+            (550, "Gen 9 Heroes (Magnus, Fred, Xura)", "Hero"),
+            (620, "Gen 10 Heroes (Blanchette, Gregory, Freya)", "Hero"),
+            (690, "Gen 11 Heroes (Eleonora, Lloyd, Rufus)", "Hero"),
+            (750, "Fire Crystal 11–12 & T12 Troops", "Fire Crystal"),
+            (760, "Gen 12 Heroes (Ligeia, Hervor, Karol)", "Hero"),
+            (830, "Gen 13 Heroes (Gisela, Flora, Vulcanus)", "Hero"),
+            (900, "Gen 14 Heroes (Cara, Elif, Dominic)", "Hero"),
+            (960, "Gen 15 Heroes (Hank, Estrella, Viveca)", "Hero"),
+            (1160, "Gen 16 Heroes (Seigel, Ursar, Aisling)", "Hero"),
+            (1240, "Gen 17 Heroes (Aiden, Bertha, Eleanor)", "Hero"),
+        ]
 
     unlocked = [m for m in milestones if age >= m[0]]
     upcoming = [m for m in milestones if age < m[0]]
     next_m = upcoming[0] if upcoming else None
 
-    # Gen calculation
-    gen_unlocks = {
-        1: 0, 2: 40, 3: 120, 4: 180, 5: 250, 6: 320, 7: 400, 8: 480,
-        9: 550, 10: 620, 11: 690, 12: 760, 13: 830, 14: 900, 15: 960, 16: 1160, 17: 1240
-    }
+    # Dynamic Gen calculation from heroes_data.json if present
+    gen_unlocks = {}
+    if os.path.exists("heroes_data.json"):
+        try:
+            with open("heroes_data.json", "r", encoding="utf-8") as f:
+                h_data = json.load(f)
+                for g_item in h_data:
+                    gen_num = g_item.get("gen", 0)
+                    day_val = g_item.get("unlock_day", 0)
+                    if gen_num > 0:
+                        gen_unlocks[gen_num] = day_val
+        except Exception:
+            pass
+
+    if not gen_unlocks:
+        gen_unlocks = {
+            1: 0, 2: 40, 3: 120, 4: 180, 5: 250, 6: 320, 7: 400, 8: 480,
+            9: 550, 10: 620, 11: 690, 12: 760, 13: 830, 14: 900, 15: 960, 16: 1160, 17: 1240
+        }
+
     cur_gen = 1
     for g in sorted(gen_unlocks.keys(), reverse=True):
         if age >= gen_unlocks[g]:
