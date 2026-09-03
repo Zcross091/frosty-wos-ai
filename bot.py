@@ -367,14 +367,6 @@ async def slash_expert(interaction: discord.Interaction, expert_name: str):
     await interaction.followup.send(embed=embed, view=view)
 
 
-@bot.tree.command(name="bear", description="Quick master reference for Bear Trap rally setups, joiner buffs, and ratios.")
-async def slash_bear(interaction: discord.Interaction):
-    await interaction.response.defer(thinking=True)
-    query = "Give a concise master guide for Bear Trap: 1. Troop ratio (10/10/80), 2. Rally leader heroes, 3. Critical Rally Joiner heroes (Jessie/Seo-yoon damage buffs), and 4. March optimization tips."
-    embed, view = await generate_frosty_response(interaction.channel_id, interaction.user, query)
-    await interaction.followup.send(embed=embed, view=view)
-
-
 @bot.tree.command(name="status", description="Display live Discord servers, total users reached, active AI model, and RAM.")
 async def slash_status(interaction: discord.Interaction):
     process = psutil.Process(os.getpid())
@@ -395,37 +387,6 @@ async def slash_status(interaction: discord.Interaction):
     embed.add_field(name="📡 Gateway Ping", value=f"`{bot.latency * 1000:.1f} ms`", inline=True)
     embed.set_footer(text="Mobile & Web API: Check http://<server-ip>:8000/api/stats for active app users")
     await interaction.response.send_message(embed=embed)
-
-
-@bot.tree.command(name="reindex", description="[Admin Only] Re-ingest local markdown guides and update the vector database.")
-@app_commands.describe(local_only="If True, only index local 'wos data' files without web scraping (faster)")
-async def slash_reindex(interaction: discord.Interaction, local_only: bool = True):
-    is_admin = interaction.user.id in ADMIN_USER_IDS or (interaction.user.guild_permissions.administrator if interaction.guild else False)
-    if not is_admin:
-        await interaction.response.send_message("❌ You need administrator privileges to trigger database re-indexing.", ephemeral=True)
-        return
-
-    await interaction.response.defer(thinking=True)
-    start_time = time.time()
-
-    loop = asyncio.get_running_loop()
-    try:
-        new_count = await loop.run_in_executor(None, run_full_reindex, local_only)
-        knowledge_base.reload_dynamic_entities()
-        elapsed = time.time() - start_time
-        embed = discord.Embed(
-            title="✨ Knowledge Base & Hero Data Auto-Synced",
-            description=f"Frosty's brain and hero codex have been refreshed with the latest data!\n\n• **Total Chunks in DB:** `{new_count}`\n• **Active Generations:** `Gen 0 through Gen {knowledge_base.max_generation}+`\n• **Heroes Synced:** `{len(knowledge_base.known_heroes)} heroes`\n• **Elapsed Time:** `{elapsed:.2f}s`",
-            color=SUCCESS_COLOR
-        )
-        await interaction.followup.send(embed=embed)
-    except Exception as e:
-        embed = discord.Embed(
-            title="❌ Re-indexing Failed",
-            description=f"An error occurred during re-indexing: `{str(e)}`",
-            color=ERROR_COLOR
-        )
-        await interaction.followup.send(embed=embed)
 
 
 def estimate_state_launch_date(state_number: int) -> datetime:
