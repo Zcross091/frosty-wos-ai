@@ -66,6 +66,13 @@ Frosty fully supports both modern **Slash Commands (`/`)** with instant autocomp
 | Slash Command | Prefix Command | Description |
 | :--- | :--- | :--- |
 | `/wos [question]` | `!wos [question]` | Ask any complex Whiteout Survival question, hero comparison, meta lineup, or battle strategy. |
+| `/state [number/days]` | `!state [number/days]` | Real-time Server Age calculator, active Generation, recently unlocked features & milestone countdowns. |
+| `/fc [building] [from] [to]` | `!fc [building] [from] [to]` | Fire Crystal (FC 1 - FC 12+ & Refined FC) material, build time, and SvS Construction points calculator. |
+| `/charms [from] [to]` | `!charms [from] [to]` | Chief Charms (Lv 1 - 12) Guides & Designs cost, combat surge %, and SvS Charm points. |
+| `/svs [activity] [amount]` | `!svs [activity] [amount]` | SvS Prep Phase Points optimizer with optimal day recommendations (Day 1 to 5). |
+| `/timer [set/list/delete]` | `!timer [set/list/delete]` | Manage up to 5 UTC alliance countdowns (Foundry, Canyon Clash, SvS, Bear Trap, Fortress) with automated `@here` alerts. |
+| `/transfer [power]` | `!transfer [power]` | State Transfer Pass calculator based on Chief Power (1 to 80+ passes) & eligibility rules. |
+| `/codes` | `!codes` | Active Whiteout Survival gift codes with direct 1-tap Century Games redemption portal link. |
 | `/hero [name]` | `!hero [name]` | Complete hero dossier (Generation, Troop Type, Skills, Exclusive Gear, F2P vs P2W verdict). |
 | `/lineup [mode] [gen]` | `!lineup [mode]` | Recommended 3-hero lineups and troop ratios for PvP, Bear Trap, Castle Defense, and Foundry. |
 | `/bear` | `!bear` | Master Bear Trap cheat sheet: `10/10/80` troop ratio, rally joiner Jessie/Seo-yoon buffs, and leader setups. |
@@ -95,10 +102,10 @@ Frosty fully supports both modern **Slash Commands (`/`)** with instant autocomp
          ┌─────────────────────────┐                     ┌─────────────────────────┐
          │ ChromaDB Hybrid RAG     │                     │ Multi-Provider AI Engine│
          ├─────────────────────────┤                     ├─────────────────────────┤
-         │ • Heroes.md (Gen 0-16)  │ === Context Boost ==>│ 1. Google Gemini 3.6    │
+         │ • Heroes.md (Gen 0-17+) │ === Context Boost ==>│ 1. Google Gemini 3.6    │
          │ • Events.md (Crazy Joe) │                     │ 2. Groq LLMs            │
-         │ • Experts.md (Dawn Acad)│                     │ 3. Local Ollama         │
-         │ • Filtered English Wiki │                     │ 4. Zero-Key Synthesizer │
+         │ • State_Timeline.md     │                     │ 3. Local Ollama         │
+         │ • Utility_Calculators.md│                     │ 4. Zero-Key Synthesizer │
          └─────────────────────────┘                     └────────────┬────────────┘
                                                                       │
                                                                       ▼
@@ -159,7 +166,7 @@ ADMIN_USER_IDS=
 ### 4. Ingest Tactical Knowledge Base
 Index the local strategy guides into ChromaDB:
 ```bash
-# Ingest clean local markdown guides (Heroes Gen 0-16, Events, Experts)
+# Ingest clean local markdown guides (Heroes Gen 0-17, State Timeline, Utilities)
 python ingest.py --local-only --clean
 ```
 
@@ -206,7 +213,26 @@ Frosty contains verified statistical dossiers, exploration skills, expedition bu
 | **Gen 7** | ~Day 400 | Bradley, Edith, Gordon | Top PvP Frontline & Piercing Marksman |
 | **Gen 8 – 11** | Mid-Late Game | Sonya, Reina, Magnus, Blanche, Xylona, Rufus | Lethality Shred & Multi-Target Debuffs |
 | **Gen 12 – 15** | Late Game | Anson, Eleanor, Lloyd, Freyja, Kai, Alistair | High Scale Defense & Speed Metas |
-| **Gen 16+** | 1160+ Days | **Seigel** (Infantry), **Ursar** (Lancer), **Aisling** (Marksman) | Reflect Shield, Toxic Support & Endgame Burst |
+| **Gen 16** | ~1160 Days | **Seigel** (Infantry), **Ursar** (Lancer), **Aisling** (Marksman) | Reflect Shield, Toxic Support & Endgame Burst |
+| **Gen 17+** | 1240+ Days | **Aiden** (Infantry), **Eleanor** (Marksman), **Rufus** (Lancer) | Ultimate Piercing Lethality & Solar Aegis |
+
+---
+
+## 👥 Contributors
+
+Thank you to everyone who has contributed code, bug reports, tactical data, and feature ideas to the Frosty WOS AI project!
+
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+<p align="center">
+  <a href="https://github.com/Zcross091/frosty-wos-ai/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=Zcross091/frosty-wos-ai" alt="Frosty Contributors" />
+  </a>
+</p>
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
+
+<p align="center">
+  <sub>Made with ❤️ by <a href="https://github.com/Zcross091"><b>Zcross091</b></a> and the Whiteout Survival tactical community.</sub>
+</p>
 
 ---
 
@@ -215,6 +241,7 @@ Frosty contains verified statistical dossiers, exploration skills, expedition bu
 Contributions, issues, and tactical strategy submissions are warmly welcome!
 - **Submit an Issue:** Report bugs or suggest new game features via [GitHub Issues](https://github.com/Zcross091/frosty-wos-ai/issues).
 - **Pull Requests:** Feel free to submit PRs for new hero guides, event data, or performance optimizations.
+- **View Full Contributor Network:** Explore all [contributors on GitHub](https://github.com/Zcross091/frosty-wos-ai/graphs/contributors).
 
 ---
 
