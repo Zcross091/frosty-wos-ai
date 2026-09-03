@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../services/knowledge_service.dart';
 
 class UtilitiesScreen extends StatefulWidget {
   const UtilitiesScreen({super.key});
@@ -35,8 +36,80 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
     super.dispose();
   }
 
-  // --- Data Tables ---
-  static const Map<int, List<num>> _fcTable = {
+  // --- Dynamic Data Resolvers ---
+  List<Map<String, String>> _resolveGiftCodes() {
+    final dynamicData = KnowledgeService.dynamicUtilityData;
+    if (dynamicData != null && dynamicData['gift_codes'] is List) {
+      return (dynamicData['gift_codes'] as List).map<Map<String, String>>((item) {
+        return {
+          'code': item['code']?.toString() ?? '',
+          'rewards': item['rewards']?.toString() ?? '',
+        };
+      }).toList();
+    }
+    return _defaultGiftCodes;
+  }
+
+  Map<int, List<num>> _resolveFcTable() {
+    final dynamicData = KnowledgeService.dynamicUtilityData;
+    if (dynamicData != null && dynamicData['fc_table'] is Map) {
+      final Map<String, dynamic> raw = dynamicData['fc_table'];
+      final Map<int, List<num>> res = {};
+      raw.forEach((k, v) {
+        final int? lvl = int.tryParse(k);
+        if (lvl != null && v is Map) {
+          res[lvl] = [
+            v['furnace_fc'] ?? 0,
+            v['furnace_rfc'] ?? 0,
+            v['camp_fc'] ?? 0,
+            v['camp_rfc'] ?? 0,
+            v['days'] ?? 0,
+          ];
+        }
+      });
+      if (res.isNotEmpty) return res;
+    }
+    return _defaultFcTable;
+  }
+
+  Map<int, List<num>> _resolveCharmTable() {
+    final dynamicData = KnowledgeService.dynamicUtilityData;
+    if (dynamicData != null && dynamicData['charm_table'] is Map) {
+      final Map<String, dynamic> raw = dynamicData['charm_table'];
+      final Map<int, List<num>> res = {};
+      raw.forEach((k, v) {
+        final int? lvl = int.tryParse(k);
+        if (lvl != null && v is Map) {
+          res[lvl] = [
+            v['guides'] ?? 0,
+            v['designs'] ?? 0,
+            v['boost'] ?? 0.0,
+            v['svs_pts'] ?? 0,
+          ];
+        }
+      });
+      if (res.isNotEmpty) return res;
+    }
+    return _defaultCharmTable;
+  }
+
+  Map<String, Map<String, dynamic>> _resolveSvsRates() {
+    final dynamicData = KnowledgeService.dynamicUtilityData;
+    if (dynamicData != null && dynamicData['svs_rates'] is Map) {
+      final Map<String, dynamic> raw = dynamicData['svs_rates'];
+      final Map<String, Map<String, dynamic>> res = {};
+      raw.forEach((k, v) {
+        if (v is Map) {
+          res[k] = Map<String, dynamic>.from(v);
+        }
+      });
+      if (res.isNotEmpty) return res;
+    }
+    return _defaultSvsRates;
+  }
+
+  // --- Default Fallback Tables ---
+  static const Map<int, List<num>> _defaultFcTable = {
     1: [600, 0, 350, 0, 8],
     2: [1200, 0, 700, 0, 12],
     3: [2000, 0, 1150, 0, 16],
@@ -47,9 +120,11 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
     8: [5000, 550, 2800, 300, 65],
     9: [7000, 850, 3900, 480, 80],
     10: [10000, 1300, 5500, 720, 100],
+    11: [14000, 1900, 7800, 1050, 120],
+    12: [19500, 2700, 11000, 1500, 145],
   };
 
-  static const Map<int, List<num>> _charmTable = {
+  static const Map<int, List<num>> _defaultCharmTable = {
     1: [10, 0, 2.5, 7000],
     2: [25, 5, 5.5, 17500],
     3: [50, 15, 9.0, 35000],
@@ -61,22 +136,26 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
     9: [720, 340, 64.5, 504000],
     10: [980, 490, 82.0, 686000],
     11: [1300, 680, 105.0, 910000],
+    12: [1750, 920, 132.0, 1225000],
   };
 
-  static const Map<String, Map<String, dynamic>> _svsRates = {
+  static const Map<String, Map<String, dynamic>> _defaultSvsRates = {
     'fc': {'name': 'Fire Crystals', 'rate': 2000, 'unit': 'FC', 'day': 'Day 1 & Day 5'},
     'rfc': {'name': 'Refined Fire Crystals', 'rate': 30000, 'unit': 'RFC', 'day': 'Day 1 & Day 5'},
     'speedup_hr': {'name': 'Speedups (Hours)', 'rate': 1800, 'unit': 'Hours', 'day': 'Day 1, 2 & 5'},
+    'speedup_min': {'name': 'Speedups (Minutes)', 'rate': 30, 'unit': 'Minutes', 'day': 'Day 1, 2 & 5'},
     'fc_shard': {'name': 'FC Shards (Helios)', 'rate': 1000, 'unit': 'Shards', 'day': 'Day 2 & Day 5'},
     'lucky_wheel': {'name': 'Lucky Wheel Spins', 'rate': 4000, 'unit': 'Spins', 'day': 'Day 2'},
     'hero_shard': {'name': 'Mythic Hero Shards', 'rate': 6000, 'unit': 'Shards', 'day': 'Day 2'},
+    'expert_sigil': {'name': 'Dawn Expert Sigils', 'rate': 6000, 'unit': 'Sigils', 'day': 'Day 2'},
     'polar_terror': {'name': 'Polar Terror Rallies', 'rate': 30000, 'unit': 'Rallies', 'day': 'Day 3'},
     'mithril': {'name': 'Mithril (Exclusive Gear)', 'rate': 144000, 'unit': 'Mithril', 'day': 'Day 4 & 5'},
     't10_train': {'name': 'T10 Troops Trained', 'rate': 60, 'unit': 'Troops', 'day': 'Day 4'},
     't11_train': {'name': 'T11 Troops Trained', 'rate': 75, 'unit': 'Troops', 'day': 'Day 4'},
+    't12_train': {'name': 'T12 Troops Trained', 'rate': 90, 'unit': 'Troops', 'day': 'Day 4'},
   };
 
-  static const List<Map<String, String>> _giftCodes = [
+  static const List<Map<String, String>> _defaultGiftCodes = [
     {'code': 'WOS2026', 'rewards': '1000 Gems, 5x 1h Speedups, 10x Gold Keys, 500k Meat/Wood'},
     {'code': 'STATEOFPOWER', 'rewards': '500 Gems, 10x Advanced Wild Marks, 20x Charm Guides'},
     {'code': 'DC300K', 'rewards': '1500 Gems, 20x Mythic Shards, 10x 1h Speedups'},
@@ -196,13 +275,15 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
 
   // --- 1. Fire Crystal Calculator ---
   Widget _buildFCCalculator() {
+    final fcTable = _resolveFcTable();
+    final maxFcLevel = fcTable.keys.isNotEmpty ? fcTable.keys.reduce((a, b) => a > b ? a : b) : 10;
     final isFurnace = _fcBuildingType == 'furnace';
     int totalFC = 0;
     int totalRFC = 0;
     int totalDays = 0;
 
     for (int lvl = _fcFromLevel + 1; lvl <= _fcToLevel; lvl++) {
-      final row = _fcTable[lvl] ?? [0, 0, 0, 0, 0];
+      final row = fcTable[lvl] ?? [0, 0, 0, 0, 0];
       if (isFurnace) {
         totalFC += row[0].toInt();
         totalRFC += row[1].toInt();
@@ -250,7 +331,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
                     child: _buildDropdown(
                       label: 'Current FC Level',
                       value: _fcFromLevel,
-                      items: List.generate(10, (i) => i),
+                      items: List.generate(maxFcLevel, (i) => i),
                       itemLabel: (val) => val == 0 ? 'Lv 30 (FC 0)' : 'FC $val',
                       onChanged: (val) {
                         if (val != null && val < _fcToLevel) setState(() => _fcFromLevel = val);
@@ -262,7 +343,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
                     child: _buildDropdown(
                       label: 'Target FC Level',
                       value: _fcToLevel,
-                      items: List.generate(10, (i) => i + 1),
+                      items: List.generate(maxFcLevel, (i) => i + 1),
                       itemLabel: (val) => 'FC $val',
                       onChanged: (val) {
                         if (val != null && val > _fcFromLevel) setState(() => _fcToLevel = val);
@@ -297,13 +378,15 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
 
   // --- 2. Chief Charms Calculator ---
   Widget _buildCharmsCalculator() {
+    final charmTable = _resolveCharmTable();
+    final maxCharmLevel = charmTable.keys.isNotEmpty ? charmTable.keys.reduce((a, b) => a > b ? a : b) : 11;
     int totalGuides = 0;
     int totalDesigns = 0;
     double totalBoost = 0;
     int totalSvS = 0;
 
     for (int lvl = _charmFromLevel + 1; lvl <= _charmToLevel; lvl++) {
-      final row = _charmTable[lvl] ?? [0, 0, 0.0, 0];
+      final row = charmTable[lvl] ?? [0, 0, 0.0, 0];
       totalGuides += row[0].toInt();
       totalDesigns += row[1].toInt();
       totalBoost += row[2].toDouble();
@@ -323,7 +406,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
                     child: _buildDropdown(
                       label: 'Current Charm Level',
                       value: _charmFromLevel,
-                      items: List.generate(11, (i) => i),
+                      items: List.generate(maxCharmLevel, (i) => i),
                       itemLabel: (val) => val == 0 ? 'Unequipped (Lv 0)' : 'Level $val',
                       onChanged: (val) {
                         if (val != null && val < _charmToLevel) setState(() => _charmFromLevel = val);
@@ -335,7 +418,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
                     child: _buildDropdown(
                       label: 'Target Charm Level',
                       value: _charmToLevel,
-                      items: List.generate(11, (i) => i + 1),
+                      items: List.generate(maxCharmLevel, (i) => i + 1),
                       itemLabel: (val) => 'Level $val',
                       onChanged: (val) {
                         if (val != null && val > _charmFromLevel) setState(() => _charmToLevel = val);
@@ -368,7 +451,11 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
 
   // --- 3. SvS Points Calculator ---
   Widget _buildSvSCalculator() {
-    final selectedRate = _svsRates[_svsActivity]!;
+    final svsRates = _resolveSvsRates();
+    if (!svsRates.containsKey(_svsActivity)) {
+      _svsActivity = svsRates.keys.first;
+    }
+    final selectedRate = svsRates[_svsActivity]!;
     final int amount = int.tryParse(_svsAmountController.text.trim()) ?? 0;
     final int totalPoints = amount * (selectedRate['rate'] as int);
 
@@ -394,7 +481,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
                     value: _svsActivity,
                     isExpanded: true,
                     dropdownColor: const Color(0xFF0F192C),
-                    items: _svsRates.entries.map((e) {
+                    items: svsRates.entries.map((e) {
                       return DropdownMenuItem<String>(
                         value: e.key,
                         child: Text(e.value['name'] as String, style: const TextStyle(color: Colors.white)),
@@ -538,13 +625,14 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
 
   // --- 5. Gift Codes ---
   Widget _buildGiftCodesView() {
+    final giftCodes = _resolveGiftCodes();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildCard(
           title: '🎁 Active Whiteout Survival Promo Codes',
           child: Column(
-            children: _giftCodes.map((c) {
+            children: giftCodes.map((c) {
               return Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.all(12),

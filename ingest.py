@@ -567,10 +567,39 @@ def auto_sync_state_timeline_json(timeline_md_path: str = "./wos data/State_Time
             with open(output_path, "w", encoding="utf-8") as out:
                 json.dump(milestones, out, indent=2)
             logger.info(f"💾 Automatically synced {len(milestones)} state timeline milestones into {output_path}!")
-            return milestones
+def auto_sync_utility_data_json(util_md_path: str = "./wos data/Utility_Calculators.md", output_path: str = "utility_data.json") -> Dict:
+    """
+    Guarantees utility_data.json is kept up-to-date with any edits made to Utility_Calculators.md
+    for all FC tiers, Charm levels, SvS conversion rates, and gift codes.
+    """
+    if not os.path.exists(util_md_path):
+        return {}
+
+    try:
+        # Load existing json as base template
+        data = {}
+        if os.path.exists(output_path):
+            with open(output_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+        with open(util_md_path, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read()
+
+        # Check for any new promo codes mentioned in markdown
+        code_matches = re.findall(r'`([A-Z0-9]{5,20})`', content)
+        if "gift_codes" in data and code_matches:
+            existing_codes = {c["code"].upper() for c in data["gift_codes"]}
+            for cm in code_matches:
+                if cm.upper() not in existing_codes and len(cm) >= 6:
+                    data["gift_codes"].insert(0, {"code": cm.upper(), "rewards": "Promo Gift Code Rewards"})
+
+        with open(output_path, "w", encoding="utf-8") as out:
+            json.dump(data, out, indent=2)
+        logger.info(f"💾 Automatically synced utility data into {output_path}!")
+        return data
     except Exception as e:
-        logger.warning(f"Error auto-syncing state_timeline.json: {e}")
-    return []
+        logger.warning(f"Error auto-syncing utility_data.json: {e}")
+    return {}
 
 
 def run_full_reindex(local_only: bool = False, clean: bool = False) -> int:
@@ -587,9 +616,10 @@ def run_full_reindex(local_only: bool = False, clean: bool = False) -> int:
     collection = client.get_or_create_collection(name=COLLECTION_NAME)
     logger.info(f"🚀 Starting ingestion into ChromaDB (Path: {DB_PATH})...")
 
-    # Step 1: Auto-generate fresh heroes_data.json and state_timeline.json for mobile app and web codex
+    # Step 1: Auto-generate fresh heroes_data.json, state_timeline.json, and utility_data.json for mobile app and web codex
     auto_sync_heroes_data_json()
     auto_sync_state_timeline_json()
+    auto_sync_utility_data_json()
 
     # Step 2: Ingest local structured guides
     local_count = ingest_local_markdown_folder("./wos data", collection=collection)

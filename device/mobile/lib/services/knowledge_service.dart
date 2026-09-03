@@ -13,15 +13,20 @@ class KnowledgeService {
       'https://raw.githubusercontent.com/Zcross091/frosty-wos-ai/main/state_timeline.json';
   static const String _timelineCacheKey = 'frosty_cached_timeline_json';
 
+  static const String _utilitySyncUrl =
+      'https://raw.githubusercontent.com/Zcross091/frosty-wos-ai/main/utility_data.json';
+  static const String _utilityCacheKey = 'frosty_cached_utility_json';
+
   static List<HeroProfile> heroes = _buildDefaultHeroRoster();
   static List<Map<String, dynamic>> dynamicTimeline = [];
+  static Map<String, dynamic>? dynamicUtilityData;
 
-  /// Synchronize Hero Codex and State Timeline with live website data on app startup
+  /// Synchronize Hero Codex, State Timeline, and Utilities with live website data on app startup
   static Future<void> syncWithWebsite() async {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      // 1. Check offline cached heroes & timeline JSON first
+      // 1. Check offline cached JSON files first
       final cachedJson = prefs.getString(_cacheKey);
       if (cachedJson != null && cachedJson.isNotEmpty) {
         _parseAndMergeJson(cachedJson);
@@ -30,6 +35,11 @@ class KnowledgeService {
       final cachedTimeline = prefs.getString(_timelineCacheKey);
       if (cachedTimeline != null && cachedTimeline.isNotEmpty) {
         _parseTimelineJson(cachedTimeline);
+      }
+
+      final cachedUtility = prefs.getString(_utilityCacheKey);
+      if (cachedUtility != null && cachedUtility.isNotEmpty) {
+        _parseUtilityJson(cachedUtility);
       }
 
       // 2. Fetch latest online heroes_data.json
@@ -52,9 +62,30 @@ class KnowledgeService {
         }
       } catch (_) {}
 
-      debugPrint('✅ KnowledgeService: Synced ${heroes.length} heroes & ${dynamicTimeline.length} timeline milestones.');
+      // 4. Fetch latest online utility_data.json
+      try {
+        final uResponse = await http.get(Uri.parse(_utilitySyncUrl)).timeout(const Duration(seconds: 8));
+        if (uResponse.statusCode == 200) {
+          final uBody = utf8.decode(uResponse.bodyBytes);
+          _parseUtilityJson(uBody);
+          await prefs.setString(_utilityCacheKey, uBody);
+        }
+      } catch (_) {}
+
+      debugPrint('✅ KnowledgeService: Synced ${heroes.length} heroes, ${dynamicTimeline.length} timeline milestones, and utility calculators.');
     } catch (e) {
       debugPrint('ℹ️ KnowledgeService sync notice: $e (using built-in offline master data)');
+    }
+  }
+
+  static void _parseUtilityJson(String jsonStr) {
+    try {
+      final Map<String, dynamic> data = jsonDecode(jsonStr);
+      if (data.isNotEmpty) {
+        dynamicUtilityData = data;
+      }
+    } catch (e) {
+      debugPrint('Error parsing utility JSON: $e');
     }
   }
 

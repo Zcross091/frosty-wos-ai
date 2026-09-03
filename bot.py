@@ -561,6 +561,16 @@ async def slash_state(interaction: discord.Interaction, state_or_days: str):
 
 
 # --- Utility Calculation Helpers ---
+def load_utility_data() -> Dict[str, Any]:
+    json_path = os.path.join(os.path.dirname(__file__), "utility_data.json")
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
 FC_BUILDING_TABLE = {
     1: (600, 0, 350, 0, 8),
     2: (1200, 0, 700, 0, 12),
@@ -572,6 +582,8 @@ FC_BUILDING_TABLE = {
     8: (5000, 550, 2800, 300, 65),
     9: (7000, 850, 3900, 480, 80),
     10: (10000, 1300, 5500, 720, 100),
+    11: (14000, 1900, 7800, 1050, 120),
+    12: (19500, 2700, 11000, 1500, 145),
 }
 
 CHARM_TABLE = {
@@ -586,6 +598,7 @@ CHARM_TABLE = {
     9: (720, 340, 64.5, 504000),
     10: (980, 490, 82.0, 686000),
     11: (1300, 680, 105.0, 910000),
+    12: (1750, 920, 132.0, 1225000),
 }
 
 SVS_RATES = {
@@ -601,24 +614,40 @@ SVS_RATES = {
     "mithril": {"name": "Mithril (Exclusive Gear)", "rate": 144000, "unit": "mithril", "best_day": "Day 4 (Hero Dev) & Day 5 (Power Boost) — Highest Value!"},
     "t10_train": {"name": "T10 Troops Trained", "rate": 60, "unit": "troops", "best_day": "Day 4 (Hero Dev / Troops)"},
     "t11_train": {"name": "T11 Troops Trained", "rate": 75, "unit": "troops", "best_day": "Day 4 (Hero Dev / Troops)"},
+    "t12_train": {"name": "T12 Troops Trained", "rate": 90, "unit": "troops", "best_day": "Day 4 (Hero Dev / Troops)"},
 }
 
 
 def calculate_fc_cost(building_type: str, start_lvl: int, target_lvl: int) -> Dict[str, Any]:
+    util_data = load_utility_data()
+    raw_table = util_data.get("fc_table", {})
+    
     is_furnace = "furnace" in building_type.lower() or "embassy" in building_type.lower() or "command" in building_type.lower()
     total_fc = 0
     total_rfc = 0
     total_days = 0
 
-    for lvl in range(max(1, start_lvl + 1), min(11, target_lvl + 1)):
-        row = FC_BUILDING_TABLE.get(lvl, (0, 0, 0, 0, 0))
-        if is_furnace:
-            total_fc += row[0]
-            total_rfc += row[1]
+    max_lvl = max([int(k) for k in raw_table.keys()] + [12]) if raw_table else 12
+
+    for lvl in range(max(1, start_lvl + 1), min(max_lvl + 1, target_lvl + 1)):
+        row_data = raw_table.get(str(lvl))
+        if row_data:
+            if is_furnace:
+                total_fc += row_data.get("furnace_fc", 0)
+                total_rfc += row_data.get("furnace_rfc", 0)
+            else:
+                total_fc += row_data.get("camp_fc", 0)
+                total_rfc += row_data.get("camp_rfc", 0)
+            total_days += row_data.get("days", 0)
         else:
-            total_fc += row[2]
-            total_rfc += row[3]
-        total_days += row[4]
+            row = FC_BUILDING_TABLE.get(lvl, (0, 0, 0, 0, 0))
+            if is_furnace:
+                total_fc += row[0]
+                total_rfc += row[1]
+            else:
+                total_fc += row[2]
+                total_rfc += row[3]
+            total_days += row[4]
 
     svs_pts = (total_fc * 2000) + (total_rfc * 30000)
     return {
@@ -633,17 +662,29 @@ def calculate_fc_cost(building_type: str, start_lvl: int, target_lvl: int) -> Di
 
 
 def calculate_charms_cost(start_lvl: int, target_lvl: int) -> Dict[str, Any]:
+    util_data = load_utility_data()
+    raw_table = util_data.get("charm_table", {})
+
     total_guides = 0
     total_designs = 0
     total_svs = 0
     total_boost = 0.0
 
-    for lvl in range(max(1, start_lvl + 1), min(12, target_lvl + 1)):
-        row = CHARM_TABLE.get(lvl, (0, 0, 0.0, 0))
-        total_guides += row[0]
-        total_designs += row[1]
-        total_boost += row[2]
-        total_svs += row[3]
+    max_lvl = max([int(k) for k in raw_table.keys()] + [12]) if raw_table else 12
+
+    for lvl in range(max(1, start_lvl + 1), min(max_lvl + 1, target_lvl + 1)):
+        row_data = raw_table.get(str(lvl))
+        if row_data:
+            total_guides += row_data.get("guides", 0)
+            total_designs += row_data.get("designs", 0)
+            total_boost += float(row_data.get("boost", 0.0))
+            total_svs += row_data.get("svs_pts", 0)
+        else:
+            row = CHARM_TABLE.get(lvl, (0, 0, 0.0, 0))
+            total_guides += row[0]
+            total_designs += row[1]
+            total_boost += row[2]
+            total_svs += row[3]
 
     return {
         "from": start_lvl,
@@ -825,12 +866,13 @@ async def slash_transfer(interaction: discord.Interaction, power_millions: float
 
 @bot.tree.command(name="codes", description="View active Whiteout Survival gift codes and redemption link.")
 async def slash_codes(interaction: discord.Interaction):
+    codes = load_utility_data().get("gift_codes", ACTIVE_GIFT_CODES)
     embed = discord.Embed(
         title="🎁 Whiteout Survival Active Gift Codes",
         description="Redeem these codes for free Gems, Speedups, Gold Keys, and Stamina:",
         color=SUCCESS_COLOR
     )
-    for c in ACTIVE_GIFT_CODES:
+    for c in codes:
         embed.add_field(name=f"🔑 `{c['code']}`", value=f"Rewards: {c['rewards']}", inline=False)
 
     view = discord.ui.View()
@@ -1057,12 +1099,13 @@ async def prefix_transfer(ctx, *, power: str = "150"):
 
 @bot.command(name="codes")
 async def prefix_codes(ctx):
+    codes = load_utility_data().get("gift_codes", ACTIVE_GIFT_CODES)
     embed = discord.Embed(
         title="🎁 Whiteout Survival Active Gift Codes",
         description="Redeem these codes for free Gems, Speedups, Gold Keys, and Stamina:",
         color=SUCCESS_COLOR
     )
-    for c in ACTIVE_GIFT_CODES:
+    for c in codes:
         embed.add_field(name=f"🔑 `{c['code']}`", value=f"Rewards: {c['rewards']}", inline=False)
     embed.set_footer(text="Redeem at https://wos-giftcode.centurygame.com/")
     await ctx.send(embed=embed)
