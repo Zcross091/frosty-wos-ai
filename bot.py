@@ -328,10 +328,11 @@ async def slash_reindex(interaction: discord.Interaction, local_only: bool = Tru
     loop = asyncio.get_running_loop()
     try:
         new_count = await loop.run_in_executor(None, run_full_reindex, local_only)
+        knowledge_base.reload_dynamic_entities()
         elapsed = time.time() - start_time
         embed = discord.Embed(
-            title="✨ Knowledge Base Re-indexed Successfully",
-            description=f"Frosty's brain has been refreshed with the latest strategy guides!\n\n• **Total Chunks in DB:** `{new_count}`\n• **Elapsed Time:** `{elapsed:.2f}s`",
+            title="✨ Knowledge Base & Hero Data Auto-Synced",
+            description=f"Frosty's brain and hero codex have been refreshed with the latest data!\n\n• **Total Chunks in DB:** `{new_count}`\n• **Active Generations:** `Gen 0 through Gen {knowledge_base.max_generation}+`\n• **Heroes Synced:** `{len(knowledge_base.known_heroes)} heroes`\n• **Elapsed Time:** `{elapsed:.2f}s`",
             color=SUCCESS_COLOR
         )
         await interaction.followup.send(embed=embed)
@@ -442,7 +443,8 @@ async def prefix_reindex(ctx, local_only: str = "true"):
         loop = asyncio.get_running_loop()
         try:
             new_count = await loop.run_in_executor(None, run_full_reindex, is_local)
-            await ctx.send(f"✨ **Re-indexing Complete!** Database now contains `{new_count}` knowledge chunks.")
+            knowledge_base.reload_dynamic_entities()
+            await ctx.send(f"✨ **Re-indexing & Hero Sync Complete!** Database now contains `{new_count}` knowledge chunks across **Gen 0 to Gen {knowledge_base.max_generation}+** (`{len(knowledge_base.known_heroes)}` heroes active).")
         except Exception as e:
             await ctx.send(f"❌ **Re-indexing Error:** `{str(e)}`")
 

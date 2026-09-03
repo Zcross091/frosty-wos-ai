@@ -77,26 +77,47 @@ class StateAgeService {
   }
 
   static StateCalculation _buildCalculation({required int ageInDays, int? stateNumber}) {
+    int maxGen = 17;
+    final availableGens = KnowledgeService.getAvailableGenerations();
+    if (availableGens.isNotEmpty && availableGens.first > maxGen) {
+      maxGen = availableGens.first;
+    }
+
+    int getUnlockDay(int gen) {
+      if (generationUnlockDays.containsKey(gen)) {
+        return generationUnlockDays[gen]!;
+      }
+      return 1240 + (gen - 17) * 80;
+    }
+
     int currentGen = 1;
-    for (int gen = 17; gen >= 1; gen--) {
-      int unlockDay = generationUnlockDays[gen] ?? 0;
+    for (int gen = maxGen; gen >= 1; gen--) {
+      int unlockDay = getUnlockDay(gen);
       if (ageInDays >= unlockDay) {
         currentGen = gen;
         break;
       }
     }
 
-    int? nextGen = currentGen < 17 ? currentGen + 1 : null;
+    int? nextGen = currentGen < maxGen ? currentGen + 1 : null;
     int? daysUntilNextGen;
     DateTime? nextGenDate;
 
     if (nextGen != null) {
-      int nextUnlockDay = generationUnlockDays[nextGen] ?? 0;
+      int nextUnlockDay = getUnlockDay(nextGen);
       daysUntilNextGen = (nextUnlockDay - ageInDays).clamp(0, 999);
       nextGenDate = DateTime.now().add(Duration(days: daysUntilNextGen));
     }
 
     List<String> activeHeroes = generationHeroes[currentGen] ?? [];
+    if (activeHeroes.isEmpty) {
+      final genHeroes = KnowledgeService.getHeroesByGeneration(currentGen);
+      if (genHeroes.isNotEmpty) {
+        activeHeroes = genHeroes
+            .map((h) => '${h.name} (${h.troopType.name.substring(0, 1).toUpperCase()}${h.troopType.name.substring(1, 3)})')
+            .toList();
+      }
+    }
 
     // Tactical shard advice
     String tacticalAdvice;
@@ -145,7 +166,7 @@ class StateAgeService {
         'Ursar (Lancer): Hall of Heroes Marks of Valor exclusive support.',
         'Prepare shards and Lucky Wheel spins for Gen 17 Aiden (Day 1240+).'
       ];
-    } else {
+    } else if (currentGen == 17) {
       tacticalAdvice = 'GENERATION 17 ACTIVE (Apex 2,450% Multipliers). Aiden (Kinetic Aegis) & Eleanor (Armor Shred) dominate the meta.';
       roadmap = [
         'Aiden (Infantry): Spin Lucky Wheel to 4★ minimum for +25% squad Rage & 35% shield.',
@@ -153,6 +174,15 @@ class StateAgeService {
         'Bertha (Lancer): Acquire via King of Icefield / Daily Deals for 8% periodic squad healing.',
         'Apex Formation: 50/20/30 Aiden (Lead) + Bertha + Eleanor.'
       ];
+    } else {
+      tacticalAdvice = 'GENERATION $currentGen ACTIVE. High-tier endgame scaling active. Maximize Lucky Wheel and Hall of Heroes.';
+      roadmap = activeHeroes.isNotEmpty
+          ? activeHeroes.map((h) => '$h: Core meta hero. Build to 4★ minimum with exclusive gear.').toList()
+          : [
+              'Build current Gen $currentGen Lucky Wheel carry hero.',
+              'Spend weekly Marks of Valor in Hall of Heroes.',
+              'Maintain 50/20/30 PvP troop ratios in all marches.'
+            ];
     }
 
     return StateCalculation(

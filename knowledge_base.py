@@ -114,7 +114,10 @@ class KnowledgeBase:
         self.db_path = db_path
         self.chroma_client = None
         self.collection = None
+        self.known_heroes = set(KNOWN_HEROES)
+        self.max_generation = 17
         self._init_db()
+        self.reload_dynamic_entities()
 
     def _init_db(self):
         try:
@@ -125,6 +128,28 @@ class KnowledgeBase:
         except Exception as e:
             logger.warning(f"ChromaDB initialization failed: {e}. Running with core fallback knowledge.")
             self.collection = None
+
+    def reload_dynamic_entities(self):
+        """Dynamically scans heroes_data.json to keep heroes and max generation live without restarts."""
+        self.known_heroes = set(KNOWN_HEROES)
+        json_path = "heroes_data.json"
+        if os.path.exists(json_path):
+            try:
+                import json
+                with open(json_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    for item in data:
+                        g = item.get("gen", 0)
+                        if isinstance(g, int) and g > self.max_generation:
+                            self.max_generation = g
+                        for key in ["infantry", "lancer", "marksman"]:
+                            h_name = item.get(key, "").strip().lower()
+                            if h_name:
+                                clean_h = re.sub(r'[^a-z0-9]', '', h_name.split()[0])
+                                if clean_h:
+                                    self.known_heroes.add(clean_h)
+            except Exception as e:
+                logger.debug(f"Notice loading dynamic heroes: {e}")
 
     def get_count(self) -> int:
         if self.collection:
@@ -145,7 +170,7 @@ class KnowledgeBase:
         }
 
         # Hero matching
-        for hero in KNOWN_HEROES:
+        for hero in self.known_heroes:
             # Word boundary check
             if re.search(r'\b' + re.escape(hero) + r'\b', q):
                 entities["heroes"].append(hero.title())
@@ -160,7 +185,7 @@ class KnowledgeBase:
             if re.search(r'\b' + re.escape(exp) + r'\b', q):
                 entities["experts"].append(exp.title())
 
-        # Generation matching (e.g., gen 1, gen 2, gen14, generation 5)
+        # Generation matching (e.g., gen 1, gen 2, gen14, generation 5, gen 17, gen 18)
         gen_matches = re.findall(r'\b(?:gen|generation)\s*(\d{1,2})\b', q)
         if gen_matches:
             for g in gen_matches:
@@ -332,17 +357,18 @@ class KnowledgeBase:
         Constructs the Grandmaster Whiteout Survival AI persona prompt.
         """
         system_prompt = f"""You are **Frosty**, the premier Whiteout Survival Tactical Oracle and Grandmaster Military Advisor.
-You possess deep, comprehensive mastery of Whiteout Survival mechanics, heroes (Gen 0 through Gen 17+), troop ratios, rally joiner dynamics, Bear Trap setups, Crazy Joe defense, Dawn Academy Experts, and PvP/PvE strategies.
+You possess deep, comprehensive mastery of Whiteout Survival mechanics, heroes (Gen 0 through Gen {self.max_generation}+), troop ratios, rally joiner dynamics, Bear Trap setups, Crazy Joe defense, Dawn Academy Experts, and PvP/PvE strategies.
 
-### YOUR DIRECTIVE:
-1. **Provide Expert, High-Value Advice**: Deliver concrete, tactical, and immediately actionable answers.
-2. **Use Accurate Game Data**: Utilize the provided data context for exact stats, multipliers, generation numbers, and skill mechanics. Never invent fake stats.
-3. **Format for Discord Readability**:
+### YOUR DIRECTIVES:
+1. **Live Generation Reality**: All generations present in your archives up to Gen {self.max_generation}+ are fully released and active on older states. Provide direct, tactical evaluations and lineup setups for all indexed generations.
+2. **Provide Expert, High-Value Advice**: Deliver concrete, tactical, and immediately actionable answers.
+3. **Use Accurate Game Data**: Utilize the provided data context for exact stats, multipliers, generation numbers, and skill mechanics. Never invent fake stats.
+4. **Format for Discord Readability**:
    - Use clean Markdown with bold headers (`### 🛡️ ...`), bullet points, and high-visibility emojis.
    - When discussing heroes, state their Generation, Troop Type (Infantry/Lancer/Marksman), Key Skills, and F2P vs P2W verdict.
    - When discussing formations/lineups, explain the troop ratios (e.g. 50/20/30 or 4-1-1) and hero positioning (1 Leader + 2 Deputies).
    - Conclude with a clear, punchy **💡 Grandmaster Tip** or **❄️ Tactical Verdict**.
-4. **Context Synthesis**: Even if the retrieved archives have partial data, synthesize with your core Whiteout Survival knowledge to provide a complete, flawless answer.
+5. **Context Synthesis**: Synthesize retrieved archives with core Whiteout Survival knowledge to provide a complete, flawless answer.
 
 ### REFERENCE DATA CONTEXT:
 {context}
