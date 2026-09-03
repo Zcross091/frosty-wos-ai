@@ -33,6 +33,35 @@ DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 COMMAND_PREFIX = os.getenv("COMMAND_PREFIX", "!").strip() or "!"
 ADMIN_USER_IDS = [int(uid.strip()) for uid in os.getenv("ADMIN_USER_IDS", "").split(",") if uid.strip().isdigit()]
 
+# ==============================================================================
+# 👑 BOT ADMIN & OWNER CONFIGURATION
+# To change or add authorized admins, simply add usernames or IDs below!
+# Anyone sharing or self-hosting this bot can put their own Discord username here.
+# ==============================================================================
+AUTHORIZED_ADMIN_USERNAMES = [
+    "zcross071",      # Supreme Commander / Bot Owner
+]
+
+AUTHORIZED_ADMIN_IDS = [
+    # Optional: Put your numeric Discord User ID here (e.g. 123456789012345678)
+]
+
+def is_authorized_admin(user: discord.User | discord.Member) -> bool:
+    """Check if the user is an authorized bot owner by username or numerical ID."""
+    uname = getattr(user, "name", "").lower().strip()
+    gname = getattr(user, "global_name", "")
+    gname = gname.lower().strip() if gname else ""
+
+    for admin_u in AUTHORIZED_ADMIN_USERNAMES:
+        clean_target = admin_u.lower().strip()
+        if clean_target and (clean_target == uname or clean_target == gname):
+            return True
+
+    if user.id in AUTHORIZED_ADMIN_IDS or user.id in ADMIN_USER_IDS:
+        return True
+
+    return False
+
 # Color Palette
 FROSTY_COLOR = discord.Color.from_rgb(0, 210, 255)      # #00D2FF Frosty Cyan
 SUCCESS_COLOR = discord.Color.from_rgb(46, 204, 113)    # Emerald Green
@@ -981,6 +1010,36 @@ async def slash_timer(
             await interaction.response.send_message(f"❌ Timer **#{timer_id}** not found.", ephemeral=True)
 
 
+@bot.tree.command(name="reindex", description="[Admin Only] Rebuild and refresh ChromaDB archives and game data.")
+@app_commands.describe(local_only="Set to True for instant local indexing, or False for web crawl")
+async def slash_reindex(interaction: discord.Interaction, local_only: bool = True):
+    if not is_authorized_admin(interaction.user):
+        await interaction.response.send_message(
+            f"⛔ **Access Denied:** Only authorized Commander(s) (`{', '.join(AUTHORIZED_ADMIN_USERNAMES)}`) can trigger database reindexing.",
+            ephemeral=True
+        )
+        return
+
+    await interaction.response.defer(thinking=True)
+    loop = asyncio.get_running_loop()
+    try:
+        new_count = await loop.run_in_executor(None, run_full_reindex, local_only)
+        knowledge_base.reload_dynamic_entities()
+        
+        embed = discord.Embed(
+            title="✨ Knowledge Re-indexing Complete!",
+            description=f"Commander **{interaction.user.display_name}** (`@{interaction.user.name}`), tactical archives have been refreshed!",
+            color=SUCCESS_COLOR
+        )
+        embed.add_field(name="📚 Total Chunks", value=f"`{new_count}` knowledge chunks", inline=True)
+        embed.add_field(name="👑 Hero Generations", value=f"Gen 0 ➔ Gen `{knowledge_base.max_generation}+`", inline=True)
+        embed.add_field(name="🛡️ Active Heroes", value=f"`{len(knowledge_base.known_heroes)}` heroes indexed", inline=True)
+        embed.set_footer(text="Frosty AI • Tactical Intelligence Synchronization")
+        await interaction.followup.send(embed=embed)
+    except Exception as e:
+        await interaction.followup.send(f"❌ **Reindexing Error:** `{str(e)}`")
+
+
 @bot.tree.command(name="help", description="Show Frosty AI commands and strategic capabilities.")
 async def slash_help(interaction: discord.Interaction):
     embed = discord.Embed(
@@ -1166,9 +1225,30 @@ async def prefix_timer(ctx, *, args: str = "list"):
         await ctx.send(embed=embed)
 
 
-@bot.command(name="timers")
-async def prefix_timers_alias(ctx):
-    await prefix_timer(ctx, args="list")
+@bot.command(name="reindex")
+async def prefix_reindex(ctx, local_only: str = "true"):
+    if not is_authorized_admin(ctx.author):
+        await ctx.send(f"⛔ **Access Denied:** Only authorized Commander(s) (`{', '.join(AUTHORIZED_ADMIN_USERNAMES)}`) can trigger database reindexing.")
+        return
+
+    is_local = local_only.lower() in ["true", "1", "yes", "local"]
+    async with ctx.typing():
+        loop = asyncio.get_running_loop()
+        try:
+            new_count = await loop.run_in_executor(None, run_full_reindex, is_local)
+            knowledge_base.reload_dynamic_entities()
+
+            embed = discord.Embed(
+                title="✨ Knowledge Re-indexing Complete!",
+                description=f"Commander **{ctx.author.display_name}** (`@{ctx.author.name}`), tactical archives have been refreshed!",
+                color=SUCCESS_COLOR
+            )
+            embed.add_field(name="📚 Total Chunks", value=f"`{new_count}` knowledge chunks", inline=True)
+            embed.add_field(name="👑 Hero Generations", value=f"Gen 0 ➔ Gen `{knowledge_base.max_generation}+`", inline=True)
+            embed.add_field(name="🛡️ Active Heroes", value=f"`{len(knowledge_base.known_heroes)}` heroes indexed", inline=True)
+            await ctx.send(embed=embed)
+        except Exception as e:
+            await ctx.send(f"❌ **Reindexing Error:** `{str(e)}`")
 
 
 # --- Error Handling ---
