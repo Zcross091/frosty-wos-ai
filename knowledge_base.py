@@ -53,6 +53,46 @@ CORE_WOS_KNOWLEDGE = """
    - Strategic Pausing: Never level experts blindly. Pause at key breakpoints (Level 10, 20, 30) where talent boosts spike.
    - F2P Priority: Agnes (Construction/Research) -> Cyrille (Healing/Training) -> Baldur (Event economy).
    - P2W / Combat Priority: Romulus, Valeria, Fabian for massive combat stats.
+
+6. STATE TIMELINE & SERVER AGE UNLOCK DOCTRINE:
+   - Server progression is dictated by State Age (days elapsed since launch).
+   - Key Milestone Schedule:
+     * Day 0: Gen 1 Heroes (Jeronimo, Natalia, Molly, Zinman).
+     * Day 14: Tundra Territory Opens (Alliance L4 banners & tundra resource nodes).
+     * Day 40: Gen 2 Heroes (Flint on Lucky Wheel, Alonso in HoH/KoI).
+     * Day 45: Chief Gear & Elemental Charms T1.
+     * Day 53: First Sunfire Castle Battle (Alliance Presidency).
+     * Day 54: Pet Gen 1 & Beast Cage (Cave Hyena, Arctic Wolf, Musk Ox at Furnace Lv 18).
+     * Day 60: Fire Crystal Era (FC 1–3, requires Furnace Lv 30 & Monument mission).
+     * Day 80: First State vs State (SvS) & King of Icefield (Prep + Battle phase).
+     * Day 90: Pet Gen 2 (Titan Roc & Giant Tapir).
+     * Day 100: State Transfer Phase 1.
+     * Day 120: Gen 3 Heroes (Mia on Lucky Wheel, Logan garrison tank).
+     * Day 140: Pet Gen 3 (Snow Leopard & Giant Elk).
+     * Day 150: Fire Crystal 4–5 & Crystal Laboratory (Refined Crystals).
+     * Day 180: Gen 4 Heroes (Lynn on Lucky Wheel, Ahmose).
+     * Day 200: Pet Gen 4 (Cave Lion & Snow Ape).
+     * Day 220: Dawn / War Academy & T11 Troops.
+     * Day 250: Gen 5 Heroes (Hector on Lucky Wheel, Norah, Gwen).
+     * Day 280: Pet Gen 5 (Iron Rhino & Saber-tooth).
+     * Day 300: Fire Crystal 6–8 Age.
+     * Day 320: Gen 6 Heroes (Renee on Lucky Wheel, Wayne).
+     * Day 360: Pet Gen 6 (Titan Beaver & Gorgon Viper).
+     * Day 400: Gen 7 Heroes (Bradley on Lucky Wheel, Edith).
+     * Day 450: Chief Gear T4 & Legendary Charms.
+     * Day 480: Gen 8 Heroes (Hendrik) & Pet Gen 7 (Frostscale Chameleon).
+     * Day 500: Fire Crystal 9–10 Age.
+     * Day 550: Gen 9 Heroes (Magnus, Fred, Xura).
+     * Day 620: Gen 10 Heroes (Blanchette, Gregory, Freya).
+     * Day 690: Gen 11 Heroes (Eleonora, Lloyd, Rufus).
+     * Day 750: Fire Crystal 11–12 & T12 Troops.
+     * Day 760: Gen 12 Heroes (Ligeia, Hervor, Karol).
+     * Day 830: Gen 13 Heroes (Gisela, Flora, Vulcanus).
+     * Day 900: Gen 14 Heroes (Cara, Elif, Dominic).
+     * Day 960: Gen 15 Heroes (Hank, Estrella, Viveca).
+     * Day 1160: Gen 16 Heroes (Seigel, Ursar, Aisling).
+     * Day 1240+: Gen 17 Heroes (Aiden, Bertha, Eleanor).
+   - Exact Day Check: Look up the "Kindling Embers" monument task in-game (matches Day 1 of server).
 """
 
 # Recognized Heroes across all Generations

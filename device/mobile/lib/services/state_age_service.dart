@@ -1,4 +1,5 @@
 import '../models/state_calculation.dart';
+import 'knowledge_service.dart';
 
 class StateAgeService {
   // Estimated base launch reference for Whiteout Survival State 1 (approx Feb 14, 2023)
@@ -45,10 +46,263 @@ class StateAgeService {
     17: ['Aiden (Infantry)', 'Bertha (Lancer)', 'Eleanor (Marksman)'],
   };
 
+  static final List<Map<String, dynamic>> rawMilestones = [
+    {
+      'day': 0,
+      'title': 'Generation 1 Heroes',
+      'category': 'Hero',
+      'icon': '👑',
+      'description': 'Natalia, Jeronimo, Molly & Zinman. Focus on Sergey (Tank) and Jessie (Rally Joiner +25% Dmg).'
+    },
+    {
+      'day': 14,
+      'title': 'Tundra Territory Opens',
+      'category': 'Event',
+      'icon': '🗺️',
+      'description': 'Alliance territory expands to Tundra zone; high-tier resource tiles and tundra beasts unlock.'
+    },
+    {
+      'day': 34,
+      'title': 'Arena Pool Expansion',
+      'category': 'Event',
+      'icon': '⚔️',
+      'description': 'Arena opponent pool expands across state cluster.'
+    },
+    {
+      'day': 40,
+      'title': 'Generation 2 Heroes (Flint / Alonso / Philly)',
+      'category': 'Hero',
+      'icon': '🔥',
+      'description': 'Flint on Lucky Wheel (#1 F2P Tank), Alonso in Hall of Heroes / King of Icefield.'
+    },
+    {
+      'day': 45,
+      'title': 'Chief Gear & Charms T1',
+      'category': 'Gear',
+      'icon': '🛡️',
+      'description': 'Polish Chief Gear to T1 and socket initial elemental charms for squad Attack and Defense.'
+    },
+    {
+      'day': 53,
+      'title': 'First Sunfire Castle Battle',
+      'category': 'Event',
+      'icon': '🏰',
+      'description': 'First battle for Supreme Presidency, State Capital control, and ministerial titles.'
+    },
+    {
+      'day': 54,
+      'title': 'Pet System Gen 1 & Beast Cage',
+      'category': 'Pet',
+      'icon': '🐾',
+      'description': 'Requires Furnace Lv 18. Construct Beast Cage to tame Cave Hyena, Arctic Wolf, and Musk Ox.'
+    },
+    {
+      'day': 60,
+      'title': 'Fire Crystal Age (FC 1–3)',
+      'category': 'Fire Crystal',
+      'icon': '💎',
+      'description': 'Requires Furnace Lv 30 & Monument task. Upgrade structures and troops to Fire Crystal 1–3.'
+    },
+    {
+      'day': 80,
+      'title': 'State vs. State (SvS) & King of Icefield',
+      'category': 'Event',
+      'icon': '⚔️',
+      'description': 'First cross-state war! 6-day preparation phase (Castle prep) followed by Battle Phase.'
+    },
+    {
+      'day': 90,
+      'title': 'Pet Generation 2 (Titan Roc & Giant Tapir)',
+      'category': 'Pet',
+      'icon': '🦅',
+      'description': 'Unlocks Titan Roc (March Speed) and Giant Tapir (Rally Defense).'
+    },
+    {
+      'day': 100,
+      'title': 'State Transfer Phase 1',
+      'category': 'Event',
+      'icon': '🚀',
+      'description': 'Transfer window opens to relocate to older or neighboring servers in your state bracket.'
+    },
+    {
+      'day': 120,
+      'title': 'Generation 3 Heroes (Mia / Logan / Greg)',
+      'category': 'Hero',
+      'icon': '🎯',
+      'description': 'Mia on Lucky Wheel (#1 Bear Trap carry), Logan arena and garrison defender.'
+    },
+    {
+      'day': 140,
+      'title': 'Pet Generation 3 (Snow Leopard & Giant Elk)',
+      'category': 'Pet',
+      'icon': '🐆',
+      'description': 'Unlocks Snow Leopard (Backline Lethality) and Giant Elk (Resource Gathering).'
+    },
+    {
+      'day': 150,
+      'title': 'Fire Crystal 4–5 & Crystal Laboratory',
+      'category': 'Fire Crystal',
+      'icon': '🔮',
+      'description': 'Refine Fire Crystals into Refined Crystals for FC 4 and FC 5 upgrades.'
+    },
+    {
+      'day': 180,
+      'title': 'Generation 4 Heroes (Lynn / Ahmose / Reina)',
+      'category': 'Hero',
+      'icon': '🏹',
+      'description': 'Lynn on Lucky Wheel (armor-piercing marksman), Ahmose frontline invincibility tank.'
+    },
+    {
+      'day': 200,
+      'title': 'Pet Generation 4 (Cave Lion & Snow Ape)',
+      'category': 'Pet',
+      'icon': '🦁',
+      'description': 'Unlocks Cave Lion (Squad Stun) and Snow Ape (Frontline damage mitigation).'
+    },
+    {
+      'day': 220,
+      'title': 'War Academy & T11 Troops',
+      'category': 'Academy',
+      'icon': '🏛️',
+      'description': 'Dawn / War Academy research unlocks. Train elite Tier 11 Infantry, Lancers, and Marksmen.'
+    },
+    {
+      'day': 250,
+      'title': 'Generation 5 Heroes (Hector / Norah / Gwen)',
+      'category': 'Hero',
+      'icon': '🛡️',
+      'description': 'Hector on Lucky Wheel (top fortress tank), Norah lancer flanker, Gwen sniper.'
+    },
+    {
+      'day': 280,
+      'title': 'Pet Generation 5 (Iron Rhino & Saber-tooth)',
+      'category': 'Pet',
+      'icon': '🦏',
+      'description': 'Unlocks Iron Rhino (Defense surge) and Saber-tooth (Critical strike power).'
+    },
+    {
+      'day': 300,
+      'title': 'Fire Crystal 6–8 Age',
+      'category': 'Fire Crystal',
+      'icon': '💎',
+      'description': 'Massive health scaling and combat stat multipliers for FC 6, 7, and 8.'
+    },
+    {
+      'day': 320,
+      'title': 'Generation 6 Heroes (Renee / Wayne / Wu Ming)',
+      'category': 'Hero',
+      'icon': '⚔️',
+      'description': 'Renee on Lucky Wheel (marksman carry), Wayne garrison defender.'
+    },
+    {
+      'day': 360,
+      'title': 'Pet Generation 6 (Titan Beaver & Gorgon Viper)',
+      'category': 'Pet',
+      'icon': '🐍',
+      'description': 'Unlocks Titan Beaver (Rapid healing) and Gorgon Viper (Toxic rally debuffs).'
+    },
+    {
+      'day': 400,
+      'title': 'Generation 7 Heroes (Bradley / Edith / Gordon)',
+      'category': 'Hero',
+      'icon': '🎯',
+      'description': 'Bradley on Lucky Wheel (premier fortress stun lead), Edith backline assassin.'
+    },
+    {
+      'day': 450,
+      'title': 'Chief Gear T4 & Legendary Charms',
+      'category': 'Gear',
+      'icon': '👑',
+      'description': 'Apex Chief Gear tier granting massive squad Lethality and Damage Reduction.'
+    },
+    {
+      'day': 480,
+      'title': 'Generation 8 Heroes & Pet Gen 7',
+      'category': 'Hero',
+      'icon': '🛡️',
+      'description': 'Hendrik (Lucky Wheel), Gatot + Frostscale Chameleon (Evasion shield).'
+    },
+    {
+      'day': 500,
+      'title': 'Fire Crystal 9–10 Age',
+      'category': 'Fire Crystal',
+      'icon': '🔮',
+      'description': 'Refined Crystal economy expansion; structure and unit mastery for FC 9 and FC 10.'
+    },
+    {
+      'day': 550,
+      'title': 'Generation 9 Heroes (Magnus / Fred / Xura)',
+      'category': 'Hero',
+      'icon': '⚔️',
+      'description': 'Magnus on Lucky Wheel, Fred lancer flanking DPS, Xura marksman.'
+    },
+    {
+      'day': 620,
+      'title': 'Generation 10 Heroes (Blanchette / Gregory / Freya)',
+      'category': 'Hero',
+      'icon': '🏹',
+      'description': 'Blanchette on Lucky Wheel (premier PvE carry), Gregory troop HP buffer.'
+    },
+    {
+      'day': 690,
+      'title': 'Generation 11 Heroes (Eleonora / Lloyd / Rufus)',
+      'category': 'Hero',
+      'icon': '🛡️',
+      'description': 'Eleonora on Lucky Wheel, Rufus heavy armor shredder.'
+    },
+    {
+      'day': 750,
+      'title': 'Fire Crystal 11–12 & T12 Troops',
+      'category': 'Fire Crystal',
+      'icon': '⚡',
+      'description': 'Supreme Tier 12 troops and Apex Fire Crystal mastery.'
+    },
+    {
+      'day': 760,
+      'title': 'Generation 12 Heroes (Ligeia / Hervor / Karol)',
+      'category': 'Hero',
+      'icon': '🎯',
+      'description': 'Ligeia on Lucky Wheel (Bear Trap top carry), Hervor rally anchor.'
+    },
+    {
+      'day': 830,
+      'title': 'Generation 13 Heroes (Gisela / Flora / Vulcanus)',
+      'category': 'Hero',
+      'icon': '🛡️',
+      'description': 'Gisela on Lucky Wheel, Vulcanus explosive burst.'
+    },
+    {
+      'day': 900,
+      'title': 'Generation 14 Heroes (Cara / Elif / Dominic)',
+      'category': 'Hero',
+      'icon': '🏹',
+      'description': 'Cara on Lucky Wheel, Elif defense wall.'
+    },
+    {
+      'day': 960,
+      'title': 'Generation 15 Heroes (Hank / Estrella / Viveca)',
+      'category': 'Hero',
+      'icon': '👑',
+      'description': 'Hank on Lucky Wheel tank, Viveca marksman.'
+    },
+    {
+      'day': 1160,
+      'title': 'Generation 16 Heroes (Seigel / Ursar / Aisling)',
+      'category': 'Hero',
+      'icon': '🛡️',
+      'description': 'Seigel (Kinetic Reflect), Aisling (High Velocity Sniper), Ursar (HoH Lancer).'
+    },
+    {
+      'day': 1240,
+      'title': 'Generation 17 Heroes (Aiden / Bertha / Eleanor)',
+      'category': 'Hero',
+      'icon': '⚡',
+      'description': 'Aiden (Lucky Wheel Rage battery), Eleanor (HoH 45% Armor Shred), Bertha (Healer).'
+    },
+  ];
+
   /// Calculates State Age and Generation from a State Number (1 - 1500+)
   static StateCalculation calculateFromStateNumber(int stateNumber) {
-    // Estimating state launch date based on state numbering pace
-    // Older states (1-200) opened ~3 days apart; newer states opened ~0.8 days apart
     double daysAgo;
     if (stateNumber <= 100) {
       daysAgo = 1350 - (stateNumber * 2.5);
@@ -118,6 +372,22 @@ class StateAgeService {
             .toList();
       }
     }
+
+    // Build Milestones list
+    final List<StateMilestone> milestones = rawMilestones.map((raw) {
+      final int targetDay = raw['day'] as int;
+      final bool isUnlocked = ageInDays >= targetDay;
+      final int remaining = (targetDay - ageInDays).clamp(0, 9999);
+      return StateMilestone(
+        day: targetDay,
+        title: raw['title'] as String,
+        category: raw['category'] as String,
+        icon: raw['icon'] as String,
+        description: raw['description'] as String,
+        isUnlocked: isUnlocked,
+        daysRemaining: remaining,
+      );
+    }).toList();
 
     // Tactical shard advice
     String tacticalAdvice;
@@ -196,6 +466,7 @@ class StateAgeService {
       estimatedNextGenDate: nextGenDate,
       tacticalAdvice: tacticalAdvice,
       heroBuildRoadmap: roadmap,
+      milestones: milestones,
     );
   }
 }

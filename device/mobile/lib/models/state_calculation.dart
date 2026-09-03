@@ -1,3 +1,23 @@
+class StateMilestone {
+  final int day;
+  final String title;
+  final String category; // 'Hero', 'Fire Crystal', 'Pet', 'Event', 'Gear', 'Academy'
+  final String icon;
+  final String description;
+  final bool isUnlocked;
+  final int daysRemaining;
+
+  const StateMilestone({
+    required this.day,
+    required this.title,
+    required this.category,
+    required this.icon,
+    required this.description,
+    required this.isUnlocked,
+    required this.daysRemaining,
+  });
+}
+
 class StateCalculation {
   final int? stateNumber;
   final int ageInDays;
@@ -9,8 +29,9 @@ class StateCalculation {
   final DateTime? estimatedNextGenDate;
   final String tacticalAdvice;
   final List<String> heroBuildRoadmap;
+  final List<StateMilestone> milestones;
 
-  StateCalculation({
+  const StateCalculation({
     this.stateNumber,
     required this.ageInDays,
     required this.currentGeneration,
@@ -21,5 +42,9 @@ class StateCalculation {
     this.estimatedNextGenDate,
     required this.tacticalAdvice,
     required this.heroBuildRoadmap,
+    this.milestones = const [],
   });
+
+  List<StateMilestone> get unlockedMilestones => milestones.where((m) => m.isUnlocked).toList();
+  List<StateMilestone> get upcomingMilestones => milestones.where((m) => !m.isUnlocked).toList();
 }

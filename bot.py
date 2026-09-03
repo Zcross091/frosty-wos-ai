@@ -345,6 +345,125 @@ async def slash_reindex(interaction: discord.Interaction, local_only: bool = Tru
         await interaction.followup.send(embed=embed)
 
 
+def calculate_state_telemetry(input_val: int, is_state_number: bool = True) -> Dict:
+    """Calculates State Age, Generation, Active Heroes, Unlocked Features, and Next Milestone."""
+    if is_state_number:
+        if input_val <= 100:
+            age = int(round(1350 - (input_val * 2.5)))
+        elif input_val <= 500:
+            age = int(round(1100 - ((input_val - 100) * 1.5)))
+        elif input_val <= 1000:
+            age = int(round(500 - ((input_val - 500) * 0.7)))
+        else:
+            age = int(round(150 - ((input_val - 1000) * 0.4)))
+        age = max(1, min(1600, age))
+    else:
+        age = max(1, min(2500, input_val))
+
+    # Milestones definition
+    milestones = [
+        (0, "Gen 1 Heroes (Jeronimo, Natalia, Molly)", "Hero"),
+        (14, "Tundra Territory Opens", "Event"),
+        (40, "Gen 2 Heroes (Flint, Alonso, Philly)", "Hero"),
+        (45, "Chief Gear & Charms T1", "Gear"),
+        (53, "Sunfire Castle Battle", "Event"),
+        (54, "Pet Gen 1 & Beast Cage (Hyena, Wolf, Ox)", "Pet"),
+        (60, "Fire Crystal 1–3 Age (FC Troops)", "Fire Crystal"),
+        (80, "State vs State (SvS) & King of Icefield", "Event"),
+        (90, "Pet Gen 2 (Titan Roc, Giant Tapir)", "Pet"),
+        (100, "State Transfer Phase 1", "Event"),
+        (120, "Gen 3 Heroes (Mia, Logan, Greg)", "Hero"),
+        (140, "Pet Gen 3 (Snow Leopard, Giant Elk)", "Pet"),
+        (150, "Fire Crystal 4–5 & Crystal Lab", "Fire Crystal"),
+        (180, "Gen 4 Heroes (Lynn, Ahmose, Reina)", "Hero"),
+        (200, "Pet Gen 4 (Cave Lion, Snow Ape)", "Pet"),
+        (220, "War Academy & T11 Troops", "Academy"),
+        (250, "Gen 5 Heroes (Hector, Norah, Gwen)", "Hero"),
+        (280, "Pet Gen 5 (Iron Rhino, Saber-tooth)", "Pet"),
+        (300, "Fire Crystal 6–8 Age", "Fire Crystal"),
+        (320, "Gen 6 Heroes (Renee, Wayne, Wu Ming)", "Hero"),
+        (360, "Pet Gen 6 (Titan Beaver, Gorgon Viper)", "Pet"),
+        (400, "Gen 7 Heroes (Bradley, Edith, Gordon)", "Hero"),
+        (450, "Chief Gear T4 & Legendary Charms", "Gear"),
+        (480, "Gen 8 Heroes (Hendrik, Gatot, Sonya) & Pet Gen 7", "Hero"),
+        (500, "Fire Crystal 9–10 Age", "Fire Crystal"),
+        (550, "Gen 9 Heroes (Magnus, Fred, Xura)", "Hero"),
+        (620, "Gen 10 Heroes (Blanchette, Gregory, Freya)", "Hero"),
+        (690, "Gen 11 Heroes (Eleonora, Lloyd, Rufus)", "Hero"),
+        (750, "Fire Crystal 11–12 & T12 Troops", "Fire Crystal"),
+        (760, "Gen 12 Heroes (Ligeia, Hervor, Karol)", "Hero"),
+        (830, "Gen 13 Heroes (Gisela, Flora, Vulcanus)", "Hero"),
+        (900, "Gen 14 Heroes (Cara, Elif, Dominic)", "Hero"),
+        (960, "Gen 15 Heroes (Hank, Estrella, Viveca)", "Hero"),
+        (1160, "Gen 16 Heroes (Seigel, Ursar, Aisling)", "Hero"),
+        (1240, "Gen 17 Heroes (Aiden, Bertha, Eleanor)", "Hero"),
+    ]
+
+    unlocked = [m for m in milestones if age >= m[0]]
+    upcoming = [m for m in milestones if age < m[0]]
+    next_m = upcoming[0] if upcoming else None
+
+    # Gen calculation
+    gen_unlocks = {
+        1: 0, 2: 40, 3: 120, 4: 180, 5: 250, 6: 320, 7: 400, 8: 480,
+        9: 550, 10: 620, 11: 690, 12: 760, 13: 830, 14: 900, 15: 960, 16: 1160, 17: 1240
+    }
+    cur_gen = 1
+    for g in sorted(gen_unlocks.keys(), reverse=True):
+        if age >= gen_unlocks[g]:
+            cur_gen = g
+            break
+
+    return {
+        "age": age,
+        "gen": cur_gen,
+        "unlocked_count": len(unlocked),
+        "total_count": len(milestones),
+        "recent_unlocked": [m[1] for m in unlocked[-3:]],
+        "next_milestone": next_m,
+        "days_to_next": (next_m[0] - age) if next_m else None
+    }
+
+
+@bot.tree.command(name="state", description="Check state timeline, server age, unlocked features, and upcoming milestones.")
+@app_commands.describe(state_or_days="Enter your State Number (e.g. 750) or direct server age in days (e.g. 450d)")
+async def slash_state(interaction: discord.Interaction, state_or_days: str):
+    await interaction.response.defer(thinking=True)
+    raw = state_or_days.lower().replace("state", "").replace("s", "").replace("d", "").replace("days", "").strip()
+    val = int(raw) if raw.isdigit() else 750
+    is_days = "d" in state_or_days.lower() or "day" in state_or_days.lower()
+
+    t = calculate_state_telemetry(val, is_state_number=not is_days)
+
+    embed = discord.Embed(
+        title=f"⏱️ Whiteout Survival State Timeline — {'State #' + str(val) if not is_days else 'Server Day ' + str(val)}",
+        description=f"**Estimated Server Age:** `Day ~{t['age']}`\n**Current Active Generation:** `Generation {t['gen']}`",
+        color=FROSTY_COLOR
+    )
+
+    if t['recent_unlocked']:
+        embed.add_field(
+            name="✅ Recently Unlocked Features",
+            value="\n".join([f"• {item}" for item in t['recent_unlocked']]),
+            inline=False
+        )
+
+    if t['next_milestone']:
+        embed.add_field(
+            name="⏳ Next Major Milestone",
+            value=f"• **{t['next_milestone'][1]}**\n• Unlocks on **Day {t['next_milestone'][0]}** (*in ~{t['days_to_next']} days*)",
+            inline=False
+        )
+
+    embed.add_field(
+        name="📜 Feature Progress",
+        value=f"**{t['unlocked_count']}/{t['total_count']}** verified timeline features unlocked.",
+        inline=False
+    )
+    embed.set_footer(text="💡 Tip: Check your Monument 'Kindling Embers' task for exact Day 1 launch date.")
+    await interaction.followup.send(embed=embed)
+
+
 @bot.tree.command(name="help", description="Show Frosty AI commands and strategic capabilities.")
 async def slash_help(interaction: discord.Interaction):
     embed = discord.Embed(
@@ -353,6 +472,7 @@ async def slash_help(interaction: discord.Interaction):
         color=FROSTY_COLOR
     )
     embed.add_field(name="⚔️ `/wos [question]` or `!wos`", value="Ask any strategic question (e.g. *'what is a hero lineup'*, *'Flint vs Jeronimo'*).", inline=False)
+    embed.add_field(name="⏱️ `/state [number]` or `!state`", value="Check your server age, unlocked features (FC, Pets, SvS), and next milestone countdown.", inline=False)
     embed.add_field(name="👑 `/hero [name]` or `!hero`", value="Get detailed skill breakdowns, gear recommendations, and evaluations for any hero.", inline=False)
     embed.add_field(name="🛡️ `/lineup [mode] [gen]` or `!lineup`", value="Get recommended 3-hero formations and troop ratios (50/20/30, 4-1-1).", inline=False)
     embed.add_field(name="🐻 `/bear` or `!bear`", value="Instant Bear Trap guide (10/10/80 ratio, Jessie/Seo-yoon joiner damage buffs).", inline=False)
@@ -372,6 +492,44 @@ async def prefix_wos(ctx, *, question: str):
     async with ctx.typing():
         embed, view = await generate_frosty_response(ctx.channel.id, ctx.author, question)
         await ctx.send(embed=embed, view=view)
+
+
+@bot.command(name="state")
+async def prefix_state(ctx, *, state_or_days: str = "750"):
+    async with ctx.typing():
+        raw = state_or_days.lower().replace("state", "").replace("s", "").replace("d", "").replace("days", "").strip()
+        val = int(raw) if raw.isdigit() else 750
+        is_days = "d" in state_or_days.lower() or "day" in state_or_days.lower()
+
+        t = calculate_state_telemetry(val, is_state_number=not is_days)
+
+        embed = discord.Embed(
+            title=f"⏱️ Whiteout Survival State Timeline — {'State #' + str(val) if not is_days else 'Server Day ' + str(val)}",
+            description=f"**Estimated Server Age:** `Day ~{t['age']}`\n**Current Active Generation:** `Generation {t['gen']}`",
+            color=FROSTY_COLOR
+        )
+
+        if t['recent_unlocked']:
+            embed.add_field(
+                name="✅ Recently Unlocked Features",
+                value="\n".join([f"• {item}" for item in t['recent_unlocked']]),
+                inline=False
+            )
+
+        if t['next_milestone']:
+            embed.add_field(
+                name="⏳ Next Major Milestone",
+                value=f"• **{t['next_milestone'][1]}**\n• Unlocks on **Day {t['next_milestone'][0]}** (*in ~{t['days_to_next']} days*)",
+                inline=False
+            )
+
+        embed.add_field(
+            name="📜 Feature Progress",
+            value=f"**{t['unlocked_count']}/{t['total_count']}** verified timeline features unlocked.",
+            inline=False
+        )
+        embed.set_footer(text="💡 Tip: Check your Monument 'Kindling Embers' task for exact Day 1 launch date.")
+        await ctx.send(embed=embed)
 
 
 @bot.command(name="hero")
