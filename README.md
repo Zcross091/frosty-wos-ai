@@ -76,6 +76,7 @@ Frosty fully supports both modern **Slash Commands (`/`)** with instant autocomp
 | `/hero [name]` | `!hero [name]` | Complete hero dossier (Generation, Troop Type, Skills, Exclusive Gear, F2P vs P2W verdict). |
 | `/lineup [mode] [gen]` | `!lineup [mode]` | Recommended 3-hero lineups and troop ratios for PvP, Bear Trap, Castle Defense, and Foundry. |
 | `/bear` | `!bear` | Master Bear Trap cheat sheet: `10/10/80` troop ratio, rally joiner Jessie/Seo-yoon buffs, and leader setups. |
+| `/bearsim [capacity] [tier]` | `!bearsim [capacity]` | Interactive Bear Trap DPS Simulator with exact troop breakdown and Jessie joiner boost calculations. |
 | `/event [name]` | `!event [name]` | Walkthroughs and tips for Crazy Joe, Foundry Battle, Frostfire Mine, Sunfire Castle, and SvS. |
 | `/expert [name]` | `!expert [name]` | Dawn Academy expert profiles, sigil optimization, and Strategic Pausing breakpoints. |
 | `/status` | `!status` | Real-time bot diagnostics: active AI engine, RAM consumption, websocket latency, and indexed knowledge chunks. |

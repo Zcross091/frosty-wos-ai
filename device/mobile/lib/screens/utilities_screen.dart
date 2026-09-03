@@ -11,7 +11,7 @@ class UtilitiesScreen extends StatefulWidget {
 }
 
 class _UtilitiesScreenState extends State<UtilitiesScreen> {
-  int _activeTab = 0; // 0: FC Calc, 1: Charms, 2: SvS Points, 3: Transfer, 4: Gift Codes, 5: UTC Timers
+  int _activeTab = 0; // 0: FC Calc, 1: Charms, 2: SvS Points, 3: Bear Trap Simulator, 4: Transfer, 5: Gift Codes, 6: UTC Timers
 
   // FC Calculator State
   String _fcBuildingType = 'furnace';
@@ -26,12 +26,19 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
   String _svsActivity = 'fc';
   final TextEditingController _svsAmountController = TextEditingController(text: '1000');
 
+  // Bear Trap Simulator State
+  final TextEditingController _bearMarchCapacityController = TextEditingController(text: '150000');
+  String _bearTroopTier = 'T10';
+  String _bearRatioPreset = '10/10/80';
+  int _bearJoinerJessieCount = 4;
+
   // Transfer Calculator State
   final TextEditingController _transferPowerController = TextEditingController(text: '150');
 
   @override
   void dispose() {
     _svsAmountController.dispose();
+    _bearMarchCapacityController.dispose();
     _transferPowerController.dispose();
     super.dispose();
   }
@@ -200,9 +207,10 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
                   _buildSubTab(0, '💎 Fire Crystal', 'FC'),
                   _buildSubTab(1, '🛡️ Chief Charms', 'Charms'),
                   _buildSubTab(2, '🏆 SvS Points', 'SvS'),
-                  _buildSubTab(3, '🚀 State Transfer', 'Transfer'),
-                  _buildSubTab(4, '🎁 Gift Codes', 'Codes'),
-                  _buildSubTab(5, '⏰ UTC Timers', 'Timers'),
+                  _buildSubTab(3, '🐻 Bear Simulator', 'Bear'),
+                  _buildSubTab(4, '🚀 State Transfer', 'Transfer'),
+                  _buildSubTab(5, '🎁 Gift Codes', 'Codes'),
+                  _buildSubTab(6, '⏰ UTC Timers', 'Timers'),
                 ],
               ),
             ),
@@ -263,10 +271,12 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
       case 2:
         return _buildSvSCalculator();
       case 3:
-        return _buildTransferCalculator();
+        return _buildBearTrapSimulator();
       case 4:
-        return _buildGiftCodesView();
+        return _buildTransferCalculator();
       case 5:
+        return _buildGiftCodesView();
+      case 6:
         return _buildUTCTimersView();
       default:
         return const SizedBox();
@@ -533,7 +543,282 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
     );
   }
 
-  // --- 4. State Transfer Calculator ---
+  // --- 4. Bear Trap Damage Simulator ---
+  Widget _buildBearTrapSimulator() {
+    final int capacity = int.tryParse(_bearMarchCapacityController.text.trim()) ?? 150000;
+
+    // Tier base damage multipliers
+    final Map<String, double> tierMultipliers = {
+      'T8': 1.0,
+      'T9': 1.35,
+      'T10': 1.85,
+      'T11': 2.45,
+      'T12': 3.20,
+    };
+    final double tierMult = tierMultipliers[_bearTroopTier] ?? 1.85;
+
+    // Ratio distribution & DPS multipliers
+    double infPct = 0.10;
+    double lanPct = 0.10;
+    double mrkPct = 0.80;
+    double ratioEfficiency = 1.95;
+
+    if (_bearRatioPreset == '0/20/80') {
+      infPct = 0.0;
+      lanPct = 0.20;
+      mrkPct = 0.80;
+      ratioEfficiency = 1.90;
+    } else if (_bearRatioPreset == '33/33/33') {
+      infPct = 0.334;
+      lanPct = 0.333;
+      mrkPct = 0.333;
+      ratioEfficiency = 1.00;
+    }
+
+    final int infCount = (capacity * infPct).round();
+    final int lanCount = (capacity * lanPct).round();
+    final int mrkCount = capacity - infCount - lanCount;
+
+    // Joiner buff (+25% per Jessie / Seo-yoon / Jader up to 4 stacks = +100%)
+    final double joinerBonusPct = _bearJoinerJessieCount * 25.0;
+    final double joinerMultiplier = 1.0 + (joinerBonusPct / 100.0);
+
+    // Total Tactical Efficiency Score
+    final double totalMultiplier = tierMult * ratioEfficiency * joinerMultiplier;
+    final double dpsGainOverDefault = ((totalMultiplier / (tierMult * 1.0 * 1.0)) - 1.0) * 100.0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildCard(
+          title: '🐻 Bear Trap Rally Configuration',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('March Capacity (Single Rally / Lead):', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+              const SizedBox(height: 6),
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF132238),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF38BDF8).withOpacity(0.3)),
+                ),
+                child: TextField(
+                  controller: _bearMarchCapacityController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  decoration: const InputDecoration(
+                    suffixText: 'Troops',
+                    suffixStyle: TextStyle(color: Color(0xFF00F0FF)),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Quick Capacity Chips
+              Wrap(
+                spacing: 8,
+                children: [100000, 130000, 160000, 200000].map((c) {
+                  return ActionChip(
+                    label: Text('${c ~/ 1000}k'),
+                    labelStyle: const TextStyle(fontSize: 11, color: Colors.white70),
+                    backgroundColor: const Color(0xFF0F192C),
+                    side: const BorderSide(color: Colors.white24),
+                    onPressed: () {
+                      _bearMarchCapacityController.text = c.toString();
+                      setState(() {});
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+
+              // Troop Tier Picker & Ratio Preset
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Troop Tier:', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF132238),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFF38BDF8).withOpacity(0.3)),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _bearTroopTier,
+                              isExpanded: true,
+                              dropdownColor: const Color(0xFF0F192C),
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              items: ['T8', 'T9', 'T10', 'T11', 'T12'].map((t) {
+                                return DropdownMenuItem(value: t, child: Text(t));
+                              }).toList(),
+                              onChanged: (val) {
+                                if (val != null) setState(() => _bearTroopTier = val);
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Troop Ratio:', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF132238),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFF38BDF8).withOpacity(0.3)),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _bearRatioPreset,
+                              isExpanded: true,
+                              dropdownColor: const Color(0xFF0F192C),
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                              items: const [
+                                DropdownMenuItem(value: '10/10/80', child: Text('10/10/80 (Meta)')),
+                                DropdownMenuItem(value: '0/20/80', child: Text('0/20/80 (Marksman)')),
+                                DropdownMenuItem(value: '33/33/33', child: Text('33/33/33 (Default)')),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) setState(() => _bearRatioPreset = val);
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Joiner Jessie/Buff Count Slider/Counter
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Top Joiners with Jessie / Buffs (+25% each):', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                      Text('$_bearJoinerJessieCount Joiners (+${joinerBonusPct.toInt()}% Total Skill Buff)',
+                          style: const TextStyle(color: Color(0xFF00F0FF), fontSize: 13, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.remove_circle_outline, color: Color(0xFF38BDF8)),
+                        onPressed: _bearJoinerJessieCount > 0
+                            ? () => setState(() => _bearJoinerJessieCount--)
+                            : null,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add_circle_outline, color: Color(0xFF00F0FF)),
+                        onPressed: _bearJoinerJessieCount < 4
+                            ? () => setState(() => _bearJoinerJessieCount++)
+                            : null,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Simulation Results Card
+        _buildCard(
+          title: '📊 Tactical Damage Output Simulation',
+          child: Column(
+            children: [
+              _buildResultRow('Overall Damage Multiplier', '${totalMultiplier.toStringAsFixed(2)}x Boost', const Color(0xFF00F0FF)),
+              const SizedBox(height: 8),
+              _buildResultRow('DPS Surge Over Standard', '+${dpsGainOverDefault.toStringAsFixed(0)}% Damage', const Color(0xFF10B981)),
+              const SizedBox(height: 12),
+              const Divider(color: Colors.white12),
+              const SizedBox(height: 12),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text('🏹 Recommended March Troop Breakdown:',
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTroopBox('🛡️ Infantry', '${_formatNumber(infCount)} (${(infPct * 100).toInt()}%)', const Color(0xFF38BDF8)),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildTroopBox('🐎 Lancer', '${_formatNumber(lanCount)} (${(lanPct * 100).toInt()}%)', const Color(0xFFF59E0B)),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildTroopBox('🏹 Marksman', '${_formatNumber(mrkCount)} (${(mrkPct * 100).toInt()}%)', const Color(0xFFEF4444)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Strategy Tips Card
+        _buildCard(
+          title: '💡 Bear Trap Master Strategy',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text('• Marksmen deal ~2.2x higher damage than Infantry vs Bear Trap because the Bear deals zero lethal return damage.',
+                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12, height: 1.4)),
+              SizedBox(height: 6),
+              Text('• Top 4 Rally Joiners MUST send Jessie (+25%), Jader (+25%), or Seo-yoon (+20%) as their 1st Hero for maximum damage stacking.',
+                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12, height: 1.4)),
+              SizedBox(height: 6),
+              Text('• Use March Speedups to quickly return marches and re-join multiple active alliance rallies.',
+                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12, height: 1.4)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTroopBox(String label, String count, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF132238),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.4)),
+      ),
+      child: Column(
+        children: [
+          Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text(count, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  // --- 5. State Transfer Calculator ---
   Widget _buildTransferCalculator() {
     final double power = double.tryParse(_transferPowerController.text.trim()) ?? 150.0;
     int passes = 1;

@@ -874,6 +874,94 @@ async def slash_svs(interaction: discord.Interaction, activity: app_commands.Cho
     await interaction.response.send_message(embed=embed)
 
 
+@bot.tree.command(name="bear", description="Instant Bear Trap rally setup cheat sheet & joiner buff guide.")
+async def slash_bear(interaction: discord.Interaction):
+    embed = discord.Embed(
+        title="🐻 Master Bear Trap Strategy Cheat Sheet",
+        description="Maximize your alliance Bear Trap damage score with core Whiteout Survival battle mechanics:",
+        color=FROSTY_COLOR
+    )
+    embed.add_field(
+        name="🏹 Optimal Troop Ratio: `10 / 10 / 80`",
+        value="• **10% Infantry**\n• **10% Lancers**\n• **80% Marksmen**\n*(Bear deals zero lethal damage to frontlines—Marksmen deal ~2.2x damage!)*",
+        inline=False
+    )
+    embed.add_field(
+        name="⭐ Top 4 Rally Joiners: Jessie / Jader / Seo-yoon",
+        value="• The **first 4 joiners** MUST send **Jessie (+25% Dmg)**, **Jader (+25% Dmg)**, or **Seo-yoon (+20% Attack)** as their 1st Hero.\n• Stacks up to **+100% total damage boost** for the entire rally!",
+        inline=False
+    )
+    embed.add_field(
+        name="⚡ Fast March Rotation",
+        value="• Use 25% March Speedups to return quickly.\n• Keep all 4-6 march queues cycling into open alliance rallies without downtime.",
+        inline=False
+    )
+    embed.set_footer(text="Frosty AI • Bear Trap Intelligence")
+    await interaction.response.send_message(embed=embed)
+
+
+@bot.tree.command(name="bearsim", description="Calculate estimated Bear Trap DPS multiplier and exact troop breakdown.")
+@app_commands.describe(
+    march_capacity="Total troops in your march (e.g. 150000)",
+    troop_tier="Select troop tier (e.g. T10)",
+    ratio="Troop composition preset",
+    joiner_buff_count="Number of top rally joiners with Jessie (+25% each, 0 to 4)"
+)
+@app_commands.choices(
+    troop_tier=[
+        app_commands.Choice(name="T8 Troops", value="T8"),
+        app_commands.Choice(name="T9 Troops", value="T9"),
+        app_commands.Choice(name="T10 Troops", value="T10"),
+        app_commands.Choice(name="T11 Troops", value="T11"),
+        app_commands.Choice(name="T12 Troops", value="T12"),
+    ],
+    ratio=[
+        app_commands.Choice(name="10/10/80 (Meta High-DPS Marksman)", value="10/10/80"),
+        app_commands.Choice(name="0/20/80 (Pure DPS)", value="0/20/80"),
+        app_commands.Choice(name="33/33/33 (Standard Default)", value="33/33/33"),
+    ]
+)
+async def slash_bearsim(interaction: discord.Interaction, march_capacity: int, troop_tier: app_commands.Choice[str], ratio: app_commands.Choice[str], joiner_buff_count: int = 4):
+    joiners = max(0, min(4, joiner_buff_count))
+    tier_mults = {"T8": 1.0, "T9": 1.35, "T10": 1.85, "T11": 2.45, "T12": 3.20}
+    t_mult = tier_mults.get(troop_tier.value, 1.85)
+
+    if ratio.value == "10/10/80":
+        inf_pct, lan_pct, mrk_pct, r_mult = 0.10, 0.10, 0.80, 1.95
+    elif ratio.value == "0/20/80":
+        inf_pct, lan_pct, mrk_pct, r_mult = 0.0, 0.20, 0.80, 1.90
+    else:
+        inf_pct, lan_pct, mrk_pct, r_mult = 0.334, 0.333, 0.333, 1.00
+
+    inf_count = int(march_capacity * inf_pct)
+    lan_count = int(march_capacity * lan_pct)
+    mrk_count = march_capacity - inf_count - lan_count
+
+    joiner_bonus_pct = joiners * 25
+    joiner_mult = 1.0 + (joiner_bonus_pct / 100.0)
+
+    total_multiplier = t_mult * r_mult * joiner_mult
+    surge_pct = ((total_multiplier / (t_mult * 1.0 * 1.0)) - 1.0) * 100.0
+
+    embed = discord.Embed(
+        title="🐻 Bear Trap Tactical Damage Simulator",
+        description=f"Configuration: **{march_capacity:,} Troops** ({troop_tier.name}) with **{ratio.name}**",
+        color=SUCCESS_COLOR
+    )
+    embed.add_field(name="Overall Damage Multiplier", value=f"💥 **{total_multiplier:.2f}x Damage Boost**", inline=True)
+    embed.add_field(name="DPS Surge vs Standard", value=f"🚀 **+{surge_pct:.0f}% Damage**", inline=True)
+    embed.add_field(name="Joiner Buff Contribution", value=f"⭐ **{joiners} Jessie Joiners (+{joiner_bonus_pct}%)**", inline=True)
+    embed.add_field(
+        name="🏹 Exact Troop Breakdown",
+        value=f"• 🛡️ **Infantry:** `{inf_count:,}` ({(inf_pct*100):.0f}%)\n"
+              f"• 🐎 **Lancers:** `{lan_count:,}` ({(lan_pct*100):.0f}%)\n"
+              f"• 🏹 **Marksmen:** `{mrk_count:,}` ({(mrk_pct*100):.0f}%)",
+        inline=False
+    )
+    embed.set_footer(text="💡 Tip: Marksmen deal ~2.2x damage vs Bear Trap!")
+    await interaction.response.send_message(embed=embed)
+
+
 @bot.tree.command(name="transfer", description="Calculate required State Transfer Passes based on Chief Power.")
 @app_commands.describe(power_millions="Your Chief Power in Millions (e.g. 150 for 150M Power)")
 async def slash_transfer(interaction: discord.Interaction, power_millions: float):
@@ -1217,6 +1305,87 @@ async def prefix_svs(ctx, *, args: str = "fc 1000"):
     )
     embed.add_field(name="Total SvS Points Earned", value=f"🌟 **{pts:,} Points**", inline=False)
     embed.add_field(name="Optimal Day to Use", value=f"📅 **{info['best_day']}**", inline=False)
+    await ctx.send(embed=embed)
+
+
+@bot.command(name="bear")
+async def prefix_bear(ctx):
+    embed = discord.Embed(
+        title="🐻 Master Bear Trap Strategy Cheat Sheet",
+        description="Maximize your alliance Bear Trap damage score with core Whiteout Survival battle mechanics:",
+        color=FROSTY_COLOR
+    )
+    embed.add_field(
+        name="🏹 Optimal Troop Ratio: `10 / 10 / 80`",
+        value="• **10% Infantry**\n• **10% Lancers**\n• **80% Marksmen**\n*(Bear deals zero lethal damage to frontlines—Marksmen deal ~2.2x damage!)*",
+        inline=False
+    )
+    embed.add_field(
+        name="⭐ Top 4 Rally Joiners: Jessie / Jader / Seo-yoon",
+        value="• The **first 4 joiners** MUST send **Jessie (+25% Dmg)**, **Jader (+25% Dmg)**, or **Seo-yoon (+20% Attack)** as their 1st Hero.\n• Stacks up to **+100% total damage boost** for the entire rally!",
+        inline=False
+    )
+    embed.add_field(
+        name="⚡ Fast March Rotation",
+        value="• Use 25% March Speedups to return quickly.\n• Keep all 4-6 march queues cycling into open alliance rallies without downtime.",
+        inline=False
+    )
+    await ctx.send(embed=embed)
+
+
+@bot.command(name="bearsim")
+async def prefix_bearsim(ctx, *, args: str = "150000 T10 10/10/80 4"):
+    parts = args.strip().split()
+    cap = 150000
+    tier = "T10"
+    ratio_str = "10/10/80"
+    joiners = 4
+
+    if len(parts) >= 1 and parts[0].isdigit():
+        cap = int(parts[0])
+    if len(parts) >= 2:
+        tier = parts[1].upper()
+    if len(parts) >= 3:
+        ratio_str = parts[2]
+    if len(parts) >= 4 and parts[3].isdigit():
+        joiners = max(0, min(4, int(parts[3])))
+
+    tier_mults = {"T8": 1.0, "T9": 1.35, "T10": 1.85, "T11": 2.45, "T12": 3.20}
+    t_mult = tier_mults.get(tier, 1.85)
+
+    if "0/20/80" in ratio_str:
+        inf_pct, lan_pct, mrk_pct, r_mult = 0.0, 0.20, 0.80, 1.90
+    elif "33/33/33" in ratio_str or "equal" in ratio_str.lower():
+        inf_pct, lan_pct, mrk_pct, r_mult = 0.334, 0.333, 0.333, 1.00
+    else:
+        inf_pct, lan_pct, mrk_pct, r_mult = 0.10, 0.10, 0.80, 1.95
+
+    inf_count = int(cap * inf_pct)
+    lan_count = int(cap * lan_pct)
+    mrk_count = cap - inf_count - lan_count
+
+    joiner_bonus_pct = joiners * 25
+    joiner_mult = 1.0 + (joiner_bonus_pct / 100.0)
+
+    total_multiplier = t_mult * r_mult * joiner_mult
+    surge_pct = ((total_multiplier / (t_mult * 1.0 * 1.0)) - 1.0) * 100.0
+
+    embed = discord.Embed(
+        title="🐻 Bear Trap Tactical Damage Simulator",
+        description=f"Configuration: **{cap:,} Troops** ({tier}) with **{ratio_str}**",
+        color=SUCCESS_COLOR
+    )
+    embed.add_field(name="Overall Damage Multiplier", value=f"💥 **{total_multiplier:.2f}x Damage Boost**", inline=True)
+    embed.add_field(name="DPS Surge vs Standard", value=f"🚀 **+{surge_pct:.0f}% Damage**", inline=True)
+    embed.add_field(name="Joiner Buff Contribution", value=f"⭐ **{joiners} Jessie Joiners (+{joiner_bonus_pct}%)**", inline=True)
+    embed.add_field(
+        name="🏹 Exact Troop Breakdown",
+        value=f"• 🛡️ **Infantry:** `{inf_count:,}` ({(inf_pct*100):.0f}%)\n"
+              f"• 🐎 **Lancers:** `{lan_count:,}` ({(lan_pct*100):.0f}%)\n"
+              f"• 🏹 **Marksmen:** `{mrk_count:,}` ({(mrk_pct*100):.0f}%)",
+        inline=False
+    )
+    embed.set_footer(text="💡 Tip: Marksmen deal ~2.2x damage vs Bear Trap!")
     await ctx.send(embed=embed)
 
 
