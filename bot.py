@@ -1233,10 +1233,83 @@ async def slash_reindex(interaction: discord.Interaction, local_only: bool = Tru
         await interaction.followup.send(f"❌ **Reindexing Error:** `{str(e)}`")
 
 
-async def broadcast_announcement_to_guilds(sender: discord.User | discord.Member, message_text: str) -> Tuple[int, int]:
-    """Broadcast an official announcement from the bot owner across all active guilds."""
+def find_best_announcement_channel(guild: discord.Guild) -> Optional[discord.TextChannel]:
+    """
+    Intelligently select the most visible, appropriate public text channel in a guild for official broadcasts.
+    Filters out private channels, moderation logs, rules, verification, and tickets.
+    """
+    ignored_keywords = [
+        "rule", "rules", "verify", "verification", "welcome", "goodbye", "leave",
+        "log", "logs", "audit", "mod", "admin", "staff", "ticket", "tickets",
+        "mute", "ban", "voice", "archive", "afk", "role", "roles", "reaction",
+        "join", "member-log", "server-log", "bot-log", "testing", "sandbox"
+    ]
+
+    def is_channel_ignored(ch_name: str) -> bool:
+        clean_name = ch_name.lower().replace("_", "-")
+        return any(k in clean_name for k in ignored_keywords)
+
+    def can_bot_and_everyone_use(ch: discord.TextChannel) -> bool:
+        bot_perms = ch.permissions_for(guild.me)
+        if not bot_perms.send_messages or not bot_perms.embed_links:
+            return False
+        everyone_perms = ch.permissions_for(guild.default_role)
+        if not everyone_perms.view_channel:
+            return False
+        return True
+
+    # Gather candidate channels where bot can write & everyone can view
+    valid_channels = [ch for ch in guild.text_channels if can_bot_and_everyone_use(ch)]
+    if not valid_channels:
+        # Fallback: channels where bot has write perms even if everyone perms are custom
+        valid_channels = [
+            ch for ch in guild.text_channels 
+            if ch.permissions_for(guild.me).send_messages and ch.permissions_for(guild.me).embed_links
+        ]
+        if not valid_channels:
+            return None
+
+    # Priority groups for community announcements
+    priority_groups = [
+        ["frosty-announcements", "frosty-announcement", "frosty-bot", "frosty-news", "frosty-chat", "frosty"],
+        ["announcements", "announcement", "announcement-chat", "updates", "update", "news", "server-announcements", "alliance-announcements", "broadcast"],
+        ["wos-chat", "wos", "whiteout-survival", "whiteout", "alliance-chat", "game-chat", "strategy"],
+        ["general", "general-chat", "main-chat", "chat", "lounge", "discussion", "talk"],
+        ["bot-commands", "bot-command", "bot-chat", "bot-spam", "commands", "bots", "bot"]
+    ]
+
+    for group in priority_groups:
+        for keyword in group:
+            for ch in valid_channels:
+                if is_channel_ignored(ch.name):
+                    continue
+                clean_name = ch.name.lower().replace("_", "-")
+                if keyword in clean_name:
+                    return ch
+
+    # Fallback to system channel if public and not ignored
+    if guild.system_channel and guild.system_channel in valid_channels and not is_channel_ignored(guild.system_channel.name):
+        return guild.system_channel
+
+    # Fallback to first non-ignored valid channel
+    for ch in valid_channels:
+        if not is_channel_ignored(ch.name):
+            return ch
+
+    return valid_channels[0]
+
+
+async def broadcast_announcement_to_guilds(
+    sender: discord.User | discord.Member, 
+    message_text: str
+) -> Tuple[int, int, List[Dict[str, Any]]]:
+    """
+    Broadcast an official announcement from the bot owner across all active guilds.
+    Returns (success_count, fail_count, delivery_reports).
+    """
     success_count = 0
     fail_count = 0
+    delivery_reports: List[Dict[str, Any]] = []
 
     embed = discord.Embed(
         title="📢 Frosty Official Announcement",
@@ -1251,39 +1324,40 @@ async def broadcast_announcement_to_guilds(sender: discord.User | discord.Member
     embed.set_footer(text="Frosty AI • Tactical Command Network")
 
     for guild in bot.guilds:
-        target_channel = None
-
-        # Priority 1: Channel named announcements / updates / bot / general
-        preferred_names = ["announcements", "frosty-announcements", "frosty-bot", "bot-commands", "bot", "general", "chat"]
-        for name in preferred_names:
-            ch = discord.utils.find(lambda c: name in c.name.lower() and isinstance(c, discord.TextChannel), guild.text_channels)
-            if ch and ch.permissions_for(guild.me).send_messages:
-                target_channel = ch
-                break
-
-        # Priority 2: System channel if bot has write perms
-        if not target_channel and guild.system_channel and guild.system_channel.permissions_for(guild.me).send_messages:
-            target_channel = guild.system_channel
-
-        # Priority 3: First available text channel
-        if not target_channel:
-            for ch in guild.text_channels:
-                if ch.permissions_for(guild.me).send_messages:
-                    target_channel = ch
-                    break
+        target_channel = find_best_announcement_channel(guild)
 
         if target_channel:
             try:
                 await target_channel.send(embed=embed)
                 success_count += 1
+                delivery_reports.append({
+                    "guild": guild.name,
+                    "channel": f"#{target_channel.name}",
+                    "channel_id": target_channel.id,
+                    "status": "success"
+                })
+                logger.info(f"📢 [Broadcast] Delivered to '{guild.name}' ➔ #{target_channel.name} (ID: {target_channel.id})")
                 await asyncio.sleep(0.35)  # Anti-rate-limit spacing
             except Exception as e:
-                logger.warning(f"Could not send announcement to guild {guild.name}: {e}")
+                logger.warning(f"⚠️ [Broadcast] Could not send to guild '{guild.name}' in #{target_channel.name}: {e}")
                 fail_count += 1
+                delivery_reports.append({
+                    "guild": guild.name,
+                    "channel": f"#{target_channel.name}",
+                    "channel_id": target_channel.id,
+                    "status": f"error: {e}"
+                })
         else:
+            logger.warning(f"⚠️ [Broadcast] No suitable writable channel found for guild '{guild.name}'")
             fail_count += 1
+            delivery_reports.append({
+                "guild": guild.name,
+                "channel": "None (No Perms)",
+                "channel_id": None,
+                "status": "missing_perms"
+            })
 
-    return success_count, fail_count
+    return success_count, fail_count, delivery_reports
 
 
 @bot.tree.command(name="sendmessage", description="[Owner Only] Broadcast an official announcement to all servers.")
@@ -1297,17 +1371,28 @@ async def slash_sendmessage(interaction: discord.Interaction, message: str):
         return
 
     await interaction.response.defer(thinking=True, ephemeral=True)
-    success, fail = await broadcast_announcement_to_guilds(interaction.user, message)
+    success, fail, reports = await broadcast_announcement_to_guilds(interaction.user, message)
+
+    lines = []
+    for r in reports[:30]:
+        status_icon = "✅" if r["status"] == "success" else "⚠️"
+        lines.append(f"{status_icon} **{r['guild'][:22]}** ➔ `{r['channel']}`")
+
+    breakdown_text = "\n".join(lines)
+    if len(reports) > 30:
+        breakdown_text += f"\n*...and {len(reports) - 30} more servers.*"
 
     res_embed = discord.Embed(
         title="📢 Broadcast Transmission Complete",
-        description=f"Your message was broadcast across all active Discord servers!\n\n"
+        description=f"Your message was broadcast across active Discord servers!\n\n"
                     f"• ✅ **Delivered to:** `{success}` servers\n"
-                    f"• ⚠️ **Skipped (No Perms):** `{fail}` servers\n"
-                    f"• 🌐 **Total Connected Servers:** `{len(bot.guilds)}`",
+                    f"• ⚠️ **Skipped (No Perms/Hidden):** `{fail}` servers\n"
+                    f"• 🌐 **Total Connected Servers:** `{len(bot.guilds)}`\n\n"
+                    f"**📋 Delivery Destinations:**\n{breakdown_text}",
         color=SUCCESS_COLOR
     )
     await interaction.followup.send(embed=res_embed, ephemeral=True)
+
 
 
 
@@ -1600,13 +1685,23 @@ async def prefix_sendmessage(ctx, *, message: str):
         return
 
     async with ctx.typing():
-        success, fail = await broadcast_announcement_to_guilds(ctx.author, message)
+        success, fail, reports = await broadcast_announcement_to_guilds(ctx.author, message)
+        lines = []
+        for r in reports[:30]:
+            status_icon = "✅" if r["status"] == "success" else "⚠️"
+            lines.append(f"{status_icon} **{r['guild'][:22]}** ➔ `{r['channel']}`")
+
+        breakdown_text = "\n".join(lines)
+        if len(reports) > 30:
+            breakdown_text += f"\n*...and {len(reports) - 30} more servers.*"
+
         res_embed = discord.Embed(
             title="📢 Broadcast Transmission Complete",
-            description=f"Your message was broadcast across all active Discord servers!\n\n"
+            description=f"Your message was broadcast across active Discord servers!\n\n"
                         f"• ✅ **Delivered to:** `{success}` servers\n"
-                        f"• ⚠️ **Skipped (No Perms):** `{fail}` servers\n"
-                        f"• 🌐 **Total Connected Servers:** `{len(bot.guilds)}`",
+                        f"• ⚠️ **Skipped (No Perms/Hidden):** `{fail}` servers\n"
+                        f"• 🌐 **Total Connected Servers:** `{len(bot.guilds)}`\n\n"
+                        f"**📋 Delivery Destinations:**\n{breakdown_text}",
             color=SUCCESS_COLOR
         )
         await ctx.send(embed=res_embed)
