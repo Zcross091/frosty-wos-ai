@@ -74,11 +74,10 @@ _timer_counter = 1
 
 # Active Whiteout Survival Promo Codes (Easy to update and poll)
 ACTIVE_GIFT_CODES = [
-    {"code": "WOS2026", "rewards": "1000 Gems, 5x 1h Speedups, 10x Gold Keys, 500k Meat/Wood"},
-    {"code": "STATEOFPOWER", "rewards": "500 Gems, 10x Advanced Wild Marks, 20x Chief Charm Guides"},
-    {"code": "DC300K", "rewards": "1500 Gems, 20x Mythic Shards, 10x 1h Speedups"},
-    {"code": "FROSTYTACTICS", "rewards": "Exclusive Frosty Avatar Frame, 300 Gems, 5x Stamina Potions"},
-    {"code": "BEARHUNT2026", "rewards": "800 Gems, 100x Stamina, 10x March Speedups"},
+    {"code": "gogoWOS", "status": "🟢 Active & Verified", "rewards": "500 Gems, 2x Gold Keys, 10,000 Hero XP, 20x 5m Speedups"},
+    {"code": "OFFICIALSTORE", "status": "⚡ Webstore Event Code", "rewards": "1,000 Gems, 5x 1h Speedups, 10x Gold Keys, Stamina Potions"},
+    {"code": "GuDokYTKOR", "status": "⚡ Limited Event Code", "rewards": "300 Gems, 5x 1h Speedups, 2,000 Hero XP"},
+    {"code": "2ndYoutubeKR", "status": "⚡ Limited Event Code", "rewards": "300 Gems, 5x 1h Speedups, 2,000 Hero XP"},
 ]
 
 # Initialize Core Services
@@ -560,6 +559,17 @@ def load_utility_data() -> Dict[str, Any]:
         except Exception:
             pass
     return {}
+
+
+def save_utility_data(data: Dict[str, Any]) -> bool:
+    json_path = os.path.join(os.path.dirname(__file__), "utility_data.json")
+    try:
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        return True
+    except Exception as e:
+        logger.error(f"Error saving utility data: {e}")
+        return False
 
 FC_BUILDING_TABLE = {
     1: (600, 0, 350, 0, 8),
@@ -1086,23 +1096,116 @@ async def slash_transfer(interaction: discord.Interaction, power_millions: float
     await interaction.response.send_message(embed=embed)
 
 
-@bot.tree.command(name="codes", description="View active Whiteout Survival gift codes and redemption link.")
-async def slash_codes(interaction: discord.Interaction):
-    codes = load_utility_data().get("gift_codes", ACTIVE_GIFT_CODES)
+@bot.tree.command(name="codes", description="View active Whiteout Survival gift codes, or add/remove codes (Admin).")
+@app_commands.describe(
+    action="View active codes, or add/remove codes (Admin)",
+    code="The promo code (e.g. gogoWOS)",
+    rewards="Description of rewards (when adding a new code)"
+)
+@app_commands.choices(action=[
+    app_commands.Choice(name="View Active Codes", value="view"),
+    app_commands.Choice(name="[Admin] Add New Code", value="add"),
+    app_commands.Choice(name="[Admin] Remove Expired Code", value="remove"),
+])
+async def slash_codes(
+    interaction: discord.Interaction,
+    action: Optional[app_commands.Choice[str]] = None,
+    code: Optional[str] = None,
+    rewards: Optional[str] = None
+):
+    action_val = action.value if action else "view"
+    data = load_utility_data()
+    gift_codes = data.get("gift_codes", list(ACTIVE_GIFT_CODES))
+
+    # --- ADMIN ACTIONS: ADD / REMOVE ---
+    if action_val in ["add", "remove"]:
+        if not is_authorized_admin(interaction.user):
+            await interaction.response.send_message(
+                f"⛔ **Access Denied:** Only the Supreme Commander (`{', '.join(AUTHORIZED_ADMIN_USERNAMES)}`) can manage gift codes.",
+                ephemeral=True
+            )
+            return
+
+        if not code:
+            await interaction.response.send_message("⚠️ Please provide the `code` parameter to add or remove.", ephemeral=True)
+            return
+
+        clean_code = code.strip()
+
+        if action_val == "add":
+            clean_rewards = rewards.strip() if rewards else "Free In-Game Rewards (Gems, Speedups, Gold Keys)"
+            existing = [c for c in gift_codes if c["code"].lower() == clean_code.lower()]
+            if existing:
+                existing[0]["code"] = clean_code
+                existing[0]["rewards"] = clean_rewards
+                existing[0]["status"] = "🟢 Active & Verified"
+            else:
+                gift_codes.insert(0, {
+                    "code": clean_code,
+                    "status": "🟢 Active & Verified",
+                    "rewards": clean_rewards
+                })
+            data["gift_codes"] = gift_codes
+            save_utility_data(data)
+            await interaction.response.send_message(
+                f"✅ **Gift Code Added!** Code `{clean_code}` is now live across all servers with rewards: *{clean_rewards}*.",
+                ephemeral=True
+            )
+            return
+
+        elif action_val == "remove":
+            new_codes = [c for c in gift_codes if c["code"].lower() != clean_code.lower()]
+            if len(new_codes) == len(gift_codes):
+                await interaction.response.send_message(f"⚠️ Code `{clean_code}` was not found in the active database.", ephemeral=True)
+                return
+            data["gift_codes"] = new_codes
+            save_utility_data(data)
+            await interaction.response.send_message(f"🗑️ **Code Removed:** `{clean_code}` was deleted from the active list.", ephemeral=True)
+            return
+
+    # --- VIEW CODES ---
     embed = discord.Embed(
         title="🎁 Whiteout Survival Active Gift Codes",
-        description="Redeem these codes for free Gems, Speedups, Gold Keys, and Stamina:",
+        description=(
+            "Redeem these official codes for free Gems, Speedups, Gold Keys, and Stamina!\n\n"
+            "⚠️ **Important Chief Tips:**\n"
+            "• Codes are **CASE-SENSITIVE** — enter them exactly as shown below.\n"
+            "• Century Games codes are **time-limited** (usually expire in 24–72 hours).\n"
+            "• If a code says *'Invalid or Expired'*, its global redemption limit has been reached."
+        ),
         color=SUCCESS_COLOR
     )
-    for c in codes:
-        embed.add_field(name=f"🔑 `{c['code']}`", value=f"Rewards: {c['rewards']}", inline=False)
+
+    for c in gift_codes:
+        status = c.get("status", "🟢 Active & Verified")
+        embed.add_field(
+            name=f"🔑 `{c['code']}` — {status}",
+            value=f"**Rewards:** {c['rewards']}",
+            inline=False
+        )
+
+    embed.add_field(
+        name="📱 How to Redeem",
+        value=(
+            "• **Android:** Tap Avatar ➔ Settings (Gear icon) ➔ Gift Code ➔ Paste code & confirm.\n"
+            "• **iOS:** Tap the **'🌐 Official Redeem Portal'** button below ➔ Enter Player ID & Code."
+        ),
+        inline=False
+    )
+    embed.set_footer(text="Codes updated dynamically • Frosty AI Command Center")
 
     view = discord.ui.View()
     view.add_item(discord.ui.Button(
-        label="🌐 Redeem Codes Portal",
+        label="🌐 Official Redeem Portal",
         url="https://wos-giftcode.centurygame.com/",
         style=discord.ButtonStyle.link,
         emoji="🎁"
+    ))
+    view.add_item(discord.ui.Button(
+        label="📢 Official Discord Codes",
+        url="https://discord.gg/whiteoutsurvival",
+        style=discord.ButtonStyle.link,
+        emoji="💬"
     ))
     await interaction.response.send_message(embed=embed, view=view)
 
@@ -1584,16 +1687,65 @@ async def prefix_transfer(ctx, *, power: str = "150"):
 
 
 @bot.command(name="codes")
-async def prefix_codes(ctx):
-    codes = load_utility_data().get("gift_codes", ACTIVE_GIFT_CODES)
+async def prefix_codes(ctx, action: Optional[str] = None, code: Optional[str] = None, *, rewards: Optional[str] = None):
+    data = load_utility_data()
+    gift_codes = data.get("gift_codes", list(ACTIVE_GIFT_CODES))
+
+    if action and action.lower() in ["add", "remove"]:
+        if not is_authorized_admin(ctx.author):
+            await ctx.send(f"⛔ **Access Denied:** Only the Supreme Commander can manage gift codes.")
+            return
+        if not code:
+            await ctx.send(f"⚠️ Usage: `{COMMAND_PREFIX}codes add <CODE> <rewards>` or `{COMMAND_PREFIX}codes remove <CODE>`")
+            return
+
+        clean_code = code.strip()
+        if action.lower() == "add":
+            clean_rewards = rewards.strip() if rewards else "Free In-Game Rewards (Gems, Speedups)"
+            existing = [c for c in gift_codes if c["code"].lower() == clean_code.lower()]
+            if existing:
+                existing[0]["code"] = clean_code
+                existing[0]["rewards"] = clean_rewards
+                existing[0]["status"] = "🟢 Active & Verified"
+            else:
+                gift_codes.insert(0, {"code": clean_code, "status": "🟢 Active & Verified", "rewards": clean_rewards})
+            data["gift_codes"] = gift_codes
+            save_utility_data(data)
+            await ctx.send(f"✅ **Gift Code Added!** `{clean_code}` is now live.")
+            return
+        elif action.lower() == "remove":
+            new_codes = [c for c in gift_codes if c["code"].lower() != clean_code.lower()]
+            if len(new_codes) == len(gift_codes):
+                await ctx.send(f"⚠️ Code `{clean_code}` not found.")
+                return
+            data["gift_codes"] = new_codes
+            save_utility_data(data)
+            await ctx.send(f"🗑️ **Code Removed:** `{clean_code}` was deleted.")
+            return
+
     embed = discord.Embed(
         title="🎁 Whiteout Survival Active Gift Codes",
-        description="Redeem these codes for free Gems, Speedups, Gold Keys, and Stamina:",
+        description=(
+            "Redeem these official codes for free Gems, Speedups, Gold Keys, and Stamina!\n\n"
+            "⚠️ **Important Chief Tips:**\n"
+            "• Codes are **CASE-SENSITIVE** — enter them exactly as shown.\n"
+            "• Century Games codes are **time-limited** (usually expire in 24–72 hours)."
+        ),
         color=SUCCESS_COLOR
     )
-    for c in codes:
-        embed.add_field(name=f"🔑 `{c['code']}`", value=f"Rewards: {c['rewards']}", inline=False)
-    embed.set_footer(text="Redeem at https://wos-giftcode.centurygame.com/")
+    for c in gift_codes:
+        status = c.get("status", "🟢 Active & Verified")
+        embed.add_field(
+            name=f"🔑 `{c['code']}` — {status}",
+            value=f"**Rewards:** {c['rewards']}",
+            inline=False
+        )
+    embed.add_field(
+        name="📱 How to Redeem",
+        value="• **Android:** Avatar ➔ Settings ➔ Gift Code\n• **iOS Portal:** https://wos-giftcode.centurygame.com/",
+        inline=False
+    )
+    embed.set_footer(text="Official Portal: https://wos-giftcode.centurygame.com/")
     await ctx.send(embed=embed)
 
 

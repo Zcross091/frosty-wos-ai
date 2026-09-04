@@ -161,19 +161,28 @@ def sync_state_timeline(timeline_md_path: str = "./wos data/State_Timeline.md", 
 
 
 def scrape_online_gift_codes() -> List[Dict[str, str]]:
-    """Fetches active promo gift codes from online sources"""
+    """Fetches active promo gift codes from online sources (e.g. Beebom)"""
     found_codes = []
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
 
     try:
-        url = "https://www.whiteoutsurvival.wiki/gift-codes/"
-        resp = requests.get(url, headers=headers, timeout=6)
+        url = "https://beebom.com/whiteout-survival-codes/"
+        resp = requests.get(url, headers=headers, timeout=10)
         if resp.status_code == 200:
             soup = BeautifulSoup(resp.text, "html.parser")
-            for tag in soup.find_all(["strong", "code", "b"]):
-                txt = tag.get_text().strip().upper()
-                if 5 <= len(txt) <= 20 and txt.isalnum() and not txt.startswith("HTTP") and txt not in ["GIFT", "CODE", "CODES", "WHITEOUT"]:
-                    found_codes.append({"code": txt, "rewards": "Free In-Game Rewards (Gems, Speedups, Gold Keys)"})
+            active_list = soup.find("ul", class_="is-style-copy-code-list")
+            if active_list:
+                for li in active_list.find_all("li"):
+                    strong = li.find("strong")
+                    if strong:
+                        code_txt = strong.get_text().strip()
+                        raw_text = li.get_text().replace("Copy", "").replace("Copied", "").strip()
+                        rewards = raw_text.split(":", 1)[1].strip() if ":" in raw_text else "Free In-Game Rewards (Gems, Speedups)"
+                        found_codes.append({
+                            "code": code_txt,
+                            "status": "🟢 Active & Verified",
+                            "rewards": rewards
+                        })
     except Exception as e:
         logger.debug(f"Online gift codes fetch notice: {e}")
 
