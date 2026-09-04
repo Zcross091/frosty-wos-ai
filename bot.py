@@ -22,6 +22,9 @@ from dotenv import load_dotenv
 from ai_engine import AIEngine
 from knowledge_base import KnowledgeBase, KNOWN_HEROES, KNOWN_EVENTS, KNOWN_EXPERTS
 from ingest import run_full_reindex
+from wos_giftcode_api import redeem_gift_code, ERROR_CODE_MESSAGES
+import registered_players
+from sync_data import scrape_online_gift_codes
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -268,6 +271,9 @@ async def on_ready():
         rotate_presence.start()
     if not check_timers.is_running():
         check_timers.start()
+    if not auto_sync_gift_codes.is_running():
+        auto_sync_gift_codes.start()
+    bot.add_view(CodesActionView())
 
 
 # --- Core Response Generator ---
@@ -1096,20 +1102,261 @@ async def slash_transfer(interaction: discord.Interaction, power_millions: float
     await interaction.response.send_message(embed=embed)
 
 
-@bot.tree.command(name="codes", description="View active Whiteout Survival gift codes, or add/remove codes (Admin).")
+# ==============================================================================
+# 🎁 WHITEOUT SURVIVAL AUTOMATED GIFT CODES & REDEMPTION SYSTEM
+# ==============================================================================
+
+class RegisterModal(discord.ui.Modal, title="Whiteout Survival Auto-Claim"):
+    player_id_input = discord.ui.TextInput(
+        label="Your In-Game Player ID",
+        placeholder="e.g. 123456789 (find under Avatar top-left)",
+        min_length=4,
+        max_length=15,
+        required=True
+    )
+    state_input = discord.ui.TextInput(
+        label="Your State / Kingdom Number",
+        placeholder="e.g. 542 (numbers only)",
+        min_length=1,
+        max_length=5,
+        required=True
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        pid = self.player_id_input.value.strip()
+        state_str = self.state_input.value.strip()
+
+        if not pid.isdigit():
+            await interaction.response.send_message("❌ **Invalid Player ID:** Player ID must consist only of digits.", ephemeral=True)
+            return
+        if not state_str.isdigit():
+            await interaction.response.send_message("❌ **Invalid State Number:** State must be a valid number (e.g. 542).", ephemeral=True)
+            return
+
+        state_num = int(state_str)
+        await interaction.response.defer(ephemeral=True)
+
+        # Quick verification against Century Games API using a known promo code
+        test_code = "gogoWOS"
+        check_res = await redeem_gift_code(pid, state_num, test_code)
+
+        if check_res.get("err_code") == 40020:
+            await interaction.followup.send(
+                f"❌ **Character Verification Failed:**\n"
+                f"Player ID `{pid}` was not found in State `{state_num}` on Century Games servers.\n\n"
+                f"• Please open Whiteout Survival and tap your **Avatar** (top-left) to confirm your exact Player ID and State number!",
+                ephemeral=True
+            )
+            return
+
+        registered_players.register_player(interaction.user.id, pid, state_num, notify_dm=True)
+
+        embed = discord.Embed(
+            title="✅ Successfully Registered for Auto-Claim!",
+            description=(
+                f"Welcome aboard, Chief! Your character is now registered for automated gift code redemption.\n\n"
+                f"👤 **Player ID:** `{pid}`\n"
+                f"🏰 **State:** `{state_num}`\n"
+                f"⚡ **Auto-Claim Status:** `🟢 Active (ON)`\n"
+                f"📬 **Direct Message Alerts:** `🔔 Enabled`\n\n"
+                f"🎁 **What happens next?**\n"
+                f"Whenever a new Whiteout Survival gift code is released, Frosty Bot will automatically redeem it directly to your in-game mailbox!"
+            ),
+            color=SUCCESS_COLOR
+        )
+        embed.set_footer(text="Use /codes action:My Registration Status to check or update your settings anytime.")
+        await interaction.followup.send(embed=embed, ephemeral=True)
+
+
+class CodesActionView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(discord.ui.Button(
+            label="Official Redeem Portal",
+            url="https://wos-giftcode.centurygame.com/",
+            style=discord.ButtonStyle.link,
+            emoji="🌐"
+        ))
+        self.add_item(discord.ui.Button(
+            label="Official Discord Codes",
+            url="https://discord.gg/whiteoutsurvival",
+            style=discord.ButtonStyle.link,
+            emoji="📢"
+        ))
+
+    @discord.ui.button(
+        label="Register for Auto-Claim",
+        style=discord.ButtonStyle.success,
+        emoji="📝",
+        custom_id="frosty_codes_register_btn"
+    )
+    async def register_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(RegisterModal())
+
+    @discord.ui.button(
+        label="My Registration Status",
+        style=discord.ButtonStyle.secondary,
+        emoji="📊",
+        custom_id="frosty_codes_status_btn"
+    )
+    async def status_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        player = registered_players.get_player(interaction.user.id)
+        if not player:
+            embed = discord.Embed(
+                title="📋 Not Registered Yet",
+                description=(
+                    "You haven't registered your Whiteout Survival character for automated gift codes yet.\n\n"
+                    "Click **'📝 Register for Auto-Claim'** above to receive free in-game rewards automatically whenever new codes drop!"
+                ),
+                color=FROSTY_COLOR
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        auto_str = "🟢 Enabled" if player.get("auto_claim", True) else "🔴 Disabled"
+        dm_str = "🔔 Enabled" if player.get("notify_dm", True) else "🔕 Disabled"
+        claimed_list = player.get("claimed_codes", [])
+        claimed_count = len(claimed_list)
+        last_date = player.get("last_claim_at", "No redemptions yet")
+        if last_date and "T" in last_date:
+            last_date = last_date.split("T")[0]
+
+        recent_claimed = ", ".join(f"`{c}`" for c in claimed_list[-6:]) if claimed_list else "None yet"
+
+        embed = discord.Embed(
+            title="📊 Your Auto-Claim Account Status",
+            description=(
+                f"👤 **Player ID:** `{player['player_id']}`\n"
+                f"🏰 **State:** `{player['state']}`\n"
+                f"⚡ **Auto-Claim:** {auto_str}\n"
+                f"📬 **DM Notifications:** {dm_str}\n"
+                f"🎁 **Total Claimed Codes:** `{claimed_count}`\n"
+                f"⏱️ **Last Activity:** `{last_date}`\n"
+                f"🔑 **Recent Codes:** {recent_claimed}\n\n"
+                f"• Use `/codes action:Claim a Code Now` to redeem a code immediately.\n"
+                f"• Use `/codes action:Unregister from Auto-Claim` to remove your registration."
+            ),
+            color=SUCCESS_COLOR
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
+async def dispatch_auto_claim(code: str):
+    """
+    Background worker queue: Iterates through all registered players with auto-claim enabled
+    and redeems the new gift code sequentially with rate-limit pacing.
+    """
+    clean_code = code.strip()
+    active_players = registered_players.get_active_auto_claim_players()
+    if not active_players:
+        logger.info(f"Auto-claim dispatched for code '{clean_code}', but no registered players found.")
+        return
+
+    logger.info(f"🚀 [Auto-Claim] Starting redemption queue for code '{clean_code}' across {len(active_players)} registered players...")
+    claimed_count = 0
+    skipped_count = 0
+    failed_count = 0
+
+    for uid_str, pdata in active_players.items():
+        claimed_list = [c.upper() for c in pdata.get("claimed_codes", [])]
+        if clean_code.upper() in claimed_list:
+            skipped_count += 1
+            continue
+
+        pid = pdata.get("player_id")
+        state = pdata.get("state")
+        if not pid or not state:
+            continue
+
+        try:
+            res = await redeem_gift_code(pid, state, clean_code)
+            is_success = res["success"]
+            registered_players.record_claim(int(uid_str), clean_code, is_success, res["message"])
+
+            if is_success:
+                claimed_count += 1
+                if pdata.get("notify_dm", True):
+                    try:
+                        user = bot.get_user(int(uid_str)) or await bot.fetch_user(int(uid_str))
+                        if user:
+                            dm_embed = discord.Embed(
+                                title="🎁 Frosty Auto-Claim: Gift Code Redeemed!",
+                                description=(
+                                    f"A new Whiteout Survival gift code was automatically claimed for your character!\n\n"
+                                    f"🔑 **Gift Code:** `{clean_code}`\n"
+                                    f"👤 **Player ID:** `{pid}`\n"
+                                    f"🏰 **State:** `{state}`\n\n"
+                                    f"📫 Check your in-game mailbox in Whiteout Survival to collect your rewards!"
+                                ),
+                                color=SUCCESS_COLOR
+                            )
+                            dm_embed.set_footer(text="Frosty Bot • Automated Gift Code Center")
+                            await user.send(embed=dm_embed)
+                    except Exception as dm_err:
+                        logger.debug(f"Could not send DM to {uid_str}: {dm_err}")
+            else:
+                failed_count += 1
+                logger.info(f"[Auto-Claim] Player {pid} (State {state}) code '{clean_code}' returned: {res['message']}")
+
+        except Exception as claim_err:
+            failed_count += 1
+            logger.error(f"[Auto-Claim] Error for user {uid_str}: {claim_err}")
+
+        # Human-like delay & Century Games API rate-limit protection
+        await asyncio.sleep(1.5)
+
+    logger.info(f"✨ [Auto-Claim] Finished queue for '{clean_code}': {claimed_count} claimed, {skipped_count} skipped, {failed_count} failed.")
+
+
+@tasks.loop(hours=4)
+async def auto_sync_gift_codes():
+    """Periodically scans online sources for new promo codes and auto-claims for registered players."""
+    try:
+        data = load_utility_data()
+        gift_codes = data.get("gift_codes", list(ACTIVE_GIFT_CODES))
+        existing_codes = {c["code"].upper() for c in gift_codes}
+
+        new_online = await asyncio.to_thread(scrape_online_gift_codes)
+        found_new = []
+        for oc in new_online:
+            clean_c = oc["code"].strip().upper()
+            if clean_c not in existing_codes and len(clean_c) >= 5:
+                gift_codes.insert(0, oc)
+                existing_codes.add(clean_c)
+                found_new.append(oc["code"].strip())
+
+        if found_new:
+            data["gift_codes"] = gift_codes
+            save_utility_data(data)
+            logger.info(f"🎁 Discovered {len(found_new)} new gift codes: {', '.join(found_new)}")
+            for new_code in found_new:
+                asyncio.create_task(dispatch_auto_claim(new_code))
+    except Exception as e:
+        logger.debug(f"Periodic gift codes check notice: {e}")
+
+
+@bot.tree.command(name="codes", description="Whiteout Survival gift codes & automated redemption service.")
 @app_commands.describe(
-    action="View active codes, or add/remove codes (Admin)",
+    action="View active codes, register for auto-claim, check status, or claim",
+    player_id="Your in-game Player ID (numbers only, for registration)",
+    state="Your State Number (e.g. 542, for registration)",
     code="The promo code (e.g. gogoWOS)",
-    rewards="Description of rewards (when adding a new code)"
+    rewards="Description of rewards (when adding a code)"
 )
 @app_commands.choices(action=[
     app_commands.Choice(name="View Active Codes", value="view"),
-    app_commands.Choice(name="[Admin] Add New Code", value="add"),
+    app_commands.Choice(name="Register for Auto-Claim", value="register"),
+    app_commands.Choice(name="My Registration Status", value="status"),
+    app_commands.Choice(name="Unregister from Auto-Claim", value="unregister"),
+    app_commands.Choice(name="Claim a Code Now", value="claim"),
+    app_commands.Choice(name="[Admin] Add New Code & Auto-Claim", value="add"),
     app_commands.Choice(name="[Admin] Remove Expired Code", value="remove"),
 ])
 async def slash_codes(
     interaction: discord.Interaction,
     action: Optional[app_commands.Choice[str]] = None,
+    player_id: Optional[str] = None,
+    state: Optional[int] = None,
     code: Optional[str] = None,
     rewards: Optional[str] = None
 ):
@@ -1117,11 +1364,136 @@ async def slash_codes(
     data = load_utility_data()
     gift_codes = data.get("gift_codes", list(ACTIVE_GIFT_CODES))
 
+    # --- REGISTER ---
+    if action_val == "register":
+        if not player_id or not state:
+            await interaction.response.send_modal(RegisterModal())
+            return
+
+        clean_pid = player_id.strip()
+        if not clean_pid.isdigit():
+            await interaction.response.send_message("❌ **Invalid Player ID:** Player ID must consist only of numbers.", ephemeral=True)
+            return
+        if state <= 0:
+            await interaction.response.send_message("❌ **Invalid State Number:** State must be a positive number (e.g. 542).", ephemeral=True)
+            return
+
+        await interaction.response.defer(ephemeral=True)
+        test_code = "gogoWOS"
+        check_res = await redeem_gift_code(clean_pid, state, test_code)
+
+        if check_res.get("err_code") == 40020:
+            await interaction.followup.send(
+                f"❌ **Character Verification Failed:**\n"
+                f"Player ID `{clean_pid}` was not found in State `{state}` on Century Games servers.\n\n"
+                f"• Please open Whiteout Survival and tap your **Avatar** (top-left) to confirm your exact Player ID and State number.",
+                ephemeral=True
+            )
+            return
+
+        registered_players.register_player(interaction.user.id, clean_pid, state, notify_dm=True)
+        embed = discord.Embed(
+            title="✅ Registered for Frosty Auto-Claim!",
+            description=(
+                f"Welcome aboard, Chief! Your character is now registered for automated gift code redemption.\n\n"
+                f"👤 **Player ID:** `{clean_pid}`\n"
+                f"🏰 **State:** `{state}`\n"
+                f"⚡ **Auto-Claim Status:** `🟢 Active (ON)`\n"
+                f"📬 **Direct Message Alerts:** `🔔 Enabled`\n\n"
+                f"🎁 **What happens next?**\n"
+                f"Whenever a new Whiteout Survival gift code is released, Frosty Bot will automatically redeem it directly to your in-game mailbox!"
+            ),
+            color=SUCCESS_COLOR
+        )
+        embed.set_footer(text="Use /codes action:My Registration Status to check or update your settings anytime.")
+        await interaction.followup.send(embed=embed, ephemeral=True)
+        return
+
+    # --- STATUS ---
+    if action_val == "status":
+        player = registered_players.get_player(interaction.user.id)
+        if not player:
+            embed = discord.Embed(
+                title="📋 Not Registered Yet",
+                description="You have not registered for auto-claim yet. Use `/codes action:Register for Auto-Claim` to sign up!",
+                color=FROSTY_COLOR
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        auto_str = "🟢 Enabled" if player.get("auto_claim", True) else "🔴 Disabled"
+        dm_str = "🔔 Enabled" if player.get("notify_dm", True) else "🔕 Disabled"
+        claimed_list = player.get("claimed_codes", [])
+        claimed_count = len(claimed_list)
+        last_date = player.get("last_claim_at", "No redemptions yet")
+        if last_date and "T" in last_date:
+            last_date = last_date.split("T")[0]
+        recent_claimed = ", ".join(f"`{c}`" for c in claimed_list[-6:]) if claimed_list else "None yet"
+
+        embed = discord.Embed(
+            title="📊 Your Auto-Claim Status",
+            description=(
+                f"👤 **Player ID:** `{player['player_id']}`\n"
+                f"🏰 **State:** `{player['state']}`\n"
+                f"⚡ **Auto-Claim:** {auto_str}\n"
+                f"📬 **DM Notifications:** {dm_str}\n"
+                f"🎁 **Total Claimed Codes:** `{claimed_count}`\n"
+                f"⏱️ **Last Activity:** `{last_date}`\n"
+                f"🔑 **Recent Codes:** {recent_claimed}\n\n"
+                f"• Use `/codes action:Claim a Code Now` to redeem a code immediately.\n"
+                f"• Use `/codes action:Unregister from Auto-Claim` to remove your registration."
+            ),
+            color=SUCCESS_COLOR
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        return
+
+    # --- UNREGISTER ---
+    if action_val == "unregister":
+        if registered_players.unregister_player(interaction.user.id):
+            await interaction.response.send_message("🗑️ **Account Unregistered:** Your Player ID has been removed from auto-claim.", ephemeral=True)
+        else:
+            await interaction.response.send_message("⚠️ You don't have any account registered.", ephemeral=True)
+        return
+
+    # --- CLAIM SINGLE CODE ---
+    if action_val == "claim":
+        player = registered_players.get_player(interaction.user.id)
+        target_pid = player_id.strip() if player_id else (player["player_id"] if player else None)
+        target_state = state if state else (player["state"] if player else None)
+
+        if not target_pid or not target_state:
+            await interaction.response.send_message(
+                "⚠️ Please register first with `/codes action:Register for Auto-Claim` or provide both `player_id` and `state`.",
+                ephemeral=True
+            )
+            return
+
+        target_code = code.strip() if code else (gift_codes[0]["code"] if gift_codes else "gogoWOS")
+        await interaction.response.defer(ephemeral=True)
+
+        res = await redeem_gift_code(target_pid, target_state, target_code)
+        registered_players.record_claim(interaction.user.id, target_code, res["success"], res["message"])
+
+        status_emoji = "✅" if res["success"] else "ℹ️"
+        embed = discord.Embed(
+            title=f"{status_emoji} Gift Code Redemption Result",
+            description=(
+                f"🔑 **Code:** `{target_code}`\n"
+                f"👤 **Player ID:** `{target_pid}` (State `{target_state}`)\n\n"
+                f"**Result:** {res['message']}"
+            ),
+            color=SUCCESS_COLOR if res["success"] else WARN_COLOR
+        )
+        embed.set_footer(text="Whiteout Survival Official Redeem Service")
+        await interaction.followup.send(embed=embed, ephemeral=True)
+        return
+
     # --- ADMIN ACTIONS: ADD / REMOVE ---
     if action_val in ["add", "remove"]:
         if not is_authorized_admin(interaction.user):
             await interaction.response.send_message(
-                f"⛔ **Access Denied:** Only the Supreme Commander (`{', '.join(AUTHORIZED_ADMIN_USERNAMES)}`) can manage gift codes.",
+                f"⛔ **Access Denied:** Only Supreme Commander (`{', '.join(AUTHORIZED_ADMIN_USERNAMES)}`) can manage gift codes.",
                 ephemeral=True
             )
             return
@@ -1147,8 +1519,14 @@ async def slash_codes(
                 })
             data["gift_codes"] = gift_codes
             save_utility_data(data)
+
+            # Trigger background auto-claim queue for all registered players
+            asyncio.create_task(dispatch_auto_claim(clean_code))
+
             await interaction.response.send_message(
-                f"✅ **Gift Code Added!** Code `{clean_code}` is now live across all servers with rewards: *{clean_rewards}*.",
+                f"✅ **Gift Code Added & Auto-Claim Triggered!**\n"
+                f"• Code `{clean_code}` is live with rewards: *{clean_rewards}*.\n"
+                f"• Frosty Bot has started background auto-claiming for all registered chiefs!",
                 ephemeral=True
             )
             return
@@ -1163,15 +1541,16 @@ async def slash_codes(
             await interaction.response.send_message(f"🗑️ **Code Removed:** `{clean_code}` was deleted from the active list.", ephemeral=True)
             return
 
-    # --- VIEW CODES ---
+    # --- VIEW CODES (DEFAULT) ---
     embed = discord.Embed(
         title="🎁 Whiteout Survival Active Gift Codes",
         description=(
             "Redeem these official codes for free Gems, Speedups, Gold Keys, and Stamina!\n\n"
-            "⚠️ **Important Chief Tips:**\n"
+            "🤖 **Want Free Codes Automatically?**\n"
+            "Click **`[ 📝 Register for Auto-Claim ]`** below! Frosty Bot will automatically claim every future gift code for your character the second it drops!\n\n"
+            "⚠️ **Chief Tips:**\n"
             "• Codes are **CASE-SENSITIVE** — enter them exactly as shown below.\n"
-            "• Century Games codes are **time-limited** (usually expire in 24–72 hours).\n"
-            "• If a code says *'Invalid or Expired'*, its global redemption limit has been reached."
+            "• Century Games codes are **time-limited** (usually expire in 24–72 hours)."
         ),
         color=SUCCESS_COLOR
     )
@@ -1185,28 +1564,16 @@ async def slash_codes(
         )
 
     embed.add_field(
-        name="📱 How to Redeem",
+        name="📱 Manual Redemption Methods",
         value=(
-            "• **Android:** Tap Avatar ➔ Settings (Gear icon) ➔ Gift Code ➔ Paste code & confirm.\n"
-            "• **iOS:** Tap the **'🌐 Official Redeem Portal'** button below ➔ Enter Player ID & Code."
+            "• **Android:** Avatar ➔ Settings (Gear icon) ➔ Gift Code ➔ Paste code & confirm.\n"
+            "• **iOS:** Click the **'Official Redeem Portal'** button below ➔ Enter Player ID, State & Code."
         ),
         inline=False
     )
-    embed.set_footer(text="Codes updated dynamically • Frosty AI Command Center")
+    embed.set_footer(text="Codes updated dynamically • Frosty Automated Gift Code System")
 
-    view = discord.ui.View()
-    view.add_item(discord.ui.Button(
-        label="🌐 Official Redeem Portal",
-        url="https://wos-giftcode.centurygame.com/",
-        style=discord.ButtonStyle.link,
-        emoji="🎁"
-    ))
-    view.add_item(discord.ui.Button(
-        label="📢 Official Discord Codes",
-        url="https://discord.gg/whiteoutsurvival",
-        style=discord.ButtonStyle.link,
-        emoji="💬"
-    ))
+    view = CodesActionView()
     await interaction.response.send_message(embed=embed, view=view)
 
 
@@ -1687,66 +2054,99 @@ async def prefix_transfer(ctx, *, power: str = "150"):
 
 
 @bot.command(name="codes")
-async def prefix_codes(ctx, action: Optional[str] = None, code: Optional[str] = None, *, rewards: Optional[str] = None):
+async def prefix_codes(ctx, action: Optional[str] = None, arg1: Optional[str] = None, arg2: Optional[str] = None, *, extra: Optional[str] = None):
     data = load_utility_data()
     gift_codes = data.get("gift_codes", list(ACTIVE_GIFT_CODES))
 
-    if action and action.lower() in ["add", "remove"]:
-        if not is_authorized_admin(ctx.author):
-            await ctx.send(f"⛔ **Access Denied:** Only the Supreme Commander can manage gift codes.")
+    act = action.lower() if action else "view"
+
+    if act == "register":
+        if not arg1 or not arg2 or not arg1.isdigit() or not arg2.isdigit():
+            await ctx.send(f"⚠️ Usage: `{COMMAND_PREFIX}codes register <PLAYER_ID> <STATE>` (e.g. `{COMMAND_PREFIX}codes register 12345678 542`)")
             return
-        if not code:
+        pid = arg1.strip()
+        state = int(arg2)
+        check_res = await redeem_gift_code(pid, state, "gogoWOS")
+        if check_res.get("err_code") == 40020:
+            await ctx.send(f"❌ **Verification Failed:** Player ID `{pid}` was not found in State `{state}` on Century Games servers.")
+            return
+        registered_players.register_player(ctx.author.id, pid, state, notify_dm=True)
+        await ctx.send(f"✅ **Registered!** Player ID `{pid}` (State `{state}`) is now active for automatic gift code redemption!")
+        return
+
+    elif act == "status":
+        player = registered_players.get_player(ctx.author.id)
+        if not player:
+            await ctx.send(f"📋 You are not registered yet. Use `{COMMAND_PREFIX}codes register <PLAYER_ID> <STATE>` to sign up!")
+            return
+        auto_s = "🟢 Enabled" if player.get("auto_claim", True) else "🔴 Disabled"
+        dm_s = "🔔 Enabled" if player.get("notify_dm", True) else "🔕 Disabled"
+        claimed_c = len(player.get("claimed_codes", []))
+        await ctx.send(
+            f"📊 **Auto-Claim Account Status:**\n"
+            f"• **Player ID:** `{player['player_id']}`\n"
+            f"• **State:** `{player['state']}`\n"
+            f"• **Auto-Claim:** {auto_s} | **DM Alerts:** {dm_s}\n"
+            f"• **Claimed Codes:** `{claimed_c}`"
+        )
+        return
+
+    elif act == "unregister":
+        if registered_players.unregister_player(ctx.author.id):
+            await ctx.send("🗑️ Account removed from auto-claim.")
+        else:
+            await ctx.send("⚠️ You don't have an account registered.")
+        return
+
+    elif act == "claim":
+        player = registered_players.get_player(ctx.author.id)
+        if not player and not (arg1 and arg2):
+            await ctx.send(f"⚠️ Register first with `{COMMAND_PREFIX}codes register <ID> <STATE>` or run `/codes claim`.")
+            return
+        pid = player["player_id"] if player else arg1
+        st = player["state"] if player else int(arg2)
+        cdk = (arg1 if player else (extra or "gogoWOS")) or (gift_codes[0]["code"] if gift_codes else "gogoWOS")
+        res = await redeem_gift_code(pid, st, cdk)
+        registered_players.record_claim(ctx.author.id, cdk, res["success"], res["message"])
+        await ctx.send(f"🎁 **Redemption Result:** {res['message']}")
+        return
+
+    elif act in ["add", "remove"]:
+        if not is_authorized_admin(ctx.author):
+            await ctx.send("⛔ Access Denied.")
+            return
+        clean_code = arg1.strip() if arg1 else None
+        if not clean_code:
             await ctx.send(f"⚠️ Usage: `{COMMAND_PREFIX}codes add <CODE> <rewards>` or `{COMMAND_PREFIX}codes remove <CODE>`")
             return
-
-        clean_code = code.strip()
-        if action.lower() == "add":
-            clean_rewards = rewards.strip() if rewards else "Free In-Game Rewards (Gems, Speedups)"
-            existing = [c for c in gift_codes if c["code"].lower() == clean_code.lower()]
-            if existing:
-                existing[0]["code"] = clean_code
-                existing[0]["rewards"] = clean_rewards
-                existing[0]["status"] = "🟢 Active & Verified"
-            else:
-                gift_codes.insert(0, {"code": clean_code, "status": "🟢 Active & Verified", "rewards": clean_rewards})
+        if act == "add":
+            rew = f"{arg2} {extra}".strip() if (arg2 or extra) else "Free In-Game Rewards"
+            gift_codes.insert(0, {"code": clean_code, "status": "🟢 Active & Verified", "rewards": rew})
             data["gift_codes"] = gift_codes
             save_utility_data(data)
-            await ctx.send(f"✅ **Gift Code Added!** `{clean_code}` is now live.")
+            asyncio.create_task(dispatch_auto_claim(clean_code))
+            await ctx.send(f"✅ Code `{clean_code}` added and auto-claim queue triggered across all registered players!")
             return
-        elif action.lower() == "remove":
-            new_codes = [c for c in gift_codes if c["code"].lower() != clean_code.lower()]
-            if len(new_codes) == len(gift_codes):
-                await ctx.send(f"⚠️ Code `{clean_code}` not found.")
-                return
-            data["gift_codes"] = new_codes
+        elif act == "remove":
+            data["gift_codes"] = [c for c in gift_codes if c["code"].lower() != clean_code.lower()]
             save_utility_data(data)
-            await ctx.send(f"🗑️ **Code Removed:** `{clean_code}` was deleted.")
+            await ctx.send(f"🗑️ Code `{clean_code}` removed.")
             return
 
+    # View codes
     embed = discord.Embed(
         title="🎁 Whiteout Survival Active Gift Codes",
         description=(
             "Redeem these official codes for free Gems, Speedups, Gold Keys, and Stamina!\n\n"
-            "⚠️ **Important Chief Tips:**\n"
-            "• Codes are **CASE-SENSITIVE** — enter them exactly as shown.\n"
-            "• Century Games codes are **time-limited** (usually expire in 24–72 hours)."
+            "💡 *Tip: Use `/codes` in Discord to register your Player ID & State for automated gift code redemption!*"
         ),
         color=SUCCESS_COLOR
     )
     for c in gift_codes:
         status = c.get("status", "🟢 Active & Verified")
-        embed.add_field(
-            name=f"🔑 `{c['code']}` — {status}",
-            value=f"**Rewards:** {c['rewards']}",
-            inline=False
-        )
-    embed.add_field(
-        name="📱 How to Redeem",
-        value="• **Android:** Avatar ➔ Settings ➔ Gift Code\n• **iOS Portal:** https://wos-giftcode.centurygame.com/",
-        inline=False
-    )
-    embed.set_footer(text="Official Portal: https://wos-giftcode.centurygame.com/")
-    await ctx.send(embed=embed)
+        embed.add_field(name=f"🔑 `{c['code']}` — {status}", value=f"**Rewards:** {c['rewards']}", inline=False)
+    view = CodesActionView()
+    await ctx.send(embed=embed, view=view)
 
 
 @bot.command(name="timer")

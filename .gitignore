@@ -3,3 +3,4 @@ frosty_brain/
 __pycache__/
 temp/
 .agents
+registered_players.json
