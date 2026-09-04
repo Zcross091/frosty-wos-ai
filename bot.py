@@ -1310,11 +1310,6 @@ async def slash_sendmessage(interaction: discord.Interaction, message: str):
     await interaction.followup.send(embed=res_embed, ephemeral=True)
 
 
-@bot.tree.command(name="broadcast", description="[Owner Only] Broadcast an official announcement to all servers.")
-@app_commands.describe(message="The announcement message to broadcast across all Discord servers")
-async def slash_broadcast_alias(interaction: discord.Interaction, message: str):
-    await slash_sendmessage(interaction, message)
-
 
 @bot.tree.command(name="help", description="Show Frosty AI commands and strategic capabilities.")
 async def slash_help(interaction: discord.Interaction):
@@ -1616,10 +1611,6 @@ async def prefix_sendmessage(ctx, *, message: str):
         )
         await ctx.send(embed=res_embed)
 
-
-@bot.command(name="broadcast")
-async def prefix_broadcast_alias(ctx, *, message: str):
-    await prefix_sendmessage(ctx, message=message)
 
 
 # --- Error Handling ---
