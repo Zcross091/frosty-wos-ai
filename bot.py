@@ -11,6 +11,7 @@ import time
 import asyncio
 import logging
 import psutil
+import unicodedata
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List, Dict, Tuple, Any
 
@@ -1703,21 +1704,34 @@ async def slash_reindex(interaction: discord.Interaction, local_only: bool = Tru
         await interaction.followup.send(f"❌ **Reindexing Error:** `{str(e)}`")
 
 
+def normalize_channel_name(name: str) -> str:
+    """Normalizes stylized Unicode fonts (math sans-serif, bold, cursive, etc.) and symbols to clean ASCII."""
+    nfkd = unicodedata.normalize("NFKD", name)
+    ascii_str = nfkd.encode("ascii", "ignore").decode("utf-8").lower()
+    return re.sub(r'[\s_]+', '-', ascii_str).strip('-')
+
+
 def find_best_announcement_channel(guild: discord.Guild) -> Optional[discord.TextChannel]:
     """
     Intelligently select the most visible, appropriate public text channel in a guild for official broadcasts.
-    Filters out private channels, moderation logs, rules, verification, and tickets.
+    Filters out private channels, moderation logs, rules, verification, website links, tickets, and static guides.
+    Handles fancy Unicode fonts (e.g. 𝖦eneral-𝖢hat, 𝖠nnouncements).
     """
     ignored_keywords = [
         "rule", "rules", "verify", "verification", "welcome", "goodbye", "leave",
         "log", "logs", "audit", "mod", "admin", "staff", "ticket", "tickets",
         "mute", "ban", "voice", "archive", "afk", "role", "roles", "reaction",
-        "join", "member-log", "server-log", "bot-log", "testing", "sandbox"
+        "join", "member-log", "server-log", "bot-log", "testing", "sandbox",
+        "website", "site", "link", "links", "guide", "access", "faq", "info",
+        "information", "about", "statetube", "tube", "media", "video", "videos",
+        "stream", "streams", "patch", "patch-note", "patch-notes", "changelog", "readme",
+        "task-list", "appointment", "agreement", "agreements", "introduction", "intro",
+        "poll", "polls", "stat", "stats", "report", "reports", "fortress", "fortresses"
     ]
 
     def is_channel_ignored(ch_name: str) -> bool:
-        clean_name = ch_name.lower().replace("_", "-")
-        return any(k in clean_name for k in ignored_keywords)
+        clean = normalize_channel_name(ch_name)
+        return any(k in clean for k in ignored_keywords)
 
     def can_bot_and_everyone_use(ch: discord.TextChannel) -> bool:
         bot_perms = ch.permissions_for(guild.me)
@@ -1743,8 +1757,8 @@ def find_best_announcement_channel(guild: discord.Guild) -> Optional[discord.Tex
     priority_groups = [
         ["frosty-announcements", "frosty-announcement", "frosty-bot", "frosty-news", "frosty-chat", "frosty"],
         ["announcements", "announcement", "announcement-chat", "updates", "update", "news", "server-announcements", "alliance-announcements", "broadcast"],
-        ["wos-chat", "wos", "whiteout-survival", "whiteout", "alliance-chat", "game-chat", "strategy"],
         ["general", "general-chat", "main-chat", "chat", "lounge", "discussion", "talk"],
+        ["wos-chat", "wos", "whiteout-survival", "whiteout", "alliance-chat", "game-chat", "strategy"],
         ["bot-commands", "bot-command", "bot-chat", "bot-spam", "commands", "bots", "bot"]
     ]
 
@@ -1753,13 +1767,21 @@ def find_best_announcement_channel(guild: discord.Guild) -> Optional[discord.Tex
             for ch in valid_channels:
                 if is_channel_ignored(ch.name):
                     continue
-                clean_name = ch.name.lower().replace("_", "-")
+                clean_name = normalize_channel_name(ch.name)
                 if keyword in clean_name:
                     return ch
 
     # Fallback to system channel if public and not ignored
     if guild.system_channel and guild.system_channel in valid_channels and not is_channel_ignored(guild.system_channel.name):
         return guild.system_channel
+
+    # Fallback to channels where @everyone can talk (active discussion channels)
+    active_chats = [
+        ch for ch in valid_channels
+        if not is_channel_ignored(ch.name) and ch.permissions_for(guild.default_role).send_messages
+    ]
+    if active_chats:
+        return active_chats[0]
 
     # Fallback to first non-ignored valid channel
     for ch in valid_channels:
