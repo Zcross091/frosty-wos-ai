@@ -1122,10 +1122,18 @@ class RegisterModal(discord.ui.Modal, title="Whiteout Survival Auto-Claim"):
         max_length=5,
         required=True
     )
+    label_input = discord.ui.TextInput(
+        label="Account Label / Nickname (Optional)",
+        placeholder="e.g. Main, Farm 1, Farm 2 (default: Main / Farm #)",
+        min_length=1,
+        max_length=15,
+        required=False
+    )
 
     async def on_submit(self, interaction: discord.Interaction):
         pid = self.player_id_input.value.strip()
         state_str = self.state_input.value.strip()
+        label_val = self.label_input.value.strip() if self.label_input.value else None
 
         if not pid.isdigit():
             await interaction.response.send_message("❌ **Invalid Player ID:** Player ID must consist only of digits.", ephemeral=True)
@@ -1135,6 +1143,20 @@ class RegisterModal(discord.ui.Modal, title="Whiteout Survival Auto-Claim"):
             return
 
         state_num = int(state_str)
+        if state_num <= 0:
+            await interaction.response.send_message("❌ **Invalid State Number:** State must be a positive number.", ephemeral=True)
+            return
+
+        current_accounts = registered_players.get_player_accounts(interaction.user.id)
+        existing_pids = [a["player_id"] for a in current_accounts]
+        if len(current_accounts) >= registered_players.MAX_ACCOUNTS_PER_USER and pid not in existing_pids:
+            await interaction.response.send_message(
+                f"⚠️ You already have **{registered_players.MAX_ACCOUNTS_PER_USER} accounts** registered (the maximum limit).\n"
+                f"Use `/codes action:Unregister from Auto-Claim` with a Player ID to free up a slot.",
+                ephemeral=True
+            )
+            return
+
         await interaction.response.defer(ephemeral=True)
 
         # Quick verification against Century Games API using a known promo code
@@ -1150,18 +1172,28 @@ class RegisterModal(discord.ui.Modal, title="Whiteout Survival Auto-Claim"):
             )
             return
 
-        registered_players.register_player(interaction.user.id, pid, state_num, notify_dm=True)
+        success, msg, acc = registered_players.register_player(
+            interaction.user.id, pid, state_num, label=label_val, notify_dm=True
+        )
 
+        if not success:
+            await interaction.followup.send(msg, ephemeral=True)
+            return
+
+        total_accs = len(registered_players.get_player_accounts(interaction.user.id))
         embed = discord.Embed(
-            title="✅ Successfully Registered for Auto-Claim!",
+            title="✅ Registered for Frosty Auto-Claim!",
             description=(
                 f"Welcome aboard, Chief! Your character is now registered for automated gift code redemption.\n\n"
+                f"🏷️ **Account Label:** **{acc.get('label', 'Main')}**\n"
                 f"👤 **Player ID:** `{pid}`\n"
                 f"🏰 **State:** `{state_num}`\n"
+                f"📊 **Account Slots:** `{total_accs}/{registered_players.MAX_ACCOUNTS_PER_USER} Used`\n"
                 f"⚡ **Auto-Claim Status:** `🟢 Active (ON)`\n"
                 f"📬 **Direct Message Alerts:** `🔔 Enabled`\n\n"
                 f"🎁 **What happens next?**\n"
-                f"Whenever a new Whiteout Survival gift code is released, Frosty Bot will automatically redeem it directly to your in-game mailbox!"
+                f"Whenever a new Whiteout Survival gift code is released, Frosty Bot will automatically redeem it directly to your in-game mailbox!\n\n"
+                f"💡 *You can register up to {registered_players.MAX_ACCOUNTS_PER_USER} accounts (e.g. Main + Farm accounts) under this Discord account.*"
             ),
             color=SUCCESS_COLOR
         )
@@ -1201,82 +1233,91 @@ class CodesActionView(discord.ui.View):
         custom_id="frosty_codes_status_btn"
     )
     async def status_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        player = registered_players.get_player(interaction.user.id)
-        if not player:
+        accounts = registered_players.get_player_accounts(interaction.user.id)
+        if not accounts:
             embed = discord.Embed(
                 title="📋 Not Registered Yet",
                 description=(
-                    "You haven't registered your Whiteout Survival character for automated gift codes yet.\n\n"
-                    "Click **'📝 Register for Auto-Claim'** above to receive free in-game rewards automatically whenever new codes drop!"
+                    "You haven't registered any Whiteout Survival characters for automated gift codes yet.\n\n"
+                    "Click **'📝 Register for Auto-Claim'** above to register up to 5 accounts (Mains & Farms) and receive free in-game rewards automatically!"
                 ),
                 color=FROSTY_COLOR
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
-        auto_str = "🟢 Enabled" if player.get("auto_claim", True) else "🔴 Disabled"
-        dm_str = "🔔 Enabled" if player.get("notify_dm", True) else "🔕 Disabled"
-        claimed_list = player.get("claimed_codes", [])
-        claimed_count = len(claimed_list)
-        last_date = player.get("last_claim_at", "No redemptions yet")
-        if last_date and "T" in last_date:
-            last_date = last_date.split("T")[0]
-
-        recent_claimed = ", ".join(f"`{c}`" for c in claimed_list[-6:]) if claimed_list else "None yet"
-
         embed = discord.Embed(
-            title="📊 Your Auto-Claim Account Status",
+            title=f"📊 Your Auto-Claim Accounts ({len(accounts)}/{registered_players.MAX_ACCOUNTS_PER_USER})",
             description=(
-                f"👤 **Player ID:** `{player['player_id']}`\n"
-                f"🏰 **State:** `{player['state']}`\n"
-                f"⚡ **Auto-Claim:** {auto_str}\n"
-                f"📬 **DM Notifications:** {dm_str}\n"
-                f"🎁 **Total Claimed Codes:** `{claimed_count}`\n"
-                f"⏱️ **Last Activity:** `{last_date}`\n"
-                f"🔑 **Recent Codes:** {recent_claimed}\n\n"
-                f"• Use `/codes action:Claim a Code Now` to redeem a code immediately.\n"
-                f"• Use `/codes action:Unregister from Auto-Claim` to remove your registration."
+                f"⚡ **Auto-Claim Engine:** `🟢 Active`\n"
+                f"📬 **DM Notifications:** `🔔 Enabled`\n\n"
+                f"Here are the characters linked to your Discord account:"
             ),
             color=SUCCESS_COLOR
         )
+
+        for i, acc in enumerate(accounts, 1):
+            lbl = acc.get("label", f"Account #{i}")
+            pid = acc.get("player_id", "Unknown")
+            st = acc.get("state", "Unknown")
+            claimed_list = acc.get("claimed_codes", [])
+            claimed_cnt = len(claimed_list)
+            recent_codes = ", ".join(f"`{c}`" for c in claimed_list[-4:]) if claimed_list else "None yet"
+            last_status = acc.get("last_status", "Registered")
+
+            embed.add_field(
+                name=f"🏷️ #{i} {lbl} — State {st}",
+                value=(
+                    f"• **Player ID:** `{pid}`\n"
+                    f"• **Codes Claimed:** `{claimed_cnt}` ({recent_codes})\n"
+                    f"• **Last Activity:** `{last_status}`"
+                ),
+                inline=False
+            )
+
+        embed.set_footer(text=f"Slot usage: {len(accounts)}/{registered_players.MAX_ACCOUNTS_PER_USER} • Use /codes to register more or unregister.")
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 async def dispatch_auto_claim(code: str):
     """
-    Background worker queue: Iterates through all registered players with auto-claim enabled
+    Background worker queue: Iterates through all registered player accounts with auto-claim enabled
     and redeems the new gift code sequentially with rate-limit pacing.
     """
     clean_code = code.strip()
-    active_players = registered_players.get_active_auto_claim_players()
-    if not active_players:
-        logger.info(f"Auto-claim dispatched for code '{clean_code}', but no registered players found.")
+    active_accounts = registered_players.get_all_active_accounts()
+    if not active_accounts:
+        logger.info(f"Auto-claim dispatched for code '{clean_code}', but no registered accounts found.")
         return
 
-    logger.info(f"🚀 [Auto-Claim] Starting redemption queue for code '{clean_code}' across {len(active_players)} registered players...")
+    logger.info(f"🚀 [Auto-Claim] Starting redemption queue for code '{clean_code}' across {len(active_accounts)} registered accounts...")
     claimed_count = 0
     skipped_count = 0
     failed_count = 0
 
-    for uid_str, pdata in active_players.items():
-        claimed_list = [c.upper() for c in pdata.get("claimed_codes", [])]
-        if clean_code.upper() in claimed_list:
-            skipped_count += 1
+    for acc in active_accounts:
+        uid_str = acc.get("discord_uid")
+        pid = acc.get("player_id")
+        state = acc.get("state")
+        label = acc.get("label", "Main")
+        notify_dm = acc.get("notify_dm", True)
+
+        if not pid or not state or not uid_str:
             continue
 
-        pid = pdata.get("player_id")
-        state = pdata.get("state")
-        if not pid or not state:
+        claimed_list = [c.upper() for c in acc.get("claimed_codes", [])]
+        if clean_code.upper() in claimed_list:
+            skipped_count += 1
             continue
 
         try:
             res = await redeem_gift_code(pid, state, clean_code)
             is_success = res["success"]
-            registered_players.record_claim(int(uid_str), clean_code, is_success, res["message"])
+            registered_players.record_claim_for_account(int(uid_str), pid, clean_code, is_success, res["message"])
 
             if is_success:
                 claimed_count += 1
-                if pdata.get("notify_dm", True):
+                if notify_dm:
                     try:
                         user = bot.get_user(int(uid_str)) or await bot.fetch_user(int(uid_str))
                         if user:
@@ -1284,6 +1325,7 @@ async def dispatch_auto_claim(code: str):
                                 title="🎁 Frosty Auto-Claim: Gift Code Redeemed!",
                                 description=(
                                     f"A new Whiteout Survival gift code was automatically claimed for your character!\n\n"
+                                    f"🏷️ **Account:** **{label}**\n"
                                     f"🔑 **Gift Code:** `{clean_code}`\n"
                                     f"👤 **Player ID:** `{pid}`\n"
                                     f"🏰 **State:** `{state}`\n\n"
@@ -1297,11 +1339,11 @@ async def dispatch_auto_claim(code: str):
                         logger.debug(f"Could not send DM to {uid_str}: {dm_err}")
             else:
                 failed_count += 1
-                logger.info(f"[Auto-Claim] Player {pid} (State {state}) code '{clean_code}' returned: {res['message']}")
+                logger.info(f"[Auto-Claim] Player {pid} [{label}] (State {state}) code '{clean_code}' returned: {res['message']}")
 
         except Exception as claim_err:
             failed_count += 1
-            logger.error(f"[Auto-Claim] Error for user {uid_str}: {claim_err}")
+            logger.error(f"[Auto-Claim] Error for account {pid} (user {uid_str}): {claim_err}")
 
         # Human-like delay & Century Games API rate-limit protection
         await asyncio.sleep(1.5)
@@ -1339,8 +1381,9 @@ async def auto_sync_gift_codes():
 @bot.tree.command(name="codes", description="Whiteout Survival gift codes & automated redemption service.")
 @app_commands.describe(
     action="View active codes, register for auto-claim, check status, or claim",
-    player_id="Your in-game Player ID (numbers only, for registration)",
+    player_id="Your in-game Player ID (numbers only, for registration or claiming)",
     state="Your State Number (e.g. 542, for registration)",
+    label="Account nickname/label (e.g. Main, Farm 1, max 15 chars)",
     code="The promo code (e.g. gogoWOS)",
     rewards="Description of rewards (when adding a code)"
 )
@@ -1358,6 +1401,7 @@ async def slash_codes(
     action: Optional[app_commands.Choice[str]] = None,
     player_id: Optional[str] = None,
     state: Optional[int] = None,
+    label: Optional[str] = None,
     code: Optional[str] = None,
     rewards: Optional[str] = None
 ):
@@ -1379,6 +1423,16 @@ async def slash_codes(
             await interaction.response.send_message("❌ **Invalid State Number:** State must be a positive number (e.g. 542).", ephemeral=True)
             return
 
+        current_accounts = registered_players.get_player_accounts(interaction.user.id)
+        existing_pids = [a["player_id"] for a in current_accounts]
+        if len(current_accounts) >= registered_players.MAX_ACCOUNTS_PER_USER and clean_pid not in existing_pids:
+            await interaction.response.send_message(
+                f"⚠️ You already have **{registered_players.MAX_ACCOUNTS_PER_USER} accounts** registered (the maximum limit).\n"
+                f"Use `/codes action:Unregister from Auto-Claim` with a `player_id` to free up a slot.",
+                ephemeral=True
+            )
+            return
+
         await interaction.response.defer(ephemeral=True)
         test_code = "gogoWOS"
         check_res = await redeem_gift_code(clean_pid, state, test_code)
@@ -1392,17 +1446,28 @@ async def slash_codes(
             )
             return
 
-        registered_players.register_player(interaction.user.id, clean_pid, state, notify_dm=True)
+        clean_label = label.strip() if label else None
+        success, msg, acc = registered_players.register_player(
+            interaction.user.id, clean_pid, state, label=clean_label, notify_dm=True
+        )
+        if not success:
+            await interaction.followup.send(msg, ephemeral=True)
+            return
+
+        total_accs = len(registered_players.get_player_accounts(interaction.user.id))
         embed = discord.Embed(
             title="✅ Registered for Frosty Auto-Claim!",
             description=(
                 f"Welcome aboard, Chief! Your character is now registered for automated gift code redemption.\n\n"
+                f"🏷️ **Account Label:** **{acc.get('label', 'Main')}**\n"
                 f"👤 **Player ID:** `{clean_pid}`\n"
                 f"🏰 **State:** `{state}`\n"
+                f"📊 **Account Slots:** `{total_accs}/{registered_players.MAX_ACCOUNTS_PER_USER} Used`\n"
                 f"⚡ **Auto-Claim Status:** `🟢 Active (ON)`\n"
                 f"📬 **Direct Message Alerts:** `🔔 Enabled`\n\n"
                 f"🎁 **What happens next?**\n"
-                f"Whenever a new Whiteout Survival gift code is released, Frosty Bot will automatically redeem it directly to your in-game mailbox!"
+                f"Whenever a new Whiteout Survival gift code is released, Frosty Bot will automatically redeem it directly to your in-game mailbox!\n\n"
+                f"💡 *You can register up to {registered_players.MAX_ACCOUNTS_PER_USER} accounts (e.g. Main + Farm accounts) under this Discord account.*"
             ),
             color=SUCCESS_COLOR
         )
@@ -1412,79 +1477,135 @@ async def slash_codes(
 
     # --- STATUS ---
     if action_val == "status":
-        player = registered_players.get_player(interaction.user.id)
-        if not player:
+        accounts = registered_players.get_player_accounts(interaction.user.id)
+        if not accounts:
             embed = discord.Embed(
                 title="📋 Not Registered Yet",
-                description="You have not registered for auto-claim yet. Use `/codes action:Register for Auto-Claim` to sign up!",
+                description="You have not registered any accounts for auto-claim yet. Use `/codes action:Register for Auto-Claim` to sign up!",
                 color=FROSTY_COLOR
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
-        auto_str = "🟢 Enabled" if player.get("auto_claim", True) else "🔴 Disabled"
-        dm_str = "🔔 Enabled" if player.get("notify_dm", True) else "🔕 Disabled"
-        claimed_list = player.get("claimed_codes", [])
-        claimed_count = len(claimed_list)
-        last_date = player.get("last_claim_at", "No redemptions yet")
-        if last_date and "T" in last_date:
-            last_date = last_date.split("T")[0]
-        recent_claimed = ", ".join(f"`{c}`" for c in claimed_list[-6:]) if claimed_list else "None yet"
-
         embed = discord.Embed(
-            title="📊 Your Auto-Claim Status",
+            title=f"📊 Your Auto-Claim Accounts ({len(accounts)}/{registered_players.MAX_ACCOUNTS_PER_USER})",
             description=(
-                f"👤 **Player ID:** `{player['player_id']}`\n"
-                f"🏰 **State:** `{player['state']}`\n"
-                f"⚡ **Auto-Claim:** {auto_str}\n"
-                f"📬 **DM Notifications:** {dm_str}\n"
-                f"🎁 **Total Claimed Codes:** `{claimed_count}`\n"
-                f"⏱️ **Last Activity:** `{last_date}`\n"
-                f"🔑 **Recent Codes:** {recent_claimed}\n\n"
-                f"• Use `/codes action:Claim a Code Now` to redeem a code immediately.\n"
-                f"• Use `/codes action:Unregister from Auto-Claim` to remove your registration."
+                f"⚡ **Auto-Claim Engine:** `🟢 Active`\n"
+                f"📬 **DM Notifications:** `🔔 Enabled`\n\n"
+                f"Here are the characters registered under your Discord account:"
             ),
             color=SUCCESS_COLOR
         )
+
+        for i, acc in enumerate(accounts, 1):
+            lbl = acc.get("label", f"Account #{i}")
+            pid = acc.get("player_id", "Unknown")
+            st = acc.get("state", "Unknown")
+            claimed_list = acc.get("claimed_codes", [])
+            claimed_cnt = len(claimed_list)
+            recent_claimed = ", ".join(f"`{c}`" for c in claimed_list[-4:]) if claimed_list else "None yet"
+            last_status = acc.get("last_status", "Registered")
+
+            embed.add_field(
+                name=f"🏷️ #{i} {lbl} — State {st}",
+                value=(
+                    f"• **Player ID:** `{pid}`\n"
+                    f"• **Total Claimed:** `{claimed_cnt}` ({recent_claimed})\n"
+                    f"• **Last Activity:** `{last_status}`"
+                ),
+                inline=False
+            )
+
+        embed.set_footer(text="• /codes claim to redeem immediately\n• /codes unregister [player_id] to remove an account")
         await interaction.response.send_message(embed=embed, ephemeral=True)
         return
 
     # --- UNREGISTER ---
     if action_val == "unregister":
-        if registered_players.unregister_player(interaction.user.id):
-            await interaction.response.send_message("🗑️ **Account Unregistered:** Your Player ID has been removed from auto-claim.", ephemeral=True)
-        else:
-            await interaction.response.send_message("⚠️ You don't have any account registered.", ephemeral=True)
+        target_pid = player_id.strip() if player_id else None
+        success, msg = registered_players.unregister_player(interaction.user.id, target_pid)
+        await interaction.response.send_message(msg, ephemeral=True)
         return
 
-    # --- CLAIM SINGLE CODE ---
+    # --- CLAIM CODE ---
     if action_val == "claim":
-        player = registered_players.get_player(interaction.user.id)
-        target_pid = player_id.strip() if player_id else (player["player_id"] if player else None)
-        target_state = state if state else (player["state"] if player else None)
+        user_accounts = registered_players.get_player_accounts(interaction.user.id)
+        target_code = code.strip() if code else (gift_codes[0]["code"] if gift_codes else "gogoWOS")
 
-        if not target_pid or not target_state:
+        # Case A: Manual PID and State provided
+        if player_id and state:
+            clean_pid = player_id.strip()
+            await interaction.response.defer(ephemeral=True)
+            res = await redeem_gift_code(clean_pid, state, target_code)
+            registered_players.record_claim_for_account(interaction.user.id, clean_pid, target_code, res["success"], res["message"])
+
+            status_emoji = "✅" if res["success"] else "ℹ️"
+            embed = discord.Embed(
+                title=f"{status_emoji} Gift Code Redemption Result",
+                description=(
+                    f"🔑 **Code:** `{target_code}`\n"
+                    f"👤 **Player ID:** `{clean_pid}` (State `{state}`)\n\n"
+                    f"**Result:** {res['message']}"
+                ),
+                color=SUCCESS_COLOR if res["success"] else WARN_COLOR
+            )
+            embed.set_footer(text="Whiteout Survival Official Redeem Service")
+            await interaction.followup.send(embed=embed, ephemeral=True)
+            return
+
+        # Case B: Specific PID provided, resolve State from registered accounts
+        if player_id and not state:
+            clean_pid = player_id.strip()
+            matching_acc = next((a for a in user_accounts if a["player_id"] == clean_pid), None)
+            if not matching_acc:
+                await interaction.response.send_message(
+                    f"⚠️ Account `{clean_pid}` is not in your registered accounts. Please provide both `player_id` and `state`.",
+                    ephemeral=True
+                )
+                return
+            await interaction.response.defer(ephemeral=True)
+            res = await redeem_gift_code(clean_pid, matching_acc["state"], target_code)
+            registered_players.record_claim_for_account(interaction.user.id, clean_pid, target_code, res["success"], res["message"])
+
+            status_emoji = "✅" if res["success"] else "ℹ️"
+            embed = discord.Embed(
+                title=f"{status_emoji} Gift Code Redemption: {matching_acc.get('label', 'Main')}",
+                description=(
+                    f"🔑 **Code:** `{target_code}`\n"
+                    f"👤 **Player ID:** `{clean_pid}` (State `{matching_acc['state']}`)\n\n"
+                    f"**Result:** {res['message']}"
+                ),
+                color=SUCCESS_COLOR if res["success"] else WARN_COLOR
+            )
+            embed.set_footer(text="Whiteout Survival Official Redeem Service")
+            await interaction.followup.send(embed=embed, ephemeral=True)
+            return
+
+        # Case C: No PID provided -> Redeem for ALL registered accounts!
+        if not user_accounts:
             await interaction.response.send_message(
-                "⚠️ Please register first with `/codes action:Register for Auto-Claim` or provide both `player_id` and `state`.",
+                "⚠️ You don't have any accounts registered yet. Use `/codes action:Register for Auto-Claim` or provide both `player_id` and `state`.",
                 ephemeral=True
             )
             return
 
-        target_code = code.strip() if code else (gift_codes[0]["code"] if gift_codes else "gogoWOS")
         await interaction.response.defer(ephemeral=True)
+        results = []
+        for acc in user_accounts:
+            pid = acc["player_id"]
+            st = acc["state"]
+            lbl = acc.get("label", "Account")
+            res = await redeem_gift_code(pid, st, target_code)
+            registered_players.record_claim_for_account(interaction.user.id, pid, target_code, res["success"], res["message"])
+            icon = "✅" if res["success"] else "ℹ️"
+            results.append(f"{icon} **{lbl}** (`{pid}`, State `{st}`): {res['message']}")
+            if len(user_accounts) > 1:
+                await asyncio.sleep(1.0)
 
-        res = await redeem_gift_code(target_pid, target_state, target_code)
-        registered_players.record_claim(interaction.user.id, target_code, res["success"], res["message"])
-
-        status_emoji = "✅" if res["success"] else "ℹ️"
         embed = discord.Embed(
-            title=f"{status_emoji} Gift Code Redemption Result",
-            description=(
-                f"🔑 **Code:** `{target_code}`\n"
-                f"👤 **Player ID:** `{target_pid}` (State `{target_state}`)\n\n"
-                f"**Result:** {res['message']}"
-            ),
-            color=SUCCESS_COLOR if res["success"] else WARN_COLOR
+            title=f"🎁 Gift Code Redemption: `{target_code}`",
+            description=f"Processed **{len(user_accounts)}** registered account(s):\n\n" + "\n".join(results),
+            color=SUCCESS_COLOR
         )
         embed.set_footer(text="Whiteout Survival Official Redeem Service")
         await interaction.followup.send(embed=embed, ephemeral=True)
@@ -1521,7 +1642,7 @@ async def slash_codes(
             data["gift_codes"] = gift_codes
             save_utility_data(data)
 
-            # Trigger background auto-claim queue for all registered players
+            # Trigger background auto-claim queue for all registered player accounts
             asyncio.create_task(dispatch_auto_claim(clean_code))
 
             await interaction.response.send_message(
@@ -2084,53 +2205,84 @@ async def prefix_codes(ctx, action: Optional[str] = None, arg1: Optional[str] = 
 
     if act == "register":
         if not arg1 or not arg2 or not arg1.isdigit() or not arg2.isdigit():
-            await ctx.send(f"⚠️ Usage: `{COMMAND_PREFIX}codes register <PLAYER_ID> <STATE>` (e.g. `{COMMAND_PREFIX}codes register 12345678 542`)")
+            await ctx.send(f"⚠️ Usage: `{COMMAND_PREFIX}codes register <PLAYER_ID> <STATE> [LABEL]` (e.g. `{COMMAND_PREFIX}codes register 12345678 542 Farm1`)")
             return
         pid = arg1.strip()
         state = int(arg2)
+        label = extra.strip() if extra else None
+
+        current_accounts = registered_players.get_player_accounts(ctx.author.id)
+        existing_pids = [a["player_id"] for a in current_accounts]
+        if len(current_accounts) >= registered_players.MAX_ACCOUNTS_PER_USER and pid not in existing_pids:
+            await ctx.send(f"⚠️ You already have {registered_players.MAX_ACCOUNTS_PER_USER} accounts registered. Use `{COMMAND_PREFIX}codes unregister <PID>` first.")
+            return
+
         check_res = await redeem_gift_code(pid, state, "gogoWOS")
         if check_res.get("err_code") == 40020:
             await ctx.send(f"❌ **Verification Failed:** Player ID `{pid}` was not found in State `{state}` on Century Games servers.")
             return
-        registered_players.register_player(ctx.author.id, pid, state, notify_dm=True)
-        await ctx.send(f"✅ **Registered!** Player ID `{pid}` (State `{state}`) is now active for automatic gift code redemption!")
+        success, msg, acc = registered_players.register_player(ctx.author.id, pid, state, label=label, notify_dm=True)
+        if not success:
+            await ctx.send(msg)
+            return
+
+        total = len(registered_players.get_player_accounts(ctx.author.id))
+        await ctx.send(f"✅ **Registered {acc.get('label', 'Main')}!** Player ID `{pid}` (State `{state}`) active for auto-claim! (Slot {total}/{registered_players.MAX_ACCOUNTS_PER_USER})")
         return
 
     elif act == "status":
-        player = registered_players.get_player(ctx.author.id)
-        if not player:
+        accounts = registered_players.get_player_accounts(ctx.author.id)
+        if not accounts:
             await ctx.send(f"📋 You are not registered yet. Use `{COMMAND_PREFIX}codes register <PLAYER_ID> <STATE>` to sign up!")
             return
-        auto_s = "🟢 Enabled" if player.get("auto_claim", True) else "🔴 Disabled"
-        dm_s = "🔔 Enabled" if player.get("notify_dm", True) else "🔕 Disabled"
-        claimed_c = len(player.get("claimed_codes", []))
-        await ctx.send(
-            f"📊 **Auto-Claim Account Status:**\n"
-            f"• **Player ID:** `{player['player_id']}`\n"
-            f"• **State:** `{player['state']}`\n"
-            f"• **Auto-Claim:** {auto_s} | **DM Alerts:** {dm_s}\n"
-            f"• **Claimed Codes:** `{claimed_c}`"
-        )
+
+        lines = [f"📊 **Auto-Claim Status ({len(accounts)}/{registered_players.MAX_ACCOUNTS_PER_USER} Accounts):**"]
+        for i, acc in enumerate(accounts, 1):
+            lbl = acc.get("label", f"Account #{i}")
+            pid = acc.get("player_id")
+            st = acc.get("state")
+            cnt = len(acc.get("claimed_codes", []))
+            lines.append(f"• **{lbl}:** ID `{pid}` | State `{st}` | Claimed: `{cnt}`")
+        await ctx.send("\n".join(lines))
         return
 
     elif act == "unregister":
-        if registered_players.unregister_player(ctx.author.id):
-            await ctx.send("🗑️ Account removed from auto-claim.")
-        else:
-            await ctx.send("⚠️ You don't have an account registered.")
+        clean_pid = arg1.strip() if arg1 else None
+        success, msg = registered_players.unregister_player(ctx.author.id, clean_pid)
+        await ctx.send(msg)
         return
 
     elif act == "claim":
-        player = registered_players.get_player(ctx.author.id)
-        if not player and not (arg1 and arg2):
+        user_accounts = registered_players.get_player_accounts(ctx.author.id)
+        # Case A: Specific PID and state supplied
+        if arg1 and arg2 and arg1.isdigit() and arg2.isdigit():
+            pid = arg1.strip()
+            st = int(arg2)
+            cdk = extra.strip() if extra else (gift_codes[0]["code"] if gift_codes else "gogoWOS")
+            res = await redeem_gift_code(pid, st, cdk)
+            registered_players.record_claim_for_account(ctx.author.id, pid, cdk, res["success"], res["message"])
+            await ctx.send(f"🎁 **Redemption Result ({pid}):** {res['message']}")
+            return
+
+        # Case B: Claim for all registered accounts
+        if not user_accounts:
             await ctx.send(f"⚠️ Register first with `{COMMAND_PREFIX}codes register <ID> <STATE>` or run `/codes claim`.")
             return
-        pid = player["player_id"] if player else arg1
-        st = player["state"] if player else int(arg2)
-        cdk = (arg1 if player else (extra or "gogoWOS")) or (gift_codes[0]["code"] if gift_codes else "gogoWOS")
-        res = await redeem_gift_code(pid, st, cdk)
-        registered_players.record_claim(ctx.author.id, cdk, res["success"], res["message"])
-        await ctx.send(f"🎁 **Redemption Result:** {res['message']}")
+
+        cdk = arg1.strip() if arg1 else (gift_codes[0]["code"] if gift_codes else "gogoWOS")
+        results = []
+        for acc in user_accounts:
+            pid = acc["player_id"]
+            st = acc["state"]
+            lbl = acc.get("label", "Account")
+            res = await redeem_gift_code(pid, st, cdk)
+            registered_players.record_claim_for_account(ctx.author.id, pid, cdk, res["success"], res["message"])
+            icon = "✅" if res["success"] else "ℹ️"
+            results.append(f"{icon} **{lbl}** (`{pid}`): {res['message']}")
+            if len(user_accounts) > 1:
+                await asyncio.sleep(1.0)
+
+        await ctx.send(f"🎁 **Claim Results for `{cdk}`:**\n" + "\n".join(results))
         return
 
     elif act in ["add", "remove"]:
