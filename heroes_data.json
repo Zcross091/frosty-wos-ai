@@ -1,192 +1,254 @@
 [
   {
-    "gen": 17,
-    "label": "Gen 17",
-    "unlockDay": 1240,
-    "infantry": "Aiden",
-    "lancer": "Bertha",
-    "marksman": "Eleanor",
-    "wheelHero": "Aiden (Infantry)",
-    "advice": "Aiden on Lucky Wheel is the #1 frontline Rage & Shield tank. Build Eleanor (Hall of Heroes) for Defense shred and Bertha for rally healing."
+    "id": "epic",
+    "name": "Epic",
+    "generation": 0,
+    "troop_type": "lancer",
+    "tier": "S",
+    "summary": "",
+    "recommended_for": [
+      "Exploration",
+      "Expedition",
+      "PvP"
+    ],
+    "f2p_friendly": true
   },
   {
-    "gen": 16,
-    "label": "Gen 16",
-    "unlockDay": 1160,
-    "infantry": "Seigel",
-    "lancer": "Ursar",
-    "marksman": "Aisling",
-    "wheelHero": "Seigel (Infantry)",
-    "advice": "Focus 100% on Seigel for Absolute Permafrost damage reduction and Aisling for lethal counter-burst."
+    "id": "rare",
+    "name": "Rare",
+    "generation": 0,
+    "troop_type": "lancer",
+    "tier": "S",
+    "summary": "",
+    "recommended_for": [
+      "Exploration",
+      "Expedition",
+      "PvP"
+    ],
+    "f2p_friendly": true
   },
   {
-    "gen": 15,
-    "label": "Gen 15",
-    "unlockDay": 960,
-    "infantry": "Hank",
-    "lancer": "Estrella",
-    "marksman": "Viveca",
-    "wheelHero": "Hank (Infantry)",
-    "advice": "State 260–330 tier. Hank is a premier Lucky Wheel tank. Build Viveca for sustained Marksman damage."
+    "id": "1",
+    "name": "1",
+    "generation": 1,
+    "troop_type": "lancer",
+    "tier": "S",
+    "summary": "",
+    "recommended_for": [
+      "Exploration",
+      "Expedition",
+      "PvP"
+    ],
+    "f2p_friendly": true
   },
   {
-    "gen": 14,
-    "label": "Gen 14",
-    "unlockDay": 900,
-    "infantry": "Elif",
-    "lancer": "Dominic",
-    "marksman": "Cara",
-    "wheelHero": "Cara (Marksman)",
-    "advice": "Cara is top Lucky Wheel carry. Elif provides heavy defense wall resilience."
+    "id": "2",
+    "name": "2",
+    "generation": 2,
+    "troop_type": "lancer",
+    "tier": "S",
+    "summary": "",
+    "recommended_for": [
+      "Exploration",
+      "Expedition",
+      "PvP"
+    ],
+    "f2p_friendly": true
   },
   {
-    "gen": 13,
-    "label": "Gen 13",
-    "unlockDay": 830,
-    "infantry": "Gisela",
-    "lancer": "Flora",
-    "marksman": "Vulcanus",
-    "wheelHero": "Gisela (Infantry)",
-    "advice": "Gisela is a formidable Lucky Wheel tank. Vulcanus provides explosive backline burst."
+    "id": "3",
+    "name": "3",
+    "generation": 3,
+    "troop_type": "lancer",
+    "tier": "S",
+    "summary": "",
+    "recommended_for": [
+      "Exploration",
+      "Expedition",
+      "PvP"
+    ],
+    "f2p_friendly": true
   },
   {
-    "gen": 12,
-    "label": "Gen 12",
-    "unlockDay": 760,
-    "infantry": "Hervor",
-    "lancer": "Karol",
-    "marksman": "Ligeia",
-    "wheelHero": "Ligeia (Marksman)",
-    "advice": "Ligeia on Lucky Wheel dominates Bear Trap rankings. Hervor is a premier rally anchor."
+    "id": "4",
+    "name": "4",
+    "generation": 4,
+    "troop_type": "lancer",
+    "tier": "S",
+    "summary": "",
+    "recommended_for": [
+      "Exploration",
+      "Expedition",
+      "PvP"
+    ],
+    "f2p_friendly": true
   },
   {
-    "gen": 11,
-    "label": "Gen 11",
-    "unlockDay": 690,
-    "infantry": "Eleonora",
-    "lancer": "Lloyd",
-    "marksman": "Rufus",
-    "wheelHero": "Eleonora (Infantry)",
-    "advice": "Eleonora is the primary Lucky Wheel tank. Rufus brings heavy armor penetration."
+    "id": "5",
+    "name": "5",
+    "generation": 5,
+    "troop_type": "lancer",
+    "tier": "S",
+    "summary": "",
+    "recommended_for": [
+      "Exploration",
+      "Expedition",
+      "PvP"
+    ],
+    "f2p_friendly": true
   },
   {
-    "gen": 10,
-    "label": "Gen 10",
-    "unlockDay": 620,
-    "infantry": "Gregory",
-    "lancer": "Freya",
-    "marksman": "Blanchette",
-    "wheelHero": "Blanchette (Marksman)",
-    "advice": "Blanchette on Lucky Wheel is essential for high lethality PvE. Gregory provides massive troop HP buffs."
+    "id": "6",
+    "name": "6",
+    "generation": 6,
+    "troop_type": "lancer",
+    "tier": "S",
+    "summary": "",
+    "recommended_for": [
+      "Exploration",
+      "Expedition",
+      "PvP"
+    ],
+    "f2p_friendly": true
   },
   {
-    "gen": 9,
-    "label": "Gen 9",
-    "unlockDay": 550,
-    "infantry": "Magnus",
-    "lancer": "Fred",
-    "marksman": "Xura",
-    "wheelHero": "Magnus (Infantry)",
-    "advice": "Magnus is a durable Lucky Wheel frontline wall. Fred provides devastating lancer flanking."
+    "id": "7",
+    "name": "7",
+    "generation": 7,
+    "troop_type": "lancer",
+    "tier": "S+",
+    "summary": "",
+    "recommended_for": [
+      "Exploration",
+      "Expedition",
+      "PvP"
+    ],
+    "f2p_friendly": true
   },
   {
-    "gen": 8,
-    "label": "Gen 8",
-    "unlockDay": 480,
-    "infantry": "Gatot",
-    "lancer": "Sonya",
-    "marksman": "Hendrik",
-    "wheelHero": "Hendrik (Marksman)",
-    "advice": "Hendrik on Lucky Wheel is premier marksman carry. Gatot provides immense rally resilience."
+    "id": "9",
+    "name": "9",
+    "generation": 9,
+    "troop_type": "lancer",
+    "tier": "S",
+    "summary": "",
+    "recommended_for": [
+      "Exploration",
+      "Expedition",
+      "PvP"
+    ],
+    "f2p_friendly": true
   },
   {
-    "gen": 7,
-    "label": "Gen 7",
-    "unlockDay": 400,
-    "infantry": "Edith",
-    "lancer": "Gordon",
-    "marksman": "Bradley",
-    "wheelHero": "Bradley (Marksman)",
-    "advice": "Edith & Mr. Tin are premier frontline fortress tanks for castle garrisons. Bradley on Lucky Wheel is top marksman sniper."
+    "id": "10",
+    "name": "10",
+    "generation": 10,
+    "troop_type": "lancer",
+    "tier": "S+",
+    "summary": "",
+    "recommended_for": [
+      "Exploration",
+      "Expedition",
+      "PvP"
+    ],
+    "f2p_friendly": true
   },
   {
-    "gen": 6,
-    "label": "Gen 6",
-    "unlockDay": 320,
-    "infantry": "Wayne",
-    "lancer": "Wu Ming",
-    "marksman": "Renee",
-    "wheelHero": "Renee (Marksman)",
-    "advice": "Renee on Lucky Wheel is premier marksman damage dealer. Wayne is a solid garrison defender."
+    "id": "11",
+    "name": "11",
+    "generation": 11,
+    "troop_type": "lancer",
+    "tier": "S",
+    "summary": "",
+    "recommended_for": [
+      "Exploration",
+      "Expedition",
+      "PvP"
+    ],
+    "f2p_friendly": true
   },
   {
-    "gen": 5,
-    "label": "Gen 5",
-    "unlockDay": 250,
-    "infantry": "Hector",
-    "lancer": "Norah",
-    "marksman": "Gwen",
-    "wheelHero": "Hector (Infantry)",
-    "advice": "Hector is a top-tier Lucky Wheel tank. Norah is excellent for flank burst."
+    "id": "12",
+    "name": "12",
+    "generation": 12,
+    "troop_type": "lancer",
+    "tier": "S+",
+    "summary": "",
+    "recommended_for": [
+      "Exploration",
+      "Expedition",
+      "PvP"
+    ],
+    "f2p_friendly": true
   },
   {
-    "gen": 4,
-    "label": "Gen 4",
-    "unlockDay": 180,
-    "infantry": "Ahmose",
-    "lancer": "Reina",
-    "marksman": "Lynn",
-    "wheelHero": "Lynn (Marksman)",
-    "advice": "Lynn on Lucky Wheel is the primary carry for Bear Trap. Ahmose is an impenetrable frontline wall."
+    "id": "13",
+    "name": "13",
+    "generation": 13,
+    "troop_type": "lancer",
+    "tier": "S",
+    "summary": "",
+    "recommended_for": [
+      "Exploration",
+      "Expedition",
+      "PvP"
+    ],
+    "f2p_friendly": true
   },
   {
-    "gen": 3,
-    "label": "Gen 3",
-    "unlockDay": 120,
-    "infantry": "Logan",
-    "lancer": "Greg",
-    "marksman": "Mia",
-    "wheelHero": "Mia (Marksman)",
-    "advice": "Mia on Lucky Wheel is essential for Bear Trap damage spikes. Logan is top arena tank."
+    "id": "14",
+    "name": "14",
+    "generation": 14,
+    "troop_type": "lancer",
+    "tier": "S",
+    "summary": "",
+    "recommended_for": [
+      "Exploration",
+      "Expedition",
+      "PvP"
+    ],
+    "f2p_friendly": true
   },
   {
-    "gen": 2,
-    "label": "Gen 2",
-    "unlockDay": 40,
-    "infantry": "Flint",
-    "lancer": "Philly",
-    "marksman": "Alonso",
-    "wheelHero": "Flint (Infantry)",
-    "advice": "Spin Lucky Wheel for Flint to 3-4★. Save mythic general shards for Alonso."
+    "id": "15",
+    "name": "15",
+    "generation": 15,
+    "troop_type": "lancer",
+    "tier": "A",
+    "summary": "",
+    "recommended_for": [
+      "Exploration",
+      "Expedition",
+      "PvP"
+    ],
+    "f2p_friendly": true
   },
   {
-    "gen": 1,
-    "label": "Gen 1",
-    "unlockDay": 0,
-    "infantry": "Jeronimo",
-    "lancer": "Natalia",
-    "marksman": "Molly & Zinman",
-    "wheelHero": "Jeronimo (VIP) / Molly",
-    "advice": "Early game core. Use Sergey as defense tank and Jessie as #1 rally joiner (+25% Dmg)."
+    "id": "16",
+    "name": "16",
+    "generation": 16,
+    "troop_type": "lancer",
+    "tier": "S",
+    "summary": "",
+    "recommended_for": [
+      "Exploration",
+      "Expedition",
+      "PvP"
+    ],
+    "f2p_friendly": true
   },
   {
-    "gen": 0,
-    "label": "Epic Core (F2P)",
-    "unlockDay": 0,
-    "infantry": "Sergey & Patrick",
-    "lancer": "Jessie & Seo-yoon",
-    "marksman": "Bahiti & Gina & Jasser",
-    "wheelHero": "N/A (F2P Intel & Recruitment)",
-    "advice": "Max Jessie (+25% rally damage) and Patrick (+15% garrison HP) immediately!"
-  },
-  {
-    "gen": -1,
-    "label": "Rare (Growth)",
-    "unlockDay": 0,
-    "infantry": "Smith & Eugene",
-    "lancer": "Charlie",
-    "marksman": "Cloris",
-    "wheelHero": "N/A (Exploration & Growth)",
-    "advice": "Use for settlement construction speed, hunting stamina discounts, and initial exploration."
+    "id": "17",
+    "name": "17",
+    "generation": 17,
+    "troop_type": "lancer",
+    "tier": "S",
+    "summary": "",
+    "recommended_for": [
+      "Exploration",
+      "Expedition",
+      "PvP"
+    ],
+    "f2p_friendly": false
   }
 ]

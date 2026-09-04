@@ -1,66 +1,326 @@
 {
   "fc_table": {
-    "1": {"furnace_fc": 600, "furnace_rfc": 0, "camp_fc": 350, "camp_rfc": 0, "days": 8},
-    "2": {"furnace_fc": 1200, "furnace_rfc": 0, "camp_fc": 700, "camp_rfc": 0, "days": 12},
-    "3": {"furnace_fc": 2000, "furnace_rfc": 0, "camp_fc": 1150, "camp_rfc": 0, "days": 16},
-    "4": {"furnace_fc": 3200, "furnace_rfc": 0, "camp_fc": 1800, "camp_rfc": 0, "days": 22},
-    "5": {"furnace_fc": 4800, "furnace_rfc": 0, "camp_fc": 2700, "camp_rfc": 0, "days": 30},
-    "6": {"furnace_fc": 2500, "furnace_rfc": 180, "camp_fc": 1400, "camp_rfc": 100, "days": 40},
-    "7": {"furnace_fc": 3500, "furnace_rfc": 320, "camp_fc": 1950, "camp_rfc": 180, "days": 52},
-    "8": {"furnace_fc": 5000, "furnace_rfc": 550, "camp_fc": 2800, "camp_rfc": 300, "days": 65},
-    "9": {"furnace_fc": 7000, "furnace_rfc": 850, "camp_fc": 3900, "camp_rfc": 480, "days": 80},
-    "10": {"furnace_fc": 10000, "furnace_rfc": 1300, "camp_fc": 5500, "camp_rfc": 720, "days": 100},
-    "11": {"furnace_fc": 14000, "furnace_rfc": 1900, "camp_fc": 7800, "camp_rfc": 1050, "days": 120},
-    "12": {"furnace_fc": 19500, "furnace_rfc": 2700, "camp_fc": 11000, "camp_rfc": 1500, "days": 145}
+    "1": {
+      "furnace_fc": 600,
+      "furnace_rfc": 0,
+      "camp_fc": 350,
+      "camp_rfc": 0,
+      "days": 8
+    },
+    "2": {
+      "furnace_fc": 1200,
+      "furnace_rfc": 0,
+      "camp_fc": 700,
+      "camp_rfc": 0,
+      "days": 12
+    },
+    "3": {
+      "furnace_fc": 2000,
+      "furnace_rfc": 0,
+      "camp_fc": 1150,
+      "camp_rfc": 0,
+      "days": 16
+    },
+    "4": {
+      "furnace_fc": 3200,
+      "furnace_rfc": 0,
+      "camp_fc": 1800,
+      "camp_rfc": 0,
+      "days": 22
+    },
+    "5": {
+      "furnace_fc": 4800,
+      "furnace_rfc": 0,
+      "camp_fc": 2700,
+      "camp_rfc": 0,
+      "days": 30
+    },
+    "6": {
+      "furnace_fc": 2500,
+      "furnace_rfc": 180,
+      "camp_fc": 1400,
+      "camp_rfc": 100,
+      "days": 40
+    },
+    "7": {
+      "furnace_fc": 3500,
+      "furnace_rfc": 320,
+      "camp_fc": 1950,
+      "camp_rfc": 180,
+      "days": 52
+    },
+    "8": {
+      "furnace_fc": 5000,
+      "furnace_rfc": 550,
+      "camp_fc": 2800,
+      "camp_rfc": 300,
+      "days": 65
+    },
+    "9": {
+      "furnace_fc": 7000,
+      "furnace_rfc": 850,
+      "camp_fc": 3900,
+      "camp_rfc": 480,
+      "days": 80
+    },
+    "10": {
+      "furnace_fc": 10000,
+      "furnace_rfc": 1300,
+      "camp_fc": 5500,
+      "camp_rfc": 720,
+      "days": 100
+    },
+    "11": {
+      "furnace_fc": 14000,
+      "furnace_rfc": 1900,
+      "camp_fc": 7800,
+      "camp_rfc": 1050,
+      "days": 120
+    },
+    "12": {
+      "furnace_fc": 19500,
+      "furnace_rfc": 2700,
+      "camp_fc": 11000,
+      "camp_rfc": 1500,
+      "days": 145
+    }
   },
   "charm_table": {
-    "1": {"guides": 10, "designs": 0, "boost": 2.5, "svs_pts": 7000},
-    "2": {"guides": 25, "designs": 5, "boost": 5.5, "svs_pts": 17500},
-    "3": {"guides": 50, "designs": 15, "boost": 9.0, "svs_pts": 35000},
-    "4": {"guides": 90, "designs": 30, "boost": 14.0, "svs_pts": 63000},
-    "5": {"guides": 150, "designs": 55, "boost": 20.5, "svs_pts": 105000},
-    "6": {"guides": 240, "designs": 95, "boost": 28.5, "svs_pts": 168000},
-    "7": {"guides": 360, "designs": 150, "boost": 38.0, "svs_pts": 252000},
-    "8": {"guides": 520, "designs": 230, "boost": 50.0, "svs_pts": 364000},
-    "9": {"guides": 720, "designs": 340, "boost": 64.5, "svs_pts": 504000},
-    "10": {"guides": 980, "designs": 490, "boost": 82.0, "svs_pts": 686000},
-    "11": {"guides": 1300, "designs": 680, "boost": 105.0, "svs_pts": 910000},
-    "12": {"guides": 1750, "designs": 920, "boost": 132.0, "svs_pts": 1225000}
+    "1": {
+      "guides": 10,
+      "designs": 0,
+      "boost": 2.5,
+      "svs_pts": 7000
+    },
+    "2": {
+      "guides": 25,
+      "designs": 5,
+      "boost": 5.5,
+      "svs_pts": 17500
+    },
+    "3": {
+      "guides": 50,
+      "designs": 15,
+      "boost": 9.0,
+      "svs_pts": 35000
+    },
+    "4": {
+      "guides": 90,
+      "designs": 30,
+      "boost": 14.0,
+      "svs_pts": 63000
+    },
+    "5": {
+      "guides": 150,
+      "designs": 55,
+      "boost": 20.5,
+      "svs_pts": 105000
+    },
+    "6": {
+      "guides": 240,
+      "designs": 95,
+      "boost": 28.5,
+      "svs_pts": 168000
+    },
+    "7": {
+      "guides": 360,
+      "designs": 150,
+      "boost": 38.0,
+      "svs_pts": 252000
+    },
+    "8": {
+      "guides": 520,
+      "designs": 230,
+      "boost": 50.0,
+      "svs_pts": 364000
+    },
+    "9": {
+      "guides": 720,
+      "designs": 340,
+      "boost": 64.5,
+      "svs_pts": 504000
+    },
+    "10": {
+      "guides": 980,
+      "designs": 490,
+      "boost": 82.0,
+      "svs_pts": 686000
+    },
+    "11": {
+      "guides": 1300,
+      "designs": 680,
+      "boost": 105.0,
+      "svs_pts": 910000
+    },
+    "12": {
+      "guides": 1750,
+      "designs": 920,
+      "boost": 132.0,
+      "svs_pts": 1225000
+    }
   },
   "svs_rates": {
-    "fc": {"name": "Fire Crystals", "rate": 2000, "unit": "FC", "day": "Day 1 & Day 5"},
-    "rfc": {"name": "Refined Fire Crystals", "rate": 30000, "unit": "RFC", "day": "Day 1 & Day 5"},
-    "speedup_hr": {"name": "Speedups (Hours)", "rate": 1800, "unit": "Hours", "day": "Day 1, 2 & 5"},
-    "speedup_min": {"name": "Speedups (Minutes)", "rate": 30, "unit": "Minutes", "day": "Day 1, 2 & 5"},
-    "fc_shard": {"name": "FC Shards (Helios)", "rate": 1000, "unit": "Shards", "day": "Day 2 & Day 5"},
-    "lucky_wheel": {"name": "Lucky Wheel Spins", "rate": 4000, "unit": "Spins", "day": "Day 2"},
-    "hero_shard": {"name": "Mythic Hero Shards", "rate": 6000, "unit": "Shards", "day": "Day 2"},
-    "expert_sigil": {"name": "Dawn Expert Sigils", "rate": 6000, "unit": "Sigils", "day": "Day 2"},
-    "polar_terror": {"name": "Polar Terror Rallies", "rate": 30000, "unit": "Rallies", "day": "Day 3"},
-    "mithril": {"name": "Mithril (Exclusive Gear)", "rate": 144000, "unit": "Mithril", "day": "Day 4 & 5"},
-    "t10_train": {"name": "T10 Troops Trained", "rate": 60, "unit": "Troops", "day": "Day 4"},
-    "t11_train": {"name": "T11 Troops Trained", "rate": 75, "unit": "Troops", "day": "Day 4"},
-    "t12_train": {"name": "T12 Troops Trained", "rate": 90, "unit": "Troops", "day": "Day 4"}
+    "fc": {
+      "name": "Fire Crystals",
+      "rate": 2000,
+      "unit": "FC",
+      "day": "Day 1 & Day 5"
+    },
+    "rfc": {
+      "name": "Refined Fire Crystals",
+      "rate": 30000,
+      "unit": "RFC",
+      "day": "Day 1 & Day 5"
+    },
+    "speedup_hr": {
+      "name": "Speedups (Hours)",
+      "rate": 1800,
+      "unit": "Hours",
+      "day": "Day 1, 2 & 5"
+    },
+    "speedup_min": {
+      "name": "Speedups (Minutes)",
+      "rate": 30,
+      "unit": "Minutes",
+      "day": "Day 1, 2 & 5"
+    },
+    "fc_shard": {
+      "name": "FC Shards (Helios)",
+      "rate": 1000,
+      "unit": "Shards",
+      "day": "Day 2 & Day 5"
+    },
+    "lucky_wheel": {
+      "name": "Lucky Wheel Spins",
+      "rate": 4000,
+      "unit": "Spins",
+      "day": "Day 2"
+    },
+    "hero_shard": {
+      "name": "Mythic Hero Shards",
+      "rate": 6000,
+      "unit": "Shards",
+      "day": "Day 2"
+    },
+    "expert_sigil": {
+      "name": "Dawn Expert Sigils",
+      "rate": 6000,
+      "unit": "Sigils",
+      "day": "Day 2"
+    },
+    "polar_terror": {
+      "name": "Polar Terror Rallies",
+      "rate": 30000,
+      "unit": "Rallies",
+      "day": "Day 3"
+    },
+    "mithril": {
+      "name": "Mithril (Exclusive Gear)",
+      "rate": 144000,
+      "unit": "Mithril",
+      "day": "Day 4 & 5"
+    },
+    "t10_train": {
+      "name": "T10 Troops Trained",
+      "rate": 60,
+      "unit": "Troops",
+      "day": "Day 4"
+    },
+    "t11_train": {
+      "name": "T11 Troops Trained",
+      "rate": 75,
+      "unit": "Troops",
+      "day": "Day 4"
+    },
+    "t12_train": {
+      "name": "T12 Troops Trained",
+      "rate": 90,
+      "unit": "Troops",
+      "day": "Day 4"
+    }
   },
   "transfer_brackets": [
-    {"max_power": 30.0, "passes": 1, "tier": "Ordinary Transfer"},
-    {"max_power": 50.0, "passes": 2, "tier": "Ordinary Transfer"},
-    {"max_power": 75.0, "passes": 3, "tier": "Ordinary Transfer"},
-    {"max_power": 100.0, "passes": 5, "tier": "Ordinary Transfer"},
-    {"max_power": 130.0, "passes": 8, "tier": "Ordinary Transfer"},
-    {"max_power": 170.0, "passes": 12, "tier": "Ordinary Transfer"},
-    {"max_power": 220.0, "passes": 18, "tier": "Ordinary Transfer"},
-    {"max_power": 280.0, "passes": 25, "tier": "Ordinary Transfer"},
-    {"max_power": 350.0, "passes": 35, "tier": "High Power Transfer"},
-    {"max_power": 450.0, "passes": 50, "tier": "High Power Transfer"},
-    {"max_power": 600.0, "passes": 65, "tier": "Top Tier Transfer"},
-    {"max_power": 9999.0, "passes": 80, "tier": "Whale Transfer (Requires State President Leading Invite)"}
+    {
+      "max_power": 30.0,
+      "passes": 1,
+      "tier": "Ordinary Transfer"
+    },
+    {
+      "max_power": 50.0,
+      "passes": 2,
+      "tier": "Ordinary Transfer"
+    },
+    {
+      "max_power": 75.0,
+      "passes": 3,
+      "tier": "Ordinary Transfer"
+    },
+    {
+      "max_power": 100.0,
+      "passes": 5,
+      "tier": "Ordinary Transfer"
+    },
+    {
+      "max_power": 130.0,
+      "passes": 8,
+      "tier": "Ordinary Transfer"
+    },
+    {
+      "max_power": 170.0,
+      "passes": 12,
+      "tier": "Ordinary Transfer"
+    },
+    {
+      "max_power": 220.0,
+      "passes": 18,
+      "tier": "Ordinary Transfer"
+    },
+    {
+      "max_power": 280.0,
+      "passes": 25,
+      "tier": "Ordinary Transfer"
+    },
+    {
+      "max_power": 350.0,
+      "passes": 35,
+      "tier": "High Power Transfer"
+    },
+    {
+      "max_power": 450.0,
+      "passes": 50,
+      "tier": "High Power Transfer"
+    },
+    {
+      "max_power": 600.0,
+      "passes": 65,
+      "tier": "Top Tier Transfer"
+    },
+    {
+      "max_power": 9999.0,
+      "passes": 80,
+      "tier": "Whale Transfer (Requires State President Leading Invite)"
+    }
   ],
   "gift_codes": [
-    {"code": "WOS2026", "rewards": "1000 Gems, 5x 1h Speedups, 10x Gold Keys, 500k Meat/Wood"},
-    {"code": "STATEOFPOWER", "rewards": "500 Gems, 10x Advanced Wild Marks, 20x Charm Guides"},
-    {"code": "DC300K", "rewards": "1500 Gems, 20x Mythic Shards, 10x 1h Speedups"},
-    {"code": "FROSTYTACTICS", "rewards": "Exclusive Frosty Avatar Frame, 300 Gems, 5x Stamina"},
-    {"code": "BEARHUNT2026", "rewards": "800 Gems, 100x Stamina, 10x March Speedups"}
+    {
+      "code": "WOS2026",
+      "rewards": "1000 Gems, 5x 1h Speedups, 10x Gold Keys, 500k Meat/Wood"
+    },
+    {
+      "code": "STATEOFPOWER",
+      "rewards": "500 Gems, 10x Advanced Wild Marks, 20x Charm Guides"
+    },
+    {
+      "code": "DC300K",
+      "rewards": "1500 Gems, 20x Mythic Shards, 10x 1h Speedups"
+    },
+    {
+      "code": "FROSTYTACTICS",
+      "rewards": "Exclusive Frosty Avatar Frame, 300 Gems, 5x Stamina"
+    },
+    {
+      "code": "BEARHUNT2026",
+      "rewards": "800 Gems, 100x Stamina, 10x March Speedups"
+    }
   ]
 }
