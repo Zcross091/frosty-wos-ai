@@ -1201,57 +1201,397 @@ class RegisterModal(discord.ui.Modal, title="Whiteout Survival Auto-Claim"):
         await interaction.followup.send(embed=embed, ephemeral=True)
 
 
+BANNER_FILE_PATH = os.path.join(os.path.dirname(__file__), "assets", "wos_giftcode_banner.jpg")
+
+
+def build_codes_dashboard_embed(user: Optional[discord.User | discord.Member] = None) -> Tuple[discord.Embed, Optional[discord.File]]:
+    """Builds the rich, graphical Whiteout Survival Gift Code Command Center embed."""
+    data = load_utility_data()
+    gift_codes = data.get("gift_codes", list(ACTIVE_GIFT_CODES))
+
+    embed = discord.Embed(
+        title="❄️ Whiteout Survival • Gift Code Command Center",
+        description=(
+            "Welcome to the **Frosty Automated Gift Code Center**! Claim official Century Games promo codes "
+            "for free **Gems, Speedups, Gold Keys & Stamina**, or link your characters to receive all future rewards "
+            "automatically in your in-game mailbox!\n"
+        ),
+        color=0x00D8F6
+    )
+
+    # 1. Accounts Section with Visual Slot Gauge
+    max_slots = registered_players.MAX_ACCOUNTS_PER_USER
+    if user:
+        accounts = registered_players.get_player_accounts(user.id)
+        slot_count = len(accounts)
+        filled_bar = "▰" * slot_count + "▱" * (max_slots - slot_count)
+
+        if slot_count > 0:
+            lines = [f"`[ {filled_bar} ]` **{slot_count}/{max_slots} Accounts Active** • `⚡ Auto-Claim: ON`\n"]
+            for acc in accounts:
+                lbl = acc.get("label", "Main")
+                pid = acc.get("player_id", "Unknown")
+                st = acc.get("state", "Unknown")
+                cnt = len(acc.get("claimed_codes", []))
+                lines.append(f"• 🏷️ **{lbl}** — ID `{pid}` (State `{st}`) • 🎁 `{cnt}` Claimed")
+            lines.append("\n*💡 Click **`[ ⚡ Claim All Now ]`** to redeem all active codes for your characters in 1 click!*")
+            embed.add_field(
+                name="🎮 Your Linked Characters",
+                value="\n".join(lines),
+                inline=False
+            )
+        else:
+            embed.add_field(
+                name="🎮 Your Linked Characters",
+                value=(
+                    f"`[ {filled_bar} ]` **0/{max_slots} Accounts Linked**\n"
+                    "• *No characters linked yet.*\n"
+                    "• Click **`[ ➕ Register Account ]`** below to link your Main & Farm accounts!"
+                ),
+                inline=False
+            )
+    else:
+        embed.add_field(
+            name="🎮 Multi-Account Auto-Claim System",
+            value=(
+                "• Link up to **5 characters** (Main + Farm accounts) per Discord user.\n"
+                "• Frosty Bot automatically redeems new codes to your in-game mailbox the second they drop!\n"
+                "• Click **`[ ➕ Register Account ]`** below to get started."
+            ),
+            inline=False
+        )
+
+    # 2. Active Promo Codes (Card layout)
+    code_lines = []
+    for c in gift_codes[:6]:
+        code_str = c.get("code", "")
+        status = c.get("status", "🟢 Active & Verified")
+        rewards = c.get("rewards", "Free In-Game Rewards")
+        code_lines.append(f"💎 **`{code_str}`** — {status}\n↳ *Rewards: {rewards}*")
+
+    if not code_lines:
+        code_lines.append("ℹ️ *No active codes at this exact moment. Check back soon!*")
+
+    embed.add_field(
+        name="🎁 Active & Verified Gift Codes",
+        value="\n\n".join(code_lines),
+        inline=False
+    )
+
+    # 3. Instructions & Quick Actions
+    embed.add_field(
+        name="📱 Quick Actions",
+        value=(
+            "• **Instant Redeem:** Click **`[ ⚡ Claim All Now ]`** to redeem for all your linked characters!\n"
+            "• **Manage / Unlink:** Click **`[ 📋 My Accounts ]`** to view details, toggle DMs, or remove slots.\n"
+            "• **Web Portal:** Click **`[ 🌐 Century Games Portal ]`** to redeem manually on web."
+        ),
+        inline=False
+    )
+
+    file = None
+    if os.path.exists(BANNER_FILE_PATH):
+        file = discord.File(BANNER_FILE_PATH, filename="wos_giftcode_banner.jpg")
+        embed.set_image(url="attachment://wos_giftcode_banner.jpg")
+
+    embed.set_footer(text="Frosty AI • Automated Gift Code Network • Updated Daily")
+    return embed, file
+
+
+class AdminGiftCodeModal(discord.ui.Modal, title="Gift Code Admin Manager"):
+    action_input = discord.ui.TextInput(
+        label="Action (add or remove)",
+        placeholder="add or remove",
+        min_length=3,
+        max_length=6,
+        required=True,
+        default="add"
+    )
+    code_input = discord.ui.TextInput(
+        label="Promo Code",
+        placeholder="e.g. NEWYEAR2026",
+        min_length=3,
+        max_length=30,
+        required=True
+    )
+    rewards_input = discord.ui.TextInput(
+        label="Rewards Description (if adding)",
+        placeholder="e.g. 500 Gems, 5x Speedups",
+        required=False,
+        default="Free In-Game Rewards (Gems, Speedups, Gold Keys)"
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        if not is_authorized_admin(interaction.user):
+            await interaction.response.send_message("⛔ **Access Denied:** Admin only.", ephemeral=True)
+            return
+
+        act = self.action_input.value.strip().lower()
+        clean_code = self.code_input.value.strip()
+        clean_rewards = self.rewards_input.value.strip() or "Free In-Game Rewards (Gems, Speedups, Gold Keys)"
+        data = load_utility_data()
+        gift_codes = data.get("gift_codes", list(ACTIVE_GIFT_CODES))
+
+        if act == "add":
+            existing = [c for c in gift_codes if c["code"].lower() == clean_code.lower()]
+            if existing:
+                existing[0]["code"] = clean_code
+                existing[0]["rewards"] = clean_rewards
+                existing[0]["status"] = "🟢 Active & Verified"
+            else:
+                gift_codes.insert(0, {
+                    "code": clean_code,
+                    "status": "🟢 Active & Verified",
+                    "rewards": clean_rewards
+                })
+            data["gift_codes"] = gift_codes
+            save_utility_data(data)
+            asyncio.create_task(dispatch_auto_claim(clean_code))
+            await interaction.response.send_message(
+                f"✅ **Gift Code Added & Auto-Claim Triggered:** `{clean_code}` with rewards: *{clean_rewards}*.",
+                ephemeral=True
+            )
+        elif act == "remove":
+            data["gift_codes"] = [c for c in gift_codes if c["code"].lower() != clean_code.lower()]
+            save_utility_data(data)
+            await interaction.response.send_message(f"🗑️ **Code Removed:** `{clean_code}` from active database.", ephemeral=True)
+        else:
+            await interaction.response.send_message("⚠️ Action must be `add` or `remove`.", ephemeral=True)
+
+
+class AccountSelect(discord.ui.Select):
+    def __init__(self, user_id: int):
+        self.user_id = user_id
+        accounts = registered_players.get_player_accounts(user_id)
+        options = []
+        for i, acc in enumerate(accounts, 1):
+            lbl = acc.get("label", f"Account #{i}")
+            pid = acc.get("player_id", "")
+            st = acc.get("state", "")
+            options.append(discord.SelectOption(
+                label=f"{lbl} (State {st})",
+                value=pid,
+                description=f"Player ID: {pid}",
+                emoji="🏷️"
+            ))
+        if len(accounts) > 1:
+            options.append(discord.SelectOption(
+                label="Unregister ALL Accounts",
+                value="__ALL__",
+                description="Remove all registered accounts from Frosty",
+                emoji="🗑️"
+            ))
+        if not options:
+            options.append(discord.SelectOption(
+                label="No Accounts Registered",
+                value="__NONE__",
+                description="Click 'Register Account' to link your character",
+                emoji="ℹ️"
+            ))
+        super().__init__(
+            placeholder="Select an account to view or delete...",
+            min_values=1,
+            max_values=1,
+            options=options,
+            row=0
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        selected_pid = self.values[0]
+        if selected_pid == "__NONE__":
+            await interaction.response.send_message("ℹ️ You have no accounts registered yet.", ephemeral=True)
+            return
+
+        if selected_pid == "__ALL__":
+            ok, msg = registered_players.unregister_player(interaction.user.id)
+            await interaction.response.send_message(f"{msg}", ephemeral=True)
+            return
+
+        accounts = registered_players.get_player_accounts(interaction.user.id)
+        target = next((a for a in accounts if a["player_id"] == selected_pid), None)
+        if not target:
+            await interaction.response.send_message("⚠️ Account not found.", ephemeral=True)
+            return
+
+        embed = discord.Embed(
+            title=f"🏷️ Account Details: {target.get('label', 'Main')}",
+            description=(
+                f"👤 **Player ID:** `{target['player_id']}`\n"
+                f"🏰 **State Number:** `{target['state']}`\n"
+                f"🎁 **Total Claimed Codes:** `{len(target.get('claimed_codes', []))}`\n"
+                f"⏱️ **Last Activity:** `{target.get('last_status', 'Registered')}`\n\n"
+                f"Click below to delete this account from your auto-claim list:"
+            ),
+            color=SUCCESS_COLOR
+        )
+
+        view = discord.ui.View(timeout=120)
+        delete_btn = discord.ui.Button(
+            label=f"Delete '{target.get('label', 'Account')}'",
+            style=discord.ButtonStyle.danger,
+            emoji="🗑️"
+        )
+
+        async def delete_cb(btn_interaction: discord.Interaction):
+            ok, msg = registered_players.unregister_player(btn_interaction.user.id, selected_pid)
+            await btn_interaction.response.send_message(msg, ephemeral=True)
+
+        delete_btn.callback = delete_cb
+        view.add_item(delete_btn)
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+
+class AccountManagementView(discord.ui.View):
+    def __init__(self, user_id: int):
+        super().__init__(timeout=180)
+        self.user_id = user_id
+        self.add_item(AccountSelect(user_id))
+
+    @discord.ui.button(label="Register Another Account", style=discord.ButtonStyle.primary, emoji="➕", row=1)
+    async def add_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        accounts = registered_players.get_player_accounts(interaction.user.id)
+        if len(accounts) >= registered_players.MAX_ACCOUNTS_PER_USER:
+            await interaction.response.send_message(
+                f"⚠️ Maximum limit of **{registered_players.MAX_ACCOUNTS_PER_USER} accounts** reached! Please remove an account from the dropdown first.",
+                ephemeral=True
+            )
+            return
+        await interaction.response.send_modal(RegisterModal())
+
+    @discord.ui.button(label="Toggle DM Alerts", style=discord.ButtonStyle.secondary, emoji="🔔", row=1)
+    async def toggle_dm_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        new_status = registered_players.toggle_dm_notification(interaction.user.id)
+        status_text = "🟢 Enabled (You will receive private DMs when rewards are claimed)" if new_status else "🔴 Disabled"
+        await interaction.response.send_message(f"📬 **Direct Message Alerts:** {status_text}", ephemeral=True)
+
+
 class CodesActionView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
+        # Link buttons (Row 1)
         self.add_item(discord.ui.Button(
-            label="Official Redeem Portal",
+            label="Century Games Portal",
             url="https://wos-giftcode.centurygame.com/",
             style=discord.ButtonStyle.link,
-            emoji="🌐"
+            emoji="🌐",
+            row=1
         ))
         self.add_item(discord.ui.Button(
-            label="Official Discord Codes",
+            label="Official Discord",
             url="https://discord.gg/whiteoutsurvival",
             style=discord.ButtonStyle.link,
-            emoji="📢"
+            emoji="📢",
+            row=1
         ))
 
     @discord.ui.button(
-        label="Register for Auto-Claim",
+        label="Claim All Now",
         style=discord.ButtonStyle.success,
-        emoji="📝",
-        custom_id="frosty_codes_register_btn"
+        emoji="⚡",
+        custom_id="frosty_codes_claim_all_btn",
+        row=0
     )
-    async def register_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(RegisterModal())
-
-    @discord.ui.button(
-        label="My Registration Status",
-        style=discord.ButtonStyle.secondary,
-        emoji="📊",
-        custom_id="frosty_codes_status_btn"
-    )
-    async def status_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def claim_all_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         accounts = registered_players.get_player_accounts(interaction.user.id)
         if not accounts:
             embed = discord.Embed(
-                title="📋 Not Registered Yet",
+                title="📋 No Accounts Registered Yet",
                 description=(
-                    "You haven't registered any Whiteout Survival characters for automated gift codes yet.\n\n"
-                    "Click **'📝 Register for Auto-Claim'** above to register up to 5 accounts (Mains & Farms) and receive free in-game rewards automatically!"
+                    "You haven't linked any Whiteout Survival characters yet!\n\n"
+                    "Click **`[ ➕ Register Account ]`** below to add your **Player ID** and **State**, "
+                    "then you can claim every code in 1 click!"
+                ),
+                color=WARN_COLOR
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        await interaction.response.defer(ephemeral=True)
+        data = load_utility_data()
+        gift_codes = data.get("gift_codes", list(ACTIVE_GIFT_CODES))
+        active_codes = [c["code"].strip() for c in gift_codes if c.get("code")][:5]
+
+        if not active_codes:
+            await interaction.followup.send("ℹ️ No active gift codes found in the database right now.", ephemeral=True)
+            return
+
+        lines = [f"Processed **{len(accounts)}** character(s) across **{len(active_codes)}** active code(s):\n"]
+
+        for acc in accounts:
+            pid = acc["player_id"]
+            st = acc["state"]
+            lbl = acc.get("label", "Main")
+            lines.append(f"**🏷️ {lbl}** (`{pid}`, State `{st}`):")
+            for cdk in active_codes:
+                claimed_list = [c.upper() for c in acc.get("claimed_codes", [])]
+                if cdk.upper() in claimed_list:
+                    lines.append(f"• ℹ️ `{cdk}`: Already redeemed")
+                    continue
+
+                res = await redeem_gift_code(pid, st, cdk)
+                registered_players.record_claim_for_account(interaction.user.id, pid, cdk, res["success"], res["message"])
+                icon = "✅" if res["success"] else "ℹ️"
+                lines.append(f"• {icon} `{cdk}`: {res['message']}")
+                await asyncio.sleep(1.0)
+            lines.append("")
+
+        result_embed = discord.Embed(
+            title="🎁 Gift Code Claim Results",
+            description="\n".join(lines),
+            color=SUCCESS_COLOR
+        )
+        result_embed.set_footer(text="Rewards have been sent to your in-game mailbox in Whiteout Survival!")
+        await interaction.followup.send(embed=result_embed, ephemeral=True)
+
+    @discord.ui.button(
+        label="Register Account",
+        style=discord.ButtonStyle.primary,
+        emoji="➕",
+        custom_id="frosty_codes_register_btn",
+        row=0
+    )
+    async def register_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        accounts = registered_players.get_player_accounts(interaction.user.id)
+        if len(accounts) >= registered_players.MAX_ACCOUNTS_PER_USER:
+            await interaction.response.send_message(
+                f"⚠️ You already have **{registered_players.MAX_ACCOUNTS_PER_USER} accounts** registered (the maximum limit).\n"
+                f"Click **`[ 📋 My Accounts ]`** to remove an account first.",
+                ephemeral=True
+            )
+            return
+        await interaction.response.send_modal(RegisterModal())
+
+    @discord.ui.button(
+        label="My Accounts",
+        style=discord.ButtonStyle.secondary,
+        emoji="📋",
+        custom_id="frosty_codes_status_btn",
+        row=0
+    )
+    async def manage_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        accounts = registered_players.get_player_accounts(interaction.user.id)
+        if not accounts:
+            embed = discord.Embed(
+                title="📋 No Accounts Registered Yet",
+                description=(
+                    "You haven't registered any Whiteout Survival characters yet.\n\n"
+                    "Click **`[ ➕ Register Account ]`** to link your character (up to 5 accounts supported)!"
                 ),
                 color=FROSTY_COLOR
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
+        slot_count = len(accounts)
+        max_slots = registered_players.MAX_ACCOUNTS_PER_USER
+        filled_bar = "▰" * slot_count + "▱" * (max_slots - slot_count)
+
         embed = discord.Embed(
-            title=f"📊 Your Auto-Claim Accounts ({len(accounts)}/{registered_players.MAX_ACCOUNTS_PER_USER})",
+            title="📊 Whiteout Survival Account Manager",
             description=(
-                f"⚡ **Auto-Claim Engine:** `🟢 Active`\n"
-                f"📬 **DM Notifications:** `🔔 Enabled`\n\n"
-                f"Here are the characters linked to your Discord account:"
+                f"`[ {filled_bar} ]` **{slot_count}/{max_slots} Account Slots Used**\n"
+                f"⚡ **Auto-Claim Status:** `🟢 Active (Auto-Redeems New Codes)`\n\n"
+                f"Use the dropdown menu below to inspect or remove an account:"
             ),
             color=SUCCESS_COLOR
         )
@@ -1260,23 +1600,37 @@ class CodesActionView(discord.ui.View):
             lbl = acc.get("label", f"Account #{i}")
             pid = acc.get("player_id", "Unknown")
             st = acc.get("state", "Unknown")
-            claimed_list = acc.get("claimed_codes", [])
-            claimed_cnt = len(claimed_list)
-            recent_codes = ", ".join(f"`{c}`" for c in claimed_list[-4:]) if claimed_list else "None yet"
+            claimed_cnt = len(acc.get("claimed_codes", []))
             last_status = acc.get("last_status", "Registered")
 
             embed.add_field(
-                name=f"🏷️ #{i} {lbl} — State {st}",
+                name=f"🏷️ #{i} {lbl} (State {st})",
                 value=(
                     f"• **Player ID:** `{pid}`\n"
-                    f"• **Codes Claimed:** `{claimed_cnt}` ({recent_codes})\n"
-                    f"• **Last Activity:** `{last_status}`"
+                    f"• **Codes Claimed:** `{claimed_cnt}`\n"
+                    f"• **Status:** `{last_status}`"
                 ),
                 inline=False
             )
 
-        embed.set_footer(text=f"Slot usage: {len(accounts)}/{registered_players.MAX_ACCOUNTS_PER_USER} • Use /codes to register more or unregister.")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        view = AccountManagementView(interaction.user.id)
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+    @discord.ui.button(
+        label="Admin",
+        style=discord.ButtonStyle.secondary,
+        emoji="⚙️",
+        custom_id="frosty_codes_admin_btn",
+        row=1
+    )
+    async def admin_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not is_authorized_admin(interaction.user):
+            await interaction.response.send_message(
+                f"⛔ **Access Denied:** Only Supreme Commander (`{', '.join(AUTHORIZED_ADMIN_USERNAMES)}`) can manage gift codes.",
+                ephemeral=True
+            )
+            return
+        await interaction.response.send_modal(AdminGiftCodeModal())
 
 
 async def dispatch_auto_claim(code: str):
@@ -1378,325 +1732,111 @@ async def auto_sync_gift_codes():
         logger.debug(f"Periodic gift codes check notice: {e}")
 
 
-@bot.tree.command(name="codes", description="Whiteout Survival gift codes & automated redemption service.")
-@app_commands.describe(
-    action="View active codes, register for auto-claim, check status, or claim",
-    player_id="Your in-game Player ID (numbers only, for registration or claiming)",
-    state="Your State Number (e.g. 542, for registration)",
-    label="Account nickname/label (e.g. Main, Farm 1, max 15 chars)",
-    code="The promo code (e.g. gogoWOS)",
-    rewards="Description of rewards (when adding a code)"
-)
-@app_commands.choices(action=[
-    app_commands.Choice(name="View Active Codes", value="view"),
-    app_commands.Choice(name="Register for Auto-Claim", value="register"),
-    app_commands.Choice(name="My Registration Status", value="status"),
-    app_commands.Choice(name="Unregister from Auto-Claim", value="unregister"),
-    app_commands.Choice(name="Claim a Code Now", value="claim"),
-    app_commands.Choice(name="[Admin] Add New Code & Auto-Claim", value="add"),
-    app_commands.Choice(name="[Admin] Remove Expired Code", value="remove"),
-])
+@bot.tree.command(name="codes", description="Whiteout Survival Gift Code Center & Auto-Claim Dashboard")
+@app_commands.describe(code="Optional: Enter a specific promo code to redeem immediately across your accounts")
 async def slash_codes(
     interaction: discord.Interaction,
-    action: Optional[app_commands.Choice[str]] = None,
-    player_id: Optional[str] = None,
-    state: Optional[int] = None,
-    label: Optional[str] = None,
-    code: Optional[str] = None,
-    rewards: Optional[str] = None
+    code: Optional[str] = None
 ):
-    action_val = action.value if action else "view"
-    data = load_utility_data()
-    gift_codes = data.get("gift_codes", list(ACTIVE_GIFT_CODES))
-
-    # --- REGISTER ---
-    if action_val == "register":
-        if not player_id or not state:
-            await interaction.response.send_modal(RegisterModal())
-            return
-
-        clean_pid = player_id.strip()
-        if not clean_pid.isdigit():
-            await interaction.response.send_message("❌ **Invalid Player ID:** Player ID must consist only of numbers.", ephemeral=True)
-            return
-        if state <= 0:
-            await interaction.response.send_message("❌ **Invalid State Number:** State must be a positive number (e.g. 542).", ephemeral=True)
-            return
-
-        current_accounts = registered_players.get_player_accounts(interaction.user.id)
-        existing_pids = [a["player_id"] for a in current_accounts]
-        if len(current_accounts) >= registered_players.MAX_ACCOUNTS_PER_USER and clean_pid not in existing_pids:
-            await interaction.response.send_message(
-                f"⚠️ You already have **{registered_players.MAX_ACCOUNTS_PER_USER} accounts** registered (the maximum limit).\n"
-                f"Use `/codes action:Unregister from Auto-Claim` with a `player_id` to free up a slot.",
-                ephemeral=True
-            )
-            return
-
-        await interaction.response.defer(ephemeral=True)
-        test_code = "gogoWOS"
-        check_res = await redeem_gift_code(clean_pid, state, test_code)
-
-        if check_res.get("err_code") == 40020:
-            await interaction.followup.send(
-                f"❌ **Character Verification Failed:**\n"
-                f"Player ID `{clean_pid}` was not found in State `{state}` on Century Games servers.\n\n"
-                f"• Please open Whiteout Survival and tap your **Avatar** (top-left) to confirm your exact Player ID and State number.",
-                ephemeral=True
-            )
-            return
-
-        clean_label = label.strip() if label else None
-        success, msg, acc = registered_players.register_player(
-            interaction.user.id, clean_pid, state, label=clean_label, notify_dm=True
-        )
-        if not success:
-            await interaction.followup.send(msg, ephemeral=True)
-            return
-
-        total_accs = len(registered_players.get_player_accounts(interaction.user.id))
-        embed = discord.Embed(
-            title="✅ Registered for Frosty Auto-Claim!",
-            description=(
-                f"Welcome aboard, Chief! Your character is now registered for automated gift code redemption.\n\n"
-                f"🏷️ **Account Label:** **{acc.get('label', 'Main')}**\n"
-                f"👤 **Player ID:** `{clean_pid}`\n"
-                f"🏰 **State:** `{state}`\n"
-                f"📊 **Account Slots:** `{total_accs}/{registered_players.MAX_ACCOUNTS_PER_USER} Used`\n"
-                f"⚡ **Auto-Claim Status:** `🟢 Active (ON)`\n"
-                f"📬 **Direct Message Alerts:** `🔔 Enabled`\n\n"
-                f"🎁 **What happens next?**\n"
-                f"Whenever a new Whiteout Survival gift code is released, Frosty Bot will automatically redeem it directly to your in-game mailbox!\n\n"
-                f"💡 *You can register up to {registered_players.MAX_ACCOUNTS_PER_USER} accounts (e.g. Main + Farm accounts) under this Discord account.*"
-            ),
-            color=SUCCESS_COLOR
-        )
-        embed.set_footer(text="Use /codes action:My Registration Status to check or update your settings anytime.")
-        await interaction.followup.send(embed=embed, ephemeral=True)
-        return
-
-    # --- STATUS ---
-    if action_val == "status":
+    if code:
+        clean_code = code.strip()
         accounts = registered_players.get_player_accounts(interaction.user.id)
         if not accounts:
-            embed = discord.Embed(
-                title="📋 Not Registered Yet",
-                description="You have not registered any accounts for auto-claim yet. Use `/codes action:Register for Auto-Claim` to sign up!",
-                color=FROSTY_COLOR
-            )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-
-        embed = discord.Embed(
-            title=f"📊 Your Auto-Claim Accounts ({len(accounts)}/{registered_players.MAX_ACCOUNTS_PER_USER})",
-            description=(
-                f"⚡ **Auto-Claim Engine:** `🟢 Active`\n"
-                f"📬 **DM Notifications:** `🔔 Enabled`\n\n"
-                f"Here are the characters registered under your Discord account:"
-            ),
-            color=SUCCESS_COLOR
-        )
-
-        for i, acc in enumerate(accounts, 1):
-            lbl = acc.get("label", f"Account #{i}")
-            pid = acc.get("player_id", "Unknown")
-            st = acc.get("state", "Unknown")
-            claimed_list = acc.get("claimed_codes", [])
-            claimed_cnt = len(claimed_list)
-            recent_claimed = ", ".join(f"`{c}`" for c in claimed_list[-4:]) if claimed_list else "None yet"
-            last_status = acc.get("last_status", "Registered")
-
-            embed.add_field(
-                name=f"🏷️ #{i} {lbl} — State {st}",
-                value=(
-                    f"• **Player ID:** `{pid}`\n"
-                    f"• **Total Claimed:** `{claimed_cnt}` ({recent_claimed})\n"
-                    f"• **Last Activity:** `{last_status}`"
-                ),
-                inline=False
-            )
-
-        embed.set_footer(text="• /codes claim to redeem immediately\n• /codes unregister [player_id] to remove an account")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-        return
-
-    # --- UNREGISTER ---
-    if action_val == "unregister":
-        target_pid = player_id.strip() if player_id else None
-        success, msg = registered_players.unregister_player(interaction.user.id, target_pid)
-        await interaction.response.send_message(msg, ephemeral=True)
-        return
-
-    # --- CLAIM CODE ---
-    if action_val == "claim":
-        user_accounts = registered_players.get_player_accounts(interaction.user.id)
-        target_code = code.strip() if code else (gift_codes[0]["code"] if gift_codes else "gogoWOS")
-
-        # Case A: Manual PID and State provided
-        if player_id and state:
-            clean_pid = player_id.strip()
-            await interaction.response.defer(ephemeral=True)
-            res = await redeem_gift_code(clean_pid, state, target_code)
-            registered_players.record_claim_for_account(interaction.user.id, clean_pid, target_code, res["success"], res["message"])
-
-            status_emoji = "✅" if res["success"] else "ℹ️"
-            embed = discord.Embed(
-                title=f"{status_emoji} Gift Code Redemption Result",
-                description=(
-                    f"🔑 **Code:** `{target_code}`\n"
-                    f"👤 **Player ID:** `{clean_pid}` (State `{state}`)\n\n"
-                    f"**Result:** {res['message']}"
-                ),
-                color=SUCCESS_COLOR if res["success"] else WARN_COLOR
-            )
-            embed.set_footer(text="Whiteout Survival Official Redeem Service")
-            await interaction.followup.send(embed=embed, ephemeral=True)
-            return
-
-        # Case B: Specific PID provided, resolve State from registered accounts
-        if player_id and not state:
-            clean_pid = player_id.strip()
-            matching_acc = next((a for a in user_accounts if a["player_id"] == clean_pid), None)
-            if not matching_acc:
-                await interaction.response.send_message(
-                    f"⚠️ Account `{clean_pid}` is not in your registered accounts. Please provide both `player_id` and `state`.",
-                    ephemeral=True
-                )
-                return
-            await interaction.response.defer(ephemeral=True)
-            res = await redeem_gift_code(clean_pid, matching_acc["state"], target_code)
-            registered_players.record_claim_for_account(interaction.user.id, clean_pid, target_code, res["success"], res["message"])
-
-            status_emoji = "✅" if res["success"] else "ℹ️"
-            embed = discord.Embed(
-                title=f"{status_emoji} Gift Code Redemption: {matching_acc.get('label', 'Main')}",
-                description=(
-                    f"🔑 **Code:** `{target_code}`\n"
-                    f"👤 **Player ID:** `{clean_pid}` (State `{matching_acc['state']}`)\n\n"
-                    f"**Result:** {res['message']}"
-                ),
-                color=SUCCESS_COLOR if res["success"] else WARN_COLOR
-            )
-            embed.set_footer(text="Whiteout Survival Official Redeem Service")
-            await interaction.followup.send(embed=embed, ephemeral=True)
-            return
-
-        # Case C: No PID provided -> Redeem for ALL registered accounts!
-        if not user_accounts:
             await interaction.response.send_message(
-                "⚠️ You don't have any accounts registered yet. Use `/codes action:Register for Auto-Claim` or provide both `player_id` and `state`.",
+                f"⚠️ You don't have any characters registered yet!\n"
+                f"Please run `/codes` and click **`[ ➕ Register Account ]`** first to redeem `{clean_code}`.",
                 ephemeral=True
             )
             return
 
         await interaction.response.defer(ephemeral=True)
         results = []
-        for acc in user_accounts:
+        for acc in accounts:
             pid = acc["player_id"]
             st = acc["state"]
-            lbl = acc.get("label", "Account")
-            res = await redeem_gift_code(pid, st, target_code)
-            registered_players.record_claim_for_account(interaction.user.id, pid, target_code, res["success"], res["message"])
+            lbl = acc.get("label", "Main")
+            res = await redeem_gift_code(pid, st, clean_code)
+            registered_players.record_claim_for_account(interaction.user.id, pid, clean_code, res["success"], res["message"])
             icon = "✅" if res["success"] else "ℹ️"
             results.append(f"{icon} **{lbl}** (`{pid}`, State `{st}`): {res['message']}")
-            if len(user_accounts) > 1:
+            if len(accounts) > 1:
                 await asyncio.sleep(1.0)
 
         embed = discord.Embed(
-            title=f"🎁 Gift Code Redemption: `{target_code}`",
-            description=f"Processed **{len(user_accounts)}** registered account(s):\n\n" + "\n".join(results),
+            title=f"🎁 Gift Code Redemption: `{clean_code}`",
+            description=f"Processed **{len(accounts)}** registered account(s):\n\n" + "\n".join(results),
             color=SUCCESS_COLOR
         )
         embed.set_footer(text="Whiteout Survival Official Redeem Service")
         await interaction.followup.send(embed=embed, ephemeral=True)
         return
 
-    # --- ADMIN ACTIONS: ADD / REMOVE ---
-    if action_val in ["add", "remove"]:
-        if not is_authorized_admin(interaction.user):
-            await interaction.response.send_message(
-                f"⛔ **Access Denied:** Only Supreme Commander (`{', '.join(AUTHORIZED_ADMIN_USERNAMES)}`) can manage gift codes.",
-                ephemeral=True
-            )
-            return
-
-        if not code:
-            await interaction.response.send_message("⚠️ Please provide the `code` parameter to add or remove.", ephemeral=True)
-            return
-
-        clean_code = code.strip()
-
-        if action_val == "add":
-            clean_rewards = rewards.strip() if rewards else "Free In-Game Rewards (Gems, Speedups, Gold Keys)"
-            existing = [c for c in gift_codes if c["code"].lower() == clean_code.lower()]
-            if existing:
-                existing[0]["code"] = clean_code
-                existing[0]["rewards"] = clean_rewards
-                existing[0]["status"] = "🟢 Active & Verified"
-            else:
-                gift_codes.insert(0, {
-                    "code": clean_code,
-                    "status": "🟢 Active & Verified",
-                    "rewards": clean_rewards
-                })
-            data["gift_codes"] = gift_codes
-            save_utility_data(data)
-
-            # Trigger background auto-claim queue for all registered player accounts
-            asyncio.create_task(dispatch_auto_claim(clean_code))
-
-            await interaction.response.send_message(
-                f"✅ **Gift Code Added & Auto-Claim Triggered!**\n"
-                f"• Code `{clean_code}` is live with rewards: *{clean_rewards}*.\n"
-                f"• Frosty Bot has started background auto-claiming for all registered chiefs!",
-                ephemeral=True
-            )
-            return
-
-        elif action_val == "remove":
-            new_codes = [c for c in gift_codes if c["code"].lower() != clean_code.lower()]
-            if len(new_codes) == len(gift_codes):
-                await interaction.response.send_message(f"⚠️ Code `{clean_code}` was not found in the active database.", ephemeral=True)
-                return
-            data["gift_codes"] = new_codes
-            save_utility_data(data)
-            await interaction.response.send_message(f"🗑️ **Code Removed:** `{clean_code}` was deleted from the active list.", ephemeral=True)
-            return
-
-    # --- VIEW CODES (DEFAULT) ---
-    embed = discord.Embed(
-        title="🎁 Whiteout Survival Active Gift Codes",
-        description=(
-            "Redeem these official codes for free Gems, Speedups, Gold Keys, and Stamina!\n\n"
-            "🤖 **Want Free Codes Automatically?**\n"
-            "Click **`[ 📝 Register for Auto-Claim ]`** below! Frosty Bot will automatically claim every future gift code for your character the second it drops!\n\n"
-            "⚠️ **Chief Tips:**\n"
-            "• Codes are **CASE-SENSITIVE** — enter them exactly as shown below.\n"
-            "• Century Games codes are **time-limited** (usually expire in 24–72 hours)."
-        ),
-        color=SUCCESS_COLOR
-    )
-
-    for c in gift_codes:
-        status = c.get("status", "🟢 Active & Verified")
-        embed.add_field(
-            name=f"🔑 `{c['code']}` — {status}",
-            value=f"**Rewards:** {c['rewards']}",
-            inline=False
-        )
-
-    embed.add_field(
-        name="📱 Manual Redemption Methods",
-        value=(
-            "• **Android:** Avatar ➔ Settings (Gear icon) ➔ Gift Code ➔ Paste code & confirm.\n"
-            "• **iOS:** Click the **'Official Redeem Portal'** button below ➔ Enter Player ID, State & Code."
-        ),
-        inline=False
-    )
-    embed.set_footer(text="Codes updated dynamically • Frosty Automated Gift Code System")
-
+    # Default Interactive Dashboard
+    embed, file = build_codes_dashboard_embed(interaction.user)
     view = CodesActionView()
-    await interaction.response.send_message(embed=embed, view=view)
+    if file:
+        await interaction.response.send_message(embed=embed, file=file, view=view)
+    else:
+        await interaction.response.send_message(embed=embed, view=view)
+
+
+@bot.tree.command(name="giftcode_admin", description="[Admin Only] Add or remove Whiteout Survival promo codes.")
+@app_commands.describe(
+    action="Add new code or remove expired code",
+    code="The promo code (e.g. gogoWOS)",
+    rewards="Description of rewards (when adding)"
+)
+@app_commands.choices(action=[
+    app_commands.Choice(name="Add Code & Trigger Auto-Claim", value="add"),
+    app_commands.Choice(name="Remove Expired Code", value="remove"),
+])
+async def slash_giftcode_admin(
+    interaction: discord.Interaction,
+    action: app_commands.Choice[str],
+    code: str,
+    rewards: Optional[str] = None
+):
+    if not is_authorized_admin(interaction.user):
+        await interaction.response.send_message(
+            f"⛔ **Access Denied:** Only Supreme Commander (`{', '.join(AUTHORIZED_ADMIN_USERNAMES)}`) can manage gift codes.",
+            ephemeral=True
+        )
+        return
+
+    clean_code = code.strip()
+    data = load_utility_data()
+    gift_codes = data.get("gift_codes", list(ACTIVE_GIFT_CODES))
+
+    if action.value == "add":
+        clean_rewards = rewards.strip() if rewards else "Free In-Game Rewards (Gems, Speedups, Gold Keys)"
+        existing = [c for c in gift_codes if c["code"].lower() == clean_code.lower()]
+        if existing:
+            existing[0]["code"] = clean_code
+            existing[0]["rewards"] = clean_rewards
+            existing[0]["status"] = "🟢 Active & Verified"
+        else:
+            gift_codes.insert(0, {
+                "code": clean_code,
+                "status": "🟢 Active & Verified",
+                "rewards": clean_rewards
+            })
+        data["gift_codes"] = gift_codes
+        save_utility_data(data)
+        asyncio.create_task(dispatch_auto_claim(clean_code))
+        await interaction.response.send_message(
+            f"✅ **Gift Code Added & Auto-Claim Triggered!**\n"
+            f"• Code `{clean_code}` is live with rewards: *{clean_rewards}*.\n"
+            f"• Background auto-claim dispatched across all registered players!",
+            ephemeral=True
+        )
+    elif action.value == "remove":
+        new_codes = [c for c in gift_codes if c["code"].lower() != clean_code.lower()]
+        if len(new_codes) == len(gift_codes):
+            await interaction.response.send_message(f"⚠️ Code `{clean_code}` not found in database.", ephemeral=True)
+            return
+        data["gift_codes"] = new_codes
+        save_utility_data(data)
+        await interaction.response.send_message(f"🗑️ Code `{clean_code}` removed.", ephemeral=True)
 
 
 @bot.tree.command(name="timer", description="Manage UTC alliance countdown timers (up to 5 active).")
@@ -2307,20 +2447,13 @@ async def prefix_codes(ctx, action: Optional[str] = None, arg1: Optional[str] = 
             await ctx.send(f"🗑️ Code `{clean_code}` removed.")
             return
 
-    # View codes
-    embed = discord.Embed(
-        title="🎁 Whiteout Survival Active Gift Codes",
-        description=(
-            "Redeem these official codes for free Gems, Speedups, Gold Keys, and Stamina!\n\n"
-            "💡 *Tip: Use `/codes` in Discord to register your Player ID & State for automated gift code redemption!*"
-        ),
-        color=SUCCESS_COLOR
-    )
-    for c in gift_codes:
-        status = c.get("status", "🟢 Active & Verified")
-        embed.add_field(name=f"🔑 `{c['code']}` — {status}", value=f"**Rewards:** {c['rewards']}", inline=False)
+    # View codes (Default Dashboard)
+    embed, file = build_codes_dashboard_embed(ctx.author)
     view = CodesActionView()
-    await ctx.send(embed=embed, view=view)
+    if file:
+        await ctx.send(embed=embed, file=file, view=view)
+    else:
+        await ctx.send(embed=embed, view=view)
 
 
 @bot.command(name="timer")
