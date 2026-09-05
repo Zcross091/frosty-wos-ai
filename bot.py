@@ -1258,61 +1258,30 @@ BANNER_FILE_PATH = os.path.join(os.path.dirname(__file__), "assets", "wos_giftco
 
 
 def build_codes_dashboard_embed(user: Optional[discord.User | discord.Member] = None) -> Tuple[discord.Embed, Optional[discord.File]]:
-    """Builds the rich, graphical Whiteout Survival Gift Code Command Center embed."""
+    """Builds the public-safe Whiteout Survival Gift Code Command Center embed."""
     data = load_utility_data()
     gift_codes = data.get("gift_codes", list(ACTIVE_GIFT_CODES))
 
     embed = discord.Embed(
         title="❄️ Whiteout Survival • Gift Code Command Center",
         description=(
-            "Welcome to the **Frosty Automated Gift Code Center**! Claim official Century Games promo codes "
-            "for free **Gems, Speedups, Gold Keys & Stamina**, or link your characters to receive all future rewards "
-            "automatically in your in-game mailbox!\n"
+            "Never miss out on official Century Games promo rewards! Claim free **Gems, Chief Stamina, "
+            "Speedups, Gold Keys & Hero Shards** with instant 1-click batch claiming or automatic 24/7 background redemption.\n"
         ),
         color=0x00D8F6
     )
 
-    # 1. Accounts Section with Visual Slot Gauge
-    max_slots = registered_players.MAX_ACCOUNTS_PER_USER
-    if user:
-        accounts = registered_players.get_player_accounts(user.id)
-        slot_count = len(accounts)
-        filled_bar = "▰" * slot_count + "▱" * (max_slots - slot_count)
-
-        if slot_count > 0:
-            lines = [f"`[ {filled_bar} ]` **{slot_count}/{max_slots} Accounts Active** • `⚡ Auto-Claim: ON`\n"]
-            for acc in accounts:
-                lbl = acc.get("label", "Main")
-                pid = acc.get("player_id", "Unknown")
-                st = acc.get("state", "Unknown")
-                cnt = len(acc.get("claimed_codes", []))
-                lines.append(f"• 🏷️ **{lbl}** — ID `{pid}` (State `{st}`) • 🎁 `{cnt}` Claimed")
-            lines.append("\n*💡 Click **`[ ⚡ Claim All Now ]`** to redeem all active codes for your characters in 1 click!*")
-            embed.add_field(
-                name="🎮 Your Linked Characters",
-                value="\n".join(lines),
-                inline=False
-            )
-        else:
-            embed.add_field(
-                name="🎮 Your Linked Characters",
-                value=(
-                    f"`[ {filled_bar} ]` **0/{max_slots} Accounts Linked**\n"
-                    "• *No characters linked yet.*\n"
-                    "• Click **`[ ➕ Register Account ]`** below to link your Main & Farm accounts!"
-                ),
-                inline=False
-            )
-    else:
-        embed.add_field(
-            name="🎮 Multi-Account Auto-Claim System",
-            value=(
-                "• Link up to **5 characters** (Main + Farm accounts) per Discord user.\n"
-                "• Frosty Bot automatically redeems new codes to your in-game mailbox the second they drop!\n"
-                "• Click **`[ ➕ Register Account ]`** below to get started."
-            ),
-            inline=False
-        )
+    # 1. System Overview & Usefulness
+    embed.add_field(
+        name="⭐ What This Service Does For You",
+        value=(
+            "• 🤖 **24/7 Auto-Claim:** Link your character once and Frosty will automatically claim all newly released codes to your in-game mailbox — even while you're offline!\n"
+            "• ⚡ **1-Tap Batch Redemption:** Click **`[ ⚡ Claim All Now ]`** to redeem all active codes across all your linked characters in seconds.\n"
+            "• 🎮 **Multi-Account Support:** Connect up to **5 characters** (Main + Farm accounts) per Discord user.\n"
+            "• 🔒 **100% Private & Secure:** Character names and Player IDs are strictly confidential and never displayed in public chat."
+        ),
+        inline=False
+    )
 
     # 2. Active Promo Codes (Card layout)
     code_lines = []
@@ -1331,13 +1300,14 @@ def build_codes_dashboard_embed(user: Optional[discord.User | discord.Member] = 
         inline=False
     )
 
-    # 3. Instructions & Quick Actions
+    # 3. Interactive Buttons Guide
     embed.add_field(
-        name="📱 Quick Actions",
+        name="📱 Interactive Features & Controls",
         value=(
-            "• **Instant Redeem:** Click **`[ ⚡ Claim All Now ]`** to redeem for all your linked characters!\n"
-            "• **Manage / Unlink:** Click **`[ 📋 My Accounts ]`** to view details, toggle DMs, or remove slots.\n"
-            "• **Web Portal:** Click **`[ 🌐 Century Games Portal ]`** to redeem manually on web."
+            "• **`[ ⚡ Claim All Now ]`** — Batch-redeems all active codes for your characters *(results sent privately)*.\n"
+            "• **`[ ➕ Register Account ]`** — Securely link a new character using your Player ID and State *(private modal)*.\n"
+            "• **`[ 📋 My Accounts ]`** — Privately view your linked characters, claim history, and toggle DM alerts.\n"
+            "• **`[ 🌐 Century Games Portal ]`** — Open the official Century Games web redemption page."
         ),
         inline=False
     )
@@ -1347,7 +1317,7 @@ def build_codes_dashboard_embed(user: Optional[discord.User | discord.Member] = 
         file = discord.File(BANNER_FILE_PATH, filename="wos_giftcode_banner.jpg")
         embed.set_image(url="attachment://wos_giftcode_banner.jpg")
 
-    embed.set_footer(text="Frosty AI • Automated Gift Code Network • Updated Daily")
+    embed.set_footer(text="Frosty AI • Automated Gift Code Network • Private & Secure")
     return embed, file
 
 
@@ -1825,7 +1795,7 @@ async def slash_codes(
         return
 
     # Default Interactive Dashboard
-    embed, file = build_codes_dashboard_embed(interaction.user)
+    embed, file = build_codes_dashboard_embed()
     view = CodesActionView()
     if file:
         await interaction.response.send_message(embed=embed, file=file, view=view)
@@ -2501,7 +2471,7 @@ async def prefix_codes(ctx, action: Optional[str] = None, arg1: Optional[str] = 
             return
 
     # View codes (Default Dashboard)
-    embed, file = build_codes_dashboard_embed(ctx.author)
+    embed, file = build_codes_dashboard_embed()
     view = CodesActionView()
     if file:
         await ctx.send(embed=embed, file=file, view=view)
