@@ -319,6 +319,23 @@ class _StateAgeScreenState extends State<StateAgeScreen> {
                 ),
               ],
             ),
+            if (calc.estimatedLaunchDate != null) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Icon(Icons.rocket_launch_outlined, color: Color(0xFF38BDF8), size: 14),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Estimated Launch: ${DateFormat('MMMM d, yyyy').format(calc.estimatedLaunchDate!)}',
+                    style: const TextStyle(
+                      color: Color(0xFF94A3B8),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 18),
             const Divider(height: 1, color: Colors.white12),
             const SizedBox(height: 16),

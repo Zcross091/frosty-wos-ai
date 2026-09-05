@@ -182,73 +182,73 @@
     "description": "Refined Crystal economy expansion; structure and unit mastery for FC 9 and FC 10."
   },
   {
-    "day": 550,
+    "day": 600,
     "title": "Generation 9 Heroes",
     "category": "Heroes",
-    "icon": "\ud83d\udc51",
+    "icon": "👑",
     "description": "Magnus (Lucky Wheel), Fred (Lancer), Xura (Marksman)."
   },
   {
-    "day": 620,
+    "day": 700,
     "title": "Generation 10 Heroes",
     "category": "Heroes",
-    "icon": "\ud83d\udc51",
+    "icon": "👑",
     "description": "Blanchette (Lucky Wheel PvE sniper), Gregory (Infantry tank), Freya (Lancer)."
   },
   {
-    "day": 690,
-    "title": "Generation 11 Heroes",
-    "category": "Heroes",
-    "icon": "\ud83d\udc51",
-    "description": "Eleonora (Lucky Wheel), Rufus (Armor shred), Lloyd (Lancer)."
-  },
-  {
     "day": 750,
-    "title": "Fire Crystal 11\u201312 & T12 Troops",
+    "title": "Fire Crystal 11–12 & T12 Troops",
     "category": "Fire Crystal",
-    "icon": "\ud83d\udc8e",
+    "icon": "💎",
     "description": "Apex Tier 12 troops and Maximum Fire Crystal mastery."
   },
   {
-    "day": 760,
+    "day": 800,
+    "title": "Generation 11 Heroes",
+    "category": "Heroes",
+    "icon": "👑",
+    "description": "Eleonora (Lucky Wheel), Rufus (Armor shred), Lloyd (Lancer)."
+  },
+  {
+    "day": 870,
     "title": "Generation 12 Heroes",
     "category": "Heroes",
-    "icon": "\ud83d\udc51",
+    "icon": "👑",
     "description": "Ligeia (Lucky Wheel Bear Trap carry), Hervor (Rally anchor), Karol (Lancer)."
   },
   {
-    "day": 830,
+    "day": 951,
     "title": "Generation 13 Heroes",
     "category": "Heroes",
-    "icon": "\ud83d\udc51",
+    "icon": "👑",
     "description": "Gisela (Lucky Wheel tank), Vulcanus (Explosive burst), Flora (Lancer)."
   },
   {
-    "day": 900,
+    "day": 1030,
     "title": "Generation 14 Heroes",
     "category": "Heroes",
-    "icon": "\ud83d\udc51",
+    "icon": "👑",
     "description": "Cara (Lucky Wheel marksman), Elif (Defense wall), Dominic (Lancer)."
   },
   {
-    "day": 960,
+    "day": 1115,
     "title": "Generation 15 Heroes",
     "category": "Heroes",
-    "icon": "\ud83d\udc51",
+    "icon": "👑",
     "description": "Hank (Lucky Wheel tank), Viveca (Marksman), Estrella (Lancer)."
   },
   {
-    "day": 1160,
+    "day": 1220,
     "title": "Generation 16 Heroes",
     "category": "Heroes",
-    "icon": "\ud83d\udc51",
+    "icon": "👑",
     "description": "Seigel (Lucky Wheel reflect tank), Aisling (Siege sniper), Ursar (HoH Lancer)."
   },
   {
-    "day": 1240,
+    "day": 1280,
     "title": "Generation 17 Heroes",
     "category": "Heroes",
-    "icon": "\ud83d\udc51",
+    "icon": "👑",
     "description": "Aiden (Lucky Wheel Rage battery), Eleanor (Hall of Heroes 45% Armor Shred), Bertha (Support Healer)."
   }
 ]

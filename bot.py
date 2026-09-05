@@ -395,35 +395,84 @@ async def slash_status(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 
-def estimate_state_launch_date(state_number: int) -> datetime:
-    """Estimates the historical launch date of a Whiteout Survival State."""
-    base_date = datetime(2023, 2, 14)
-    if state_number <= 1:
-        offset_days = 0.0
-    elif state_number <= 100:
-        offset_days = state_number * 1.0
-    elif state_number <= 500:
-        offset_days = 100.0 + (state_number - 100) * 0.625
-    elif state_number <= 1000:
-        offset_days = 350.0 + (state_number - 500) * 0.70
-    elif state_number <= 1500:
-        offset_days = 700.0 + (state_number - 1000) * 0.50
-    elif state_number <= 2000:
-        offset_days = 950.0 + (state_number - 1500) * 0.40
-    else:
-        offset_days = 1150.0 + (state_number - 2000) * 0.35
+# Calibrated Whiteout Survival Historical Launch Anchor Points (State Number, Launch Date UTC)
+STATE_LAUNCH_ANCHORS = [
+    (1, datetime(2023, 2, 14, 0, 0, 0)),
+    (60, datetime(2023, 3, 19, 13, 15, 2)),
+    (80, datetime(2023, 4, 2, 8, 30, 1)),
+    (91, datetime(2023, 4, 11, 0, 30, 1)),
+    (120, datetime(2023, 5, 5, 4, 30, 2)),
+    (140, datetime(2023, 5, 22, 1, 0, 1)),
+    (195, datetime(2023, 6, 25, 15, 45, 1)),
+    (210, datetime(2023, 7, 2, 5, 45, 2)),
+    (225, datetime(2023, 7, 7, 15, 0, 2)),
+    (240, datetime(2023, 7, 13, 1, 5, 2)),
+    (266, datetime(2023, 7, 21, 10, 35, 3)),
+    (300, datetime(2023, 8, 2, 13, 35, 3)),
+    (350, datetime(2023, 8, 20, 7, 35, 3)),
+    (380, datetime(2023, 8, 28, 10, 25, 3)),
+    (390, datetime(2023, 8, 31, 15, 0, 2)),
+    (480, datetime(2023, 10, 10, 15, 15, 3)),
+    (500, datetime(2023, 10, 19, 14, 35, 3)),
+    (542, datetime(2023, 11, 3, 10, 25, 2)),
+    (600, datetime(2023, 11, 22, 17, 45, 2)),
+    (700, datetime(2023, 12, 25, 14, 15, 1)),
+    (800, datetime(2024, 1, 21, 3, 15, 1)),
+    (900, datetime(2024, 2, 21, 11, 55, 2)),
+    (1000, datetime(2024, 3, 25, 5, 5, 2)),
+    (1200, datetime(2024, 5, 17, 16, 0, 2)),
+    (1400, datetime(2024, 7, 2, 5, 40, 3)),
+    (1600, datetime(2024, 8, 15, 18, 45, 4)),
+    (1800, datetime(2024, 9, 25, 19, 15, 2)),
+    (2000, datetime(2024, 11, 1, 16, 15, 2)),
+    (2200, datetime(2024, 12, 12, 17, 15, 2)),
+    (2500, datetime(2025, 2, 2, 9, 30, 2)),
+    (2800, datetime(2025, 4, 19, 2, 15, 3)),
+    (3000, datetime(2025, 6, 10, 12, 0, 2)),
+    (3200, datetime(2025, 7, 26, 7, 15, 2)),
+    (3500, datetime(2025, 9, 26, 17, 0, 2)),
+    (3800, datetime(2025, 12, 8, 13, 45, 2)),
+    (4000, datetime(2026, 1, 18, 0, 2, 2)),
+    (4100, datetime(2026, 2, 10, 20, 45, 3)),
+    (4200, datetime(2026, 3, 12, 13, 0, 5)),
+    (4300, datetime(2026, 4, 17, 13, 45, 17)),
+    (4400, datetime(2026, 5, 23, 15, 0, 11)),
+    (4500, datetime(2026, 6, 27, 10, 58, 8)),
+    (4600, datetime(2026, 8, 7, 20, 15, 9)),
+    (4670, datetime(2026, 9, 4, 10, 45, 9)),
+]
 
-    return base_date + timedelta(days=int(round(offset_days)))
+
+def estimate_state_launch_date(state_number: int) -> datetime:
+    """Estimates the historical launch date of a Whiteout Survival State using calibrated piecewise interpolation."""
+    if state_number <= STATE_LAUNCH_ANCHORS[0][0]:
+        return STATE_LAUNCH_ANCHORS[0][1]
+
+    for i in range(len(STATE_LAUNCH_ANCHORS) - 1):
+        s1, d1 = STATE_LAUNCH_ANCHORS[i]
+        s2, d2 = STATE_LAUNCH_ANCHORS[i + 1]
+        if s1 <= state_number <= s2:
+            ratio = (state_number - s1) / (s2 - s1)
+            delta = (d2 - d1).total_seconds()
+            return d1 + timedelta(seconds=ratio * delta)
+
+    # Beyond latest anchor (extrapolate using modern cadence of ~0.40 days / ~9.6 hours per state)
+    last_s, last_d = STATE_LAUNCH_ANCHORS[-1]
+    prev_s, prev_d = STATE_LAUNCH_ANCHORS[-2]
+    sec_per_state = (last_d - prev_d).total_seconds() / (last_s - prev_s)
+    return last_d + timedelta(seconds=(state_number - last_s) * sec_per_state)
 
 
 def calculate_state_telemetry(input_val: int, is_state_number: bool = True) -> Dict:
     """Calculates State Age, Generation, Active Heroes, Unlocked Features, and Next Milestone."""
+    now_dt = datetime.now()
     if is_state_number:
         launch_date = estimate_state_launch_date(input_val)
-        age = (datetime.now() - launch_date).days
-        age = max(1, min(3000, age))
+        age = (now_dt - launch_date).days
+        age = max(0, min(3000, age))
     else:
-        age = max(1, min(3000, input_val))
+        launch_date = now_dt - timedelta(days=input_val)
+        age = max(0, min(3000, input_val))
 
     # Dynamically load from state_timeline.json if present
     milestones = []
@@ -441,6 +490,8 @@ def calculate_state_telemetry(input_val: int, is_state_number: bool = True) -> D
         milestones = [
             (0, "Gen 1 Heroes (Jeronimo, Natalia, Molly)", "Hero"),
             (14, "Tundra Territory Opens", "Event"),
+            (34, "Arena Pool Expansion", "Event"),
+            (39, "Fertile Land Opens", "Event"),
             (40, "Gen 2 Heroes (Flint, Alonso, Philly)", "Hero"),
             (45, "Chief Gear & Charms T1", "Gear"),
             (53, "Sunfire Castle Battle", "Event"),
@@ -452,53 +503,40 @@ def calculate_state_telemetry(input_val: int, is_state_number: bool = True) -> D
             (120, "Gen 3 Heroes (Mia, Logan, Greg)", "Hero"),
             (140, "Pet Gen 3 (Snow Leopard, Giant Elk)", "Pet"),
             (150, "Fire Crystal 4–5 & Crystal Lab", "Fire Crystal"),
-            (180, "Gen 4 Heroes (Lynn, Ahmose, Reina)", "Hero"),
+            (180, "Legendary Chief Gear", "Gear"),
+            (195, "Gen 4 Heroes (Lynn, Ahmose, Reina)", "Hero"),
             (200, "Pet Gen 4 (Cave Lion, Snow Ape)", "Pet"),
             (220, "War Academy & T11 Troops", "Academy"),
-            (250, "Gen 5 Heroes (Hector, Norah, Gwen)", "Hero"),
+            (270, "Gen 5 Heroes (Hector, Norah, Gwen)", "Hero"),
             (280, "Pet Gen 5 (Iron Rhino, Saber-tooth)", "Pet"),
-            (300, "Fire Crystal 6–8 Age", "Fire Crystal"),
-            (320, "Gen 6 Heroes (Renee, Wayne, Wu Ming)", "Hero"),
-            (360, "Pet Gen 6 (Titan Beaver, Gorgon Viper)", "Pet"),
-            (400, "Gen 7 Heroes (Bradley, Edith, Gordon)", "Hero"),
+            (315, "Fire Crystal 6–8 Age", "Fire Crystal"),
+            (360, "Gen 6 Heroes (Renee, Wayne, Wu Ming)", "Hero"),
+            (370, "Mammoth Pet Update", "Pet"),
+            (440, "Gen 7 Heroes (Bradley, Edith, Gordon)", "Hero"),
             (450, "Chief Gear T4 & Legendary Charms", "Gear"),
-            (480, "Gen 8 Heroes (Hendrik, Gatot, Sonya) & Pet Gen 7", "Hero"),
             (500, "Fire Crystal 9–10 Age", "Fire Crystal"),
-            (550, "Gen 9 Heroes (Magnus, Fred, Xura)", "Hero"),
-            (620, "Gen 10 Heroes (Blanchette, Gregory, Freya)", "Hero"),
-            (690, "Gen 11 Heroes (Eleonora, Lloyd, Rufus)", "Hero"),
+            (520, "Gen 8 Heroes (Hendrik, Gatot, Sonya) & Pet Gen 7", "Hero"),
+            (600, "Gen 9 Heroes (Magnus, Fred, Xura)", "Hero"),
+            (700, "Gen 10 Heroes (Blanchette, Gregory, Freya)", "Hero"),
             (750, "Fire Crystal 11–12 & T12 Troops", "Fire Crystal"),
-            (760, "Gen 12 Heroes (Ligeia, Hervor, Karol)", "Hero"),
-            (830, "Gen 13 Heroes (Gisela, Flora, Vulcanus)", "Hero"),
-            (900, "Gen 14 Heroes (Cara, Elif, Dominic)", "Hero"),
-            (960, "Gen 15 Heroes (Hank, Estrella, Viveca)", "Hero"),
-            (1160, "Gen 16 Heroes (Seigel, Ursar, Aisling)", "Hero"),
-            (1240, "Gen 17 Heroes (Aiden, Bertha, Eleanor)", "Hero"),
+            (800, "Gen 11 Heroes (Eleonora, Lloyd, Rufus)", "Hero"),
+            (870, "Gen 12 Heroes (Ligeia, Hervor, Karol)", "Hero"),
+            (951, "Gen 13 Heroes (Gisela, Flora, Vulcanus)", "Hero"),
+            (1030, "Gen 14 Heroes (Cara, Elif, Dominic)", "Hero"),
+            (1115, "Gen 15 Heroes (Hank, Estrella, Viveca)", "Hero"),
+            (1220, "Gen 16 Heroes (Seigel, Ursar, Aisling)", "Hero"),
+            (1280, "Gen 17 Heroes (Aiden, Bertha, Eleanor)", "Hero"),
         ]
 
     unlocked = [m for m in milestones if age >= m[0]]
     upcoming = [m for m in milestones if age < m[0]]
     next_m = upcoming[0] if upcoming else None
 
-    # Dynamic Gen calculation from heroes_data.json if present
-    gen_unlocks = {}
-    if os.path.exists("heroes_data.json"):
-        try:
-            with open("heroes_data.json", "r", encoding="utf-8") as f:
-                h_data = json.load(f)
-                for g_item in h_data:
-                    gen_num = g_item.get("gen", 0)
-                    day_val = g_item.get("unlock_day", 0)
-                    if gen_num > 0:
-                        gen_unlocks[gen_num] = day_val
-        except Exception:
-            pass
-
-    if not gen_unlocks:
-        gen_unlocks = {
-            1: 0, 2: 40, 3: 120, 4: 180, 5: 250, 6: 320, 7: 400, 8: 480,
-            9: 550, 10: 620, 11: 690, 12: 760, 13: 830, 14: 900, 15: 960, 16: 1160, 17: 1240
-        }
+    # Calibrated generation schedule (matching State 266 @ Gen 15, Gen 16 in ~2.5 months)
+    gen_unlocks = {
+        1: 0, 2: 40, 3: 120, 4: 195, 5: 270, 6: 360, 7: 440, 8: 520,
+        9: 600, 10: 700, 11: 800, 12: 870, 13: 951, 14: 1030, 15: 1115, 16: 1220, 17: 1280
+    }
 
     cur_gen = 1
     for g in sorted(gen_unlocks.keys(), reverse=True):
@@ -506,9 +544,16 @@ def calculate_state_telemetry(input_val: int, is_state_number: bool = True) -> D
             cur_gen = g
             break
 
+    # Calculate days to next generation
+    next_gen = cur_gen + 1 if (cur_gen + 1) in gen_unlocks else None
+    days_to_next_gen = (gen_unlocks[next_gen] - age) if next_gen else None
+
     return {
         "age": age,
         "gen": cur_gen,
+        "next_gen": next_gen,
+        "days_to_next_gen": days_to_next_gen,
+        "launch_date": launch_date.strftime("%B %d, %Y") if launch_date else "Unknown",
         "unlocked_count": len(unlocked),
         "total_count": len(milestones),
         "recent_unlocked": [m[1] for m in unlocked[-3:]],
@@ -518,7 +563,7 @@ def calculate_state_telemetry(input_val: int, is_state_number: bool = True) -> D
 
 
 @bot.tree.command(name="state", description="Check state timeline, server age, unlocked features, and upcoming milestones.")
-@app_commands.describe(state_or_days="Enter your State Number (e.g. 750) or direct server age in days (e.g. 450d)")
+@app_commands.describe(state_or_days="Enter your State Number (e.g. 266) or direct server age in days (e.g. 450d)")
 async def slash_state(interaction: discord.Interaction, state_or_days: str):
     await interaction.response.defer(thinking=True)
     raw = state_or_days.lower().replace("state", "").replace("s", "").replace("d", "").replace("days", "").strip()
@@ -527,9 +572,17 @@ async def slash_state(interaction: discord.Interaction, state_or_days: str):
 
     t = calculate_state_telemetry(val, is_state_number=not is_days)
 
+    gen_str = f"Generation {t['gen']}"
+    if t.get('next_gen') and t.get('days_to_next_gen'):
+        gen_str += f" *(Gen {t['next_gen']} in ~{t['days_to_next_gen']} days / ~{max(1, t['days_to_next_gen'] // 30)} mo)*"
+
     embed = discord.Embed(
         title=f"⏱️ Whiteout Survival State Timeline — {'State #' + str(val) if not is_days else 'Server Day ' + str(val)}",
-        description=f"**Estimated Server Age:** `Day ~{t['age']}`\n**Current Active Generation:** `Generation {t['gen']}`",
+        description=(
+            f"**Estimated Server Age:** `Day ~{t['age']}`\n"
+            f"**Estimated Launch Date:** `{t['launch_date']}`\n"
+            f"**Active Hero Generation:** `{gen_str}`"
+        ),
         color=FROSTY_COLOR
     )
 

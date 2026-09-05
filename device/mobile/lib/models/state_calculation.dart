@@ -21,6 +21,7 @@ class StateMilestone {
 class StateCalculation {
   final int? stateNumber;
   final int ageInDays;
+  final DateTime? estimatedLaunchDate;
   final int currentGeneration;
   final String currentGenLabel;
   final List<String> activeHeroes;
@@ -34,6 +35,7 @@ class StateCalculation {
   const StateCalculation({
     this.stateNumber,
     required this.ageInDays,
+    this.estimatedLaunchDate,
     required this.currentGeneration,
     required this.currentGenLabel,
     required this.activeHeroes,

@@ -34,16 +34,16 @@ In **Whiteout Survival**, server progression is strictly gated by **State Age** 
 | **Day 450** | **Chief Gear T4 & Legendary Charms** | Chief Gear | Apex Chief Gear tier granting massive squad Lethality and Damage Reduction. |
 | **Day 480** | **Generation 8 Heroes & Pet Gen 7** | Heroes / Pets | **Hendrik** (Lucky Wheel), **Gatot**, **Sonya** + **Frostscale Chameleon** (Camouflage evasion shield). |
 | **Day 500** | **Fire Crystal 9–10 Age** | Fire Crystal | Refined Crystal economy expansion; structure and unit mastery for FC 9 and FC 10. |
-| **Day 550** | **Generation 9 Heroes** | Heroes | **Magnus** (Lucky Wheel), **Fred** (Lancer), **Xura** (Marksman). |
-| **Day 620** | **Generation 10 Heroes** | Heroes | **Blanchette** (Lucky Wheel PvE sniper), **Gregory** (Infantry tank), **Freya** (Lancer). |
-| **Day 690** | **Generation 11 Heroes** | Heroes | **Eleonora** (Lucky Wheel), **Rufus** (Armor shred), **Lloyd** (Lancer). |
+| **Day 600** | **Generation 9 Heroes** | Heroes | **Magnus** (Lucky Wheel), **Fred** (Lancer), **Xura** (Marksman). |
+| **Day 700** | **Generation 10 Heroes** | Heroes | **Blanchette** (Lucky Wheel PvE sniper), **Gregory** (Infantry tank), **Freya** (Lancer). |
 | **Day 750** | **Fire Crystal 11–12 & T12 Troops** | Fire Crystal | Apex Tier 12 troops and Maximum Fire Crystal mastery. |
-| **Day 760** | **Generation 12 Heroes** | Heroes | **Ligeia** (Lucky Wheel Bear Trap carry), **Hervor** (Rally anchor), **Karol** (Lancer). |
-| **Day 830** | **Generation 13 Heroes** | Heroes | **Gisela** (Lucky Wheel tank), **Vulcanus** (Explosive burst), **Flora** (Lancer). |
-| **Day 900** | **Generation 14 Heroes** | Heroes | **Cara** (Lucky Wheel marksman), **Elif** (Defense wall), **Dominic** (Lancer). |
-| **Day 960** | **Generation 15 Heroes** | Heroes | **Hank** (Lucky Wheel tank), **Viveca** (Marksman), **Estrella** (Lancer). |
-| **Day 1160** | **Generation 16 Heroes** | Heroes | **Seigel** (Lucky Wheel reflect tank), **Aisling** (Siege sniper), **Ursar** (HoH Lancer). |
-| **Day 1240+** | **Generation 17 Heroes** | Heroes | **Aiden** (Lucky Wheel Rage battery), **Eleanor** (Hall of Heroes 45% Armor Shred), **Bertha** (Support Healer). |
+| **Day 800** | **Generation 11 Heroes** | Heroes | **Eleonora** (Lucky Wheel), **Rufus** (Armor shred), **Lloyd** (Lancer). |
+| **Day 870** | **Generation 12 Heroes** | Heroes | **Ligeia** (Lucky Wheel Bear Trap carry), **Hervor** (Rally anchor), **Karol** (Lancer). |
+| **Day 951** | **Generation 13 Heroes** | Heroes | **Gisela** (Lucky Wheel tank), **Vulcanus** (Explosive burst), **Flora** (Lancer). |
+| **Day 1030** | **Generation 14 Heroes** | Heroes | **Cara** (Lucky Wheel marksman), **Elif** (Defense wall), **Dominic** (Lancer). |
+| **Day 1115** | **Generation 15 Heroes** | Heroes | **Hank** (Lucky Wheel tank), **Viveca** (Marksman), **Estrella** (Lancer). |
+| **Day 1220** | **Generation 16 Heroes** | Heroes | **Seigel** (Lucky Wheel reflect tank), **Aisling** (Siege sniper), **Ursar** (HoH Lancer). |
+| **Day 1280+** | **Generation 17 Heroes** | Heroes | **Aiden** (Lucky Wheel Rage battery), **Eleanor** (Hall of Heroes 45% Armor Shred), **Bertha** (Support Healer). |
 
 ---
 
