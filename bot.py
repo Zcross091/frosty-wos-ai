@@ -1208,6 +1208,12 @@ class RegisterModal(discord.ui.Modal, title="Whiteout Survival Auto-Claim"):
                 f"Use `/codes action:Unregister from Auto-Claim` with a Player ID to free up a slot.",
                 ephemeral=True
             )
+        owner_uid = registered_players.get_player_owner(pid)
+        if owner_uid and owner_uid != str(interaction.user.id):
+            await interaction.response.send_message(
+                "⚠️ This Player ID is already registered by another Discord user. If this is your account, ask them to unregister it.",
+                ephemeral=True
+            )
             return
 
         await interaction.response.defer(ephemeral=True)

@@ -91,6 +91,18 @@ def get_player(discord_user_id: int) -> Optional[Dict[str, Any]]:
     return None
 
 
+def get_player_owner(player_id: str) -> Optional[str]:
+    """Returns the Discord user ID (str) who owns this player_id, or None if not registered."""
+    clean_pid = str(player_id).strip()
+    data = load_registered_players()
+    for uid, udata in data.get("users", {}).items():
+        _normalize_user(udata)
+        for acc in udata.get("accounts", []):
+            if acc.get("player_id") == clean_pid:
+                return uid
+    return None
+
+
 def register_player(
     discord_user_id: int, 
     player_id: str, 
@@ -108,12 +120,18 @@ def register_player(
     clean_pid = str(player_id).strip()
     clean_state = int(state)
 
+    # Check if this player_id is already registered by another Discord user
+    owner_uid = get_player_owner(clean_pid)
+    if owner_uid and owner_uid != uid:
+        logger.info(f"Blocked registration of {clean_pid} by user {uid}: already owned by {owner_uid}")
+        return False, "⚠️ This Player ID is already registered by another Discord user. If this is your account, ask them to unregister it.", {}
+
     user_data = data.setdefault("users", {}).setdefault(uid, {})
     _normalize_user(user_data)
     user_data["notify_dm"] = notify_dm
     accounts = user_data["accounts"]
 
-    # Check if this player_id is already registered
+    # Check if this player_id is already registered by this user (update)
     for acc in accounts:
         if acc["player_id"] == clean_pid:
             acc["state"] = clean_state
