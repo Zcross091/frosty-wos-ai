@@ -232,7 +232,7 @@ Thank you to everyone who has contributed code, bug reports, tactical data, and 
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 <p align="center">
-  <sub>Made with by <a href="https://github.com/Zcross091"><b>Zcross091</b></a> and the Whiteout Survival tactical community.</sub>
+  <sub>Made by <a href="https://github.com/Zcross091"><b>Zcross091</b></a> and the Whiteout Survival tactical community.</sub>
 </p>
 
 ---
