@@ -185,70 +185,70 @@
     "day": 600,
     "title": "Generation 9 Heroes",
     "category": "Heroes",
-    "icon": "👑",
+    "icon": "\ud83d\udc51",
     "description": "Magnus (Lucky Wheel), Fred (Lancer), Xura (Marksman)."
   },
   {
     "day": 700,
     "title": "Generation 10 Heroes",
     "category": "Heroes",
-    "icon": "👑",
+    "icon": "\ud83d\udc51",
     "description": "Blanchette (Lucky Wheel PvE sniper), Gregory (Infantry tank), Freya (Lancer)."
   },
   {
     "day": 750,
-    "title": "Fire Crystal 11–12 & T12 Troops",
+    "title": "Fire Crystal 11\u201312 & T12 Troops",
     "category": "Fire Crystal",
-    "icon": "💎",
+    "icon": "\ud83d\udc8e",
     "description": "Apex Tier 12 troops and Maximum Fire Crystal mastery."
   },
   {
     "day": 800,
     "title": "Generation 11 Heroes",
     "category": "Heroes",
-    "icon": "👑",
+    "icon": "\ud83d\udc51",
     "description": "Eleonora (Lucky Wheel), Rufus (Armor shred), Lloyd (Lancer)."
   },
   {
     "day": 870,
     "title": "Generation 12 Heroes",
     "category": "Heroes",
-    "icon": "👑",
+    "icon": "\ud83d\udc51",
     "description": "Ligeia (Lucky Wheel Bear Trap carry), Hervor (Rally anchor), Karol (Lancer)."
   },
   {
     "day": 951,
     "title": "Generation 13 Heroes",
     "category": "Heroes",
-    "icon": "👑",
+    "icon": "\ud83d\udc51",
     "description": "Gisela (Lucky Wheel tank), Vulcanus (Explosive burst), Flora (Lancer)."
   },
   {
     "day": 1030,
     "title": "Generation 14 Heroes",
     "category": "Heroes",
-    "icon": "👑",
+    "icon": "\ud83d\udc51",
     "description": "Cara (Lucky Wheel marksman), Elif (Defense wall), Dominic (Lancer)."
   },
   {
     "day": 1115,
     "title": "Generation 15 Heroes",
     "category": "Heroes",
-    "icon": "👑",
+    "icon": "\ud83d\udc51",
     "description": "Hank (Lucky Wheel tank), Viveca (Marksman), Estrella (Lancer)."
   },
   {
     "day": 1220,
     "title": "Generation 16 Heroes",
     "category": "Heroes",
-    "icon": "👑",
+    "icon": "\ud83d\udc51",
     "description": "Seigel (Lucky Wheel reflect tank), Aisling (Siege sniper), Ursar (HoH Lancer)."
   },
   {
     "day": 1280,
     "title": "Generation 17 Heroes",
     "category": "Heroes",
-    "icon": "👑",
+    "icon": "\ud83d\udc51",
     "description": "Aiden (Lucky Wheel Rage battery), Eleanor (Hall of Heroes 45% Armor Shred), Bertha (Support Healer)."
   }
 ]

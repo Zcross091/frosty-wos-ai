@@ -304,22 +304,27 @@
   "gift_codes": [
     {
       "code": "gogoWOS",
-      "status": "🟢 Active & Verified",
+      "status": "\ud83d\udfe2 Active & Verified",
+      "rewards": "10K Hero XP, 2x Gold Keys, 5x 100 Gems, 20x 5m General Speedup"
+    },
+    {
+      "code": "gogoWOS",
+      "status": "\ud83d\udfe2 Active & Verified",
       "rewards": "500 Gems, 2x Gold Keys, 10,000 Hero XP, 20x 5m Speedups"
     },
     {
       "code": "OFFICIALSTORE",
-      "status": "⚡ Webstore Event Code",
+      "status": "\u26a1 Webstore Event Code",
       "rewards": "1,000 Gems, 5x 1h Speedups, 10x Gold Keys, Stamina Potions"
     },
     {
       "code": "GuDokYTKOR",
-      "status": "⚡ Limited Event Code",
+      "status": "\u26a1 Limited Event Code",
       "rewards": "300 Gems, 5x 1h Speedups, 2,000 Hero XP"
     },
     {
       "code": "2ndYoutubeKR",
-      "status": "⚡ Limited Event Code",
+      "status": "\u26a1 Limited Event Code",
       "rewards": "300 Gems, 5x 1h Speedups, 2,000 Hero XP"
     }
   ]
