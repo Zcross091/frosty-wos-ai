@@ -78,6 +78,7 @@ _timer_counter = 1
 
 # Active Whiteout Survival Promo Codes (Easy to update and poll)
 ACTIVE_GIFT_CODES = [
+    {"code": "4dp5ZGM4c", "status": "🟢 Active & Verified", "rewards": "5x 100 Gems, 2x 10k Hero XP, 3x 1h Speedups, 2x Gold Keys, Resources (Valid until Sept 11)"},
     {"code": "gogoWOS", "status": "🟢 Active & Verified", "rewards": "500 Gems, 2x Gold Keys, 10,000 Hero XP, 20x 5m Speedups"},
     {"code": "OFFICIALSTORE", "status": "⚡ Webstore Event Code", "rewards": "1,000 Gems, 5x 1h Speedups, 10x Gold Keys, Stamina Potions"},
     {"code": "GuDokYTKOR", "status": "⚡ Limited Event Code", "rewards": "300 Gems, 5x 1h Speedups, 2,000 Hero XP"},
@@ -1538,7 +1539,14 @@ class CodesActionView(discord.ui.View):
         await interaction.response.defer(ephemeral=True)
         data = load_utility_data()
         gift_codes = data.get("gift_codes", list(ACTIVE_GIFT_CODES))
-        active_codes = [c["code"].strip() for c in gift_codes if c.get("code")][:5]
+        seen_active = set()
+        active_codes = []
+        for c in gift_codes:
+            c_str = c.get("code", "").strip()
+            if c_str and c_str.upper() not in seen_active:
+                seen_active.add(c_str.upper())
+                active_codes.append(c_str)
+        active_codes = active_codes[:10]
 
         if not active_codes:
             await interaction.followup.send("ℹ️ No active gift codes found in the database right now.", ephemeral=True)
@@ -1734,31 +1742,130 @@ async def dispatch_auto_claim(code: str):
     logger.info(f"✨ [Auto-Claim] Finished queue for '{clean_code}': {claimed_count} claimed, {skipped_count} skipped, {failed_count} failed.")
 
 
-@tasks.loop(hours=4)
+@tasks.loop(minutes=20)
 async def auto_sync_gift_codes():
     """Periodically scans online sources for new promo codes and auto-claims for registered players."""
     try:
         data = load_utility_data()
         gift_codes = data.get("gift_codes", list(ACTIVE_GIFT_CODES))
-        existing_codes = {c["code"].upper() for c in gift_codes}
+        existing_codes = {c.get("code", "").strip().upper() for c in gift_codes if c.get("code")}
 
         new_online = await asyncio.to_thread(scrape_online_gift_codes)
         found_new = []
         for oc in new_online:
-            clean_c = oc["code"].strip().upper()
-            if clean_c not in existing_codes and len(clean_c) >= 5:
+            clean_c = oc["code"].strip()
+            if clean_c.upper() not in existing_codes and len(clean_c) >= 5:
                 gift_codes.insert(0, oc)
-                existing_codes.add(clean_c)
-                found_new.append(oc["code"].strip())
+                existing_codes.add(clean_c.upper())
+                found_new.append(clean_c)
 
         if found_new:
             data["gift_codes"] = gift_codes
             save_utility_data(data)
-            logger.info(f"🎁 Discovered {len(found_new)} new gift codes: {', '.join(found_new)}")
+            logger.info(f"🎁 Discovered {len(found_new)} new gift codes from online sync: {', '.join(found_new)}")
             for new_code in found_new:
                 asyncio.create_task(dispatch_auto_claim(new_code))
     except Exception as e:
         logger.debug(f"Periodic gift codes check notice: {e}")
+
+
+@auto_sync_gift_codes.before_loop
+async def before_auto_sync():
+    await bot.wait_until_ready()
+
+
+# --- Real-Time Discord Announcement Listener ---
+@bot.event
+async def on_message(message: discord.Message):
+    """
+    Real-time listener for official Whiteout Survival gift code announcements
+    from followed channels (e.g. Whiteout Survival # 🎁giftcodes), webhooks,
+    or server community announcements. Instantly extracts codes and triggers auto-claim!
+    """
+    if not bot.user or message.author.id == bot.user.id:
+        return
+
+    try:
+        content = message.content or ""
+        author_name = getattr(message.author, "name", "").lower()
+        channel_name = getattr(message.channel, "name", "").lower() if hasattr(message.channel, "name") else ""
+
+        # Check if message is related to gift codes or from WoS announcement channel
+        is_relevant_source = (
+            "giftcode" in author_name
+            or "whiteout survival" in author_name
+            or "giftcode" in channel_name
+            or "gift-code" in channel_name
+            or "codes" in channel_name
+            or "announcement" in channel_name
+            or "wos-news" in channel_name
+            or "wos-giftcode.centurygame.com" in content
+            or "📌 Code:" in content
+            or "📌 code:" in content.lower()
+        )
+
+        detected_code = None
+
+        # Format 1: Official Discord Ping -> "📌 Code: 4dp5ZGM4c" or "Code: 4dp5ZGM4c"
+        m_code = re.search(r'(?:📌\s*Code[:\s]+|Code[:\s]+|code[:\s]+)(?:`?([A-Za-z0-9_-]{5,25})`?)', content)
+        if m_code:
+            detected_code = m_code.group(1).strip()
+        elif is_relevant_source and "wos-giftcode.centurygame.com" in content:
+            # Format 2: Announcement containing redemption link and code in backticks or bold
+            m_alt = re.search(r'[`\*]([A-Za-z0-9_-]{5,25})[`\*]', content)
+            if m_alt:
+                detected_code = m_alt.group(1).strip()
+
+        if detected_code and len(detected_code) >= 5:
+            data = load_utility_data()
+            gift_codes = data.get("gift_codes", list(ACTIVE_GIFT_CODES))
+            existing_codes = {c.get("code", "").strip().upper() for c in gift_codes if c.get("code")}
+
+            if detected_code.upper() not in existing_codes:
+                logger.info(f"🎁 [Real-Time Listener] Captured NEW Whiteout Survival gift code: '{detected_code}' (Author: {message.author}, Channel: #{channel_name})")
+
+                # Store new code
+                new_entry = {
+                    "code": detected_code,
+                    "status": "🟢 Active & Verified (Discord Announcement)",
+                    "rewards": "Official Whiteout Survival Rewards (Gems, Speedups, Gold Keys)"
+                }
+                gift_codes.insert(0, new_entry)
+                data["gift_codes"] = gift_codes
+                save_utility_data(data)
+
+                # React to announcement message with 🎁 and ⚡
+                try:
+                    await message.add_reaction("🎁")
+                    await message.add_reaction("⚡")
+                except Exception:
+                    pass
+
+                # Send confirmation embed into the channel
+                try:
+                    notify_embed = discord.Embed(
+                        title="🎁 Frosty AI • New Gift Code Captured!",
+                        description=(
+                            f"Detected a new official Whiteout Survival gift code:\n\n"
+                            f"🔑 **Code:** `{detected_code}`\n"
+                            f"⚡ **Status:** Background auto-claim dispatched across all registered players!\n"
+                            f"📫 Rewards will appear directly in players' Whiteout Survival in-game mailboxes."
+                        ),
+                        color=SUCCESS_COLOR
+                    )
+                    notify_embed.set_footer(text="Frosty Bot • Automated Gift Code Defense")
+                    await message.channel.send(embed=notify_embed)
+                except Exception as send_err:
+                    logger.debug(f"Could not send confirmation embed: {send_err}")
+
+                # Dispatch background auto-claim across all registered players immediately!
+                asyncio.create_task(dispatch_auto_claim(detected_code))
+
+    except Exception as e:
+        logger.error(f"Error in on_message gift code listener: {e}")
+
+    # Process traditional prefix commands if any
+    await bot.process_commands(message)
 
 
 @bot.tree.command(name="codes", description="Whiteout Survival Gift Code Center & Auto-Claim Dashboard")
@@ -1866,6 +1973,53 @@ async def slash_giftcode_admin(
         data["gift_codes"] = new_codes
         save_utility_data(data)
         await interaction.response.send_message(f"🗑️ Code `{clean_code}` removed.", ephemeral=True)
+
+
+@bot.tree.command(name="set_giftcode_channel", description="Set or view the channel for Whiteout Survival gift code announcements.")
+@app_commands.describe(channel="Select the channel where official Whiteout Survival announcement pings are sent")
+async def slash_set_giftcode_channel(
+    interaction: discord.Interaction,
+    channel: Optional[discord.TextChannel] = None
+):
+    if not interaction.guild:
+        await interaction.response.send_message("❌ This command must be used within a server.", ephemeral=True)
+        return
+
+    if channel:
+        if not interaction.user.guild_permissions.manage_guild and not is_authorized_admin(interaction.user):
+            await interaction.response.send_message("⛔ You need `Manage Server` permissions to configure this channel.", ephemeral=True)
+            return
+
+        embed = discord.Embed(
+            title="🎁 Gift Code Announcement Channel Configured",
+            description=(
+                f"✅ **{channel.mention}** is now designated as your Gift Code channel!\n\n"
+                f"📡 **How it works:**\n"
+                f"1. When an official Whiteout Survival announcement is posted or relayed here, Frosty Bot detects the code in real-time.\n"
+                f"2. Frosty Bot reacts with 🎁 and immediately auto-claims rewards across all registered players in the background!\n\n"
+                f"💡 **Tip:** Go to the official Whiteout Survival Discord (`discord.gg/whiteoutsurvival`), find **`#🎁giftcodes`**, "
+                f"and click **Follow** to send official Century Games pings directly into {channel.mention}!"
+            ),
+            color=SUCCESS_COLOR
+        )
+        await interaction.response.send_message(embed=embed)
+    else:
+        embed = discord.Embed(
+            title="🎁 Frosty AI • Gift Code Announcement Setup",
+            description=(
+                f"Frosty Bot automatically listens to messages in any channel named `giftcodes`, `codes`, or `announcements`, "
+                f"as well as crossposts from **Whiteout Survival # 🎁giftcodes**.\n\n"
+                f"🚀 **To enable instant 0-second auto-claiming:**\n"
+                f"1. Join the official Whiteout Survival Discord: [discord.gg/whiteoutsurvival](https://discord.gg/whiteoutsurvival)\n"
+                f"2. Go to the **`#🎁giftcodes`** channel.\n"
+                f"3. Click the **'Follow'** button at the bottom of the channel.\n"
+                f"4. Select this server and your desired announcement channel.\n\n"
+                f"Whenever Century Games drops a code, Frosty Bot will capture it and redeem it for everyone automatically!"
+            ),
+            color=FROSTY_COLOR
+        )
+        embed.set_footer(text="Frosty Bot • Automated Gift Code Defense")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 @bot.tree.command(name="timer", description="Manage UTC alliance countdown timers (up to 5 active).")

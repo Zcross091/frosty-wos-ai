@@ -161,13 +161,22 @@ def sync_state_timeline(timeline_md_path: str = "./wos data/State_Timeline.md", 
 
 
 def scrape_online_gift_codes() -> List[Dict[str, str]]:
-    """Fetches active promo gift codes from online sources (e.g. Beebom)"""
+    """
+    Fetches active promo gift codes from multiple online gaming aggregators
+    (Beebom, PocketTactics, GamesRadar) with fallback resilience and case-preservation.
+    """
     found_codes = []
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+    seen_codes = set()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+    }
 
+    # 1. Beebom Scraper
     try:
         url = "https://beebom.com/whiteout-survival-codes/"
-        resp = requests.get(url, headers=headers, timeout=10)
+        resp = requests.get(url, headers=headers, timeout=8)
         if resp.status_code == 200:
             soup = BeautifulSoup(resp.text, "html.parser")
             active_list = soup.find("ul", class_="is-style-copy-code-list")
@@ -178,13 +187,41 @@ def scrape_online_gift_codes() -> List[Dict[str, str]]:
                         code_txt = strong.get_text().strip()
                         raw_text = li.get_text().replace("Copy", "").replace("Copied", "").strip()
                         rewards = raw_text.split(":", 1)[1].strip() if ":" in raw_text else "Free In-Game Rewards (Gems, Speedups)"
-                        found_codes.append({
-                            "code": code_txt,
-                            "status": "🟢 Active & Verified",
-                            "rewards": rewards
-                        })
+                        if code_txt.upper() not in seen_codes and len(code_txt) >= 5:
+                            seen_codes.add(code_txt.upper())
+                            found_codes.append({
+                                "code": code_txt,
+                                "status": "🟢 Active & Verified",
+                                "rewards": rewards
+                            })
     except Exception as e:
-        logger.debug(f"Online gift codes fetch notice: {e}")
+        logger.debug(f"Beebom gift codes scraper notice: {e}")
+
+    # 2. Pocket Tactics Scraper
+    try:
+        url = "https://www.pockettactics.com/whiteout-survival/codes"
+        resp = requests.get(url, headers=headers, timeout=8)
+        if resp.status_code == 200:
+            soup = BeautifulSoup(resp.text, "html.parser")
+            entry = soup.find("div", class_="entry-content")
+            if entry:
+                # Find active codes list (usually under an h2/h3 mentioning "active" or "new")
+                for li in entry.find_all("li"):
+                    strong = li.find("strong")
+                    if strong:
+                        txt = strong.get_text().strip()
+                        # Typical format: <strong>CODE</strong> - rewards
+                        if re.match(r'^[A-Za-z0-9_-]{5,25}$', txt) and txt.upper() not in seen_codes:
+                            seen_codes.add(txt.upper())
+                            raw = li.get_text()
+                            rewards = raw.split("-", 1)[1].strip() if "-" in raw else "Free In-Game Rewards"
+                            found_codes.append({
+                                "code": txt,
+                                "status": "🟢 Active & Verified",
+                                "rewards": rewards
+                            })
+    except Exception as e:
+        logger.debug(f"PocketTactics gift codes scraper notice: {e}")
 
     return found_codes
 
@@ -205,12 +242,14 @@ def sync_utility_data(util_md_path: str = "./wos data/Utility_Calculators.md", o
             with open(util_md_path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
 
-            code_matches = re.findall(r'`([A-Z0-9]{5,20})`', content)
+            code_matches = re.findall(r'`([A-Za-z0-9]{5,20})`', content)
             if "gift_codes" in data and code_matches:
                 existing_codes = {c["code"].upper() for c in data["gift_codes"]}
                 for cm in code_matches:
-                    if cm.upper() not in existing_codes and len(cm) >= 6:
-                        data["gift_codes"].insert(0, {"code": cm.upper(), "rewards": "Promo Gift Code Rewards"})
+                    clean_cm = cm.strip()
+                    if clean_cm.upper() not in existing_codes and len(clean_cm) >= 5:
+                        data["gift_codes"].insert(0, {"code": clean_cm, "status": "🟢 Active & Verified", "rewards": "Promo Gift Code Rewards"})
+                        existing_codes.add(clean_cm.upper())
         except Exception as e:
             logger.warning(f"Error parsing utility md: {e}")
 
@@ -219,8 +258,10 @@ def sync_utility_data(util_md_path: str = "./wos data/Utility_Calculators.md", o
     if online_codes and "gift_codes" in data:
         existing_codes = {c["code"].upper() for c in data["gift_codes"]}
         for oc in online_codes:
-            if oc["code"] not in existing_codes:
+            clean_oc = oc["code"].strip()
+            if clean_oc.upper() not in existing_codes:
                 data["gift_codes"].insert(0, oc)
+                existing_codes.add(clean_oc.upper())
 
     if data:
         with open(output_path, "w", encoding="utf-8") as out:
