@@ -162,18 +162,59 @@ def sync_state_timeline(timeline_md_path: str = "./wos data/State_Timeline.md", 
 
 def scrape_online_gift_codes() -> List[Dict[str, str]]:
     """
-    Fetches active promo gift codes from multiple online gaming aggregators
-    (Beebom, PocketTactics, GamesRadar) with fallback resilience and case-preservation.
+    Fetches active promo gift codes from multiple live online sources:
+    1. Whiteout Survival HQ (Hourly live redemption verified codes via JSON-LD + HTML tables)
+    2. Beebom
+    Preserves exact casing and extracts live status.
     """
     found_codes = []
     seen_codes = set()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.5",
     }
 
-    # 1. Beebom Scraper
+    # 1. Whiteout Survival HQ (Live verified hourly codes - no bot block)
+    try:
+        url = "https://whiteoutsurvivalhq.com/gift-codes/"
+        resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            soup = BeautifulSoup(resp.text, "html.parser")
+
+            # A. Parse JSON-LD structured data (ItemList)
+            for script in soup.find_all("script", type="application/ld+json"):
+                try:
+                    if script.string:
+                        jdata = json.loads(script.string)
+                        if isinstance(jdata, dict) and jdata.get("@type") == "ItemList" and "itemListElement" in jdata:
+                            for item in jdata["itemListElement"]:
+                                code_val = str(item.get("name", "")).strip()
+                                if code_val and len(code_val) >= 5 and code_val.upper() not in seen_codes:
+                                    seen_codes.add(code_val.upper())
+                                    found_codes.append({
+                                        "code": code_val,
+                                        "status": "🟢 Active & Verified (WoS HQ Live)",
+                                        "rewards": "Verified In-Game Rewards (Gems, Speedups, Gold Keys)"
+                                    })
+                except Exception:
+                    pass
+
+            # B. Parse table rows with font-mono class
+            for th in soup.find_all("th", scope="row"):
+                code_val = th.get_text().strip()
+                if code_val and len(code_val) >= 5 and code_val.upper() not in seen_codes:
+                    if re.match(r'^[A-Za-z0-9_-]{5,25}$', code_val):
+                        seen_codes.add(code_val.upper())
+                        found_codes.append({
+                            "code": code_val,
+                            "status": "🟢 Active & Verified (WoS HQ Live)",
+                            "rewards": "Verified In-Game Rewards"
+                        })
+    except Exception as e:
+        logger.debug(f"WoS HQ gift codes fetch notice: {e}")
+
+    # 2. Beebom Scraper (Secondary Fallback)
     try:
         url = "https://beebom.com/whiteout-survival-codes/"
         resp = requests.get(url, headers=headers, timeout=8)
@@ -196,32 +237,6 @@ def scrape_online_gift_codes() -> List[Dict[str, str]]:
                             })
     except Exception as e:
         logger.debug(f"Beebom gift codes scraper notice: {e}")
-
-    # 2. Pocket Tactics Scraper
-    try:
-        url = "https://www.pockettactics.com/whiteout-survival/codes"
-        resp = requests.get(url, headers=headers, timeout=8)
-        if resp.status_code == 200:
-            soup = BeautifulSoup(resp.text, "html.parser")
-            entry = soup.find("div", class_="entry-content")
-            if entry:
-                # Find active codes list (usually under an h2/h3 mentioning "active" or "new")
-                for li in entry.find_all("li"):
-                    strong = li.find("strong")
-                    if strong:
-                        txt = strong.get_text().strip()
-                        # Typical format: <strong>CODE</strong> - rewards
-                        if re.match(r'^[A-Za-z0-9_-]{5,25}$', txt) and txt.upper() not in seen_codes:
-                            seen_codes.add(txt.upper())
-                            raw = li.get_text()
-                            rewards = raw.split("-", 1)[1].strip() if "-" in raw else "Free In-Game Rewards"
-                            found_codes.append({
-                                "code": txt,
-                                "status": "🟢 Active & Verified",
-                                "rewards": rewards
-                            })
-    except Exception as e:
-        logger.debug(f"PocketTactics gift codes scraper notice: {e}")
 
     return found_codes
 
