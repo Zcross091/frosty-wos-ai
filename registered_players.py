@@ -249,7 +249,8 @@ def record_claim_for_account(
     player_id: str, 
     code: str, 
     success: bool, 
-    status_msg: str
+    status_msg: str,
+    err_code: int = 0
 ) -> None:
     """Records a redemption result for a specific account."""
     data = load_registered_players()
@@ -262,12 +263,33 @@ def record_claim_for_account(
     clean_pid = str(player_id).strip()
     clean_code = code.strip().upper()
 
+    # Determine if this code should be permanently recorded in claimed_codes
+    # ONLY record if:
+    # 1. Redemption was successful
+    # 2. err_code indicates code was already redeemed or expired (40007, 40008, 40014)
+    # 3. status_msg explicitly states already claimed / expired / same type
+    # NEVER record on: rate-limiting (40004, 40002, 429), timeouts, captchas, network errors
+    is_rate_limited = (err_code in [40004, 40002, 429, -1, -2]) or any(
+        kw in status_msg.lower() for kw in ["rate limit", "cooldown", "too many requests", "timed out"]
+    )
+
+    should_record_as_claimed = False
+    if success:
+        should_record_as_claimed = True
+    elif not is_rate_limited:
+        msg_lower = status_msg.lower()
+        if err_code in [40007, 40008, 40014]:
+            should_record_as_claimed = True
+        elif any(phrase in msg_lower for phrase in ["already claimed", "already redeemed", "already used", "expired", "same type exchange"]):
+            should_record_as_claimed = True
+
     for acc in user.get("accounts", []):
         if acc["player_id"] == clean_pid:
-            claimed = acc.get("claimed_codes", [])
-            if clean_code not in [c.upper() for c in claimed]:
-                claimed.append(code.strip())
-                acc["claimed_codes"] = claimed
+            if should_record_as_claimed:
+                claimed = acc.get("claimed_codes", [])
+                if clean_code not in [c.upper() for c in claimed]:
+                    claimed.append(code.strip())
+                    acc["claimed_codes"] = claimed
             acc["last_claim_at"] = datetime.utcnow().isoformat() + "Z"
             acc["last_status"] = f"{'Success' if success else 'Failed'}: {status_msg}"
             save_registered_players(data)

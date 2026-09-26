@@ -35,6 +35,9 @@ ERROR_CODE_MESSAGES = {
     40100: "🤖 Captcha Triggered! Century Games security check required.",
     40102: "🤖 Captcha Verification Failed.",
     40002: "⏱️ Rate Limited! Frequency too high. Please try again later.",
+    40004: "⏱️ Rate Limited! Cooldown active on Century Games server.",
+    40014: "⚠️ Same Type Exchange! A code of this campaign type was already used.",
+    429: "⏱️ Too Many Requests (429)! Century Games rate limit reached.",
 }
 
 
@@ -91,6 +94,13 @@ def redeem_gift_code_sync(player_id: str, state: int, code: str, timeout: int = 
             data=signed_payload,
             timeout=timeout
         )
+        if resp.status_code == 429:
+            return {
+                "success": False,
+                "err_code": 429,
+                "message": "⏱️ Too Many Requests (429)! Century Games rate limit reached.",
+                "raw": {}
+            }
         if resp.status_code != 200:
             return {
                 "success": False,
@@ -101,10 +111,21 @@ def redeem_gift_code_sync(player_id: str, state: int, code: str, timeout: int = 
 
         data = resp.json()
         err_code = data.get("err_code", 0)
-        msg = ERROR_CODE_MESSAGES.get(err_code, data.get("msg", "Unknown response from Century Games."))
+        raw_msg = str(data.get("msg", "")).strip()
 
-        # Success is either err_code == 20000 or (code == 0 and err_code == 0)
-        is_success = (err_code == 20000) or (data.get("code") == 0 and err_code == 0)
+        # Success is either err_code == 20000 or (code == 0 and err_code == 0 and raw_msg == SUCCESS)
+        is_success = (err_code == 20000) or (data.get("code") == 0 and err_code == 0 and raw_msg.upper() == "SUCCESS")
+
+        if err_code in ERROR_CODE_MESSAGES:
+            msg = ERROR_CODE_MESSAGES[err_code]
+        elif "SAME TYPE EXCHANGE" in raw_msg.upper():
+            msg = "⚠️ Same Type Exchange! A gift code of this campaign type was already used."
+        elif raw_msg and raw_msg != str(err_code):
+            msg = raw_msg
+        elif err_code == 40004:
+            msg = "⏱️ Rate Limited! Cooldown active on Century Games server."
+        else:
+            msg = f"Century Games response: {err_code or raw_msg or 'Unknown'}"
 
         return {
             "success": is_success,

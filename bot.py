@@ -1571,10 +1571,20 @@ class CodesActionView(discord.ui.View):
                     continue
 
                 res = await redeem_gift_code(pid, st, cdk)
-                registered_players.record_claim_for_account(interaction.user.id, pid, cdk, res["success"], res["message"])
+
+                # Automatic backoff & retry if Century Games hits frequency rate limit
+                if res.get("err_code") in [40004, 40002, 429] or "rate limit" in res.get("message", "").lower():
+                    logger.warning(f"[Claim All] Rate limited on {pid} for code {cdk}. Waiting 3.5s cooldown before retrying...")
+                    await asyncio.sleep(3.5)
+                    res = await redeem_gift_code(pid, st, cdk)
+
+                registered_players.record_claim_for_account(
+                    interaction.user.id, pid, cdk, res["success"], res["message"], res.get("err_code", 0)
+                )
                 icon = "✅" if res["success"] else "ℹ️"
                 lines.append(f"• {icon} `{cdk}`: {res['message']}")
-                await asyncio.sleep(1.0)
+                # Safe pacing to respect Century Games frequency limits
+                await asyncio.sleep(2.5)
             lines.append("")
 
         result_embed = discord.Embed(
@@ -1745,8 +1755,17 @@ async def dispatch_auto_claim(code: str):
 
         try:
             res = await redeem_gift_code(pid, state, clean_code)
+
+            # Automatic backoff & retry if Century Games hits frequency rate limit
+            if res.get("err_code") in [40004, 40002, 429] or "rate limit" in res.get("message", "").lower():
+                logger.warning(f"[Auto-Claim] Rate limited on {pid} for code {clean_code}. Waiting 3.5s cooldown before retrying...")
+                await asyncio.sleep(3.5)
+                res = await redeem_gift_code(pid, state, clean_code)
+
             is_success = res["success"]
-            registered_players.record_claim_for_account(int(uid_str), pid, clean_code, is_success, res["message"])
+            registered_players.record_claim_for_account(
+                int(uid_str), pid, clean_code, is_success, res["message"], res.get("err_code", 0)
+            )
 
             if is_success:
                 claimed_count += 1
@@ -1779,7 +1798,7 @@ async def dispatch_auto_claim(code: str):
             logger.error(f"[Auto-Claim] Error for account {pid} (user {uid_str}): {claim_err}")
 
         # Human-like delay & Century Games API rate-limit protection
-        await asyncio.sleep(1.5)
+        await asyncio.sleep(2.5)
 
     logger.info(f"✨ [Auto-Claim] Finished queue for '{clean_code}': {claimed_count} claimed, {skipped_count} skipped, {failed_count} failed.")
 
@@ -1961,11 +1980,17 @@ async def slash_codes(
             st = acc["state"]
             lbl = acc.get("label", "Main")
             res = await redeem_gift_code(pid, st, clean_code)
-            registered_players.record_claim_for_account(interaction.user.id, pid, clean_code, res["success"], res["message"])
+            if res.get("err_code") in [40004, 40002, 429] or "rate limit" in res.get("message", "").lower():
+                await asyncio.sleep(3.5)
+                res = await redeem_gift_code(pid, st, clean_code)
+
+            registered_players.record_claim_for_account(
+                interaction.user.id, pid, clean_code, res["success"], res["message"], res.get("err_code", 0)
+            )
             icon = "✅" if res["success"] else "ℹ️"
             results.append(f"{icon} **{lbl}** (`{pid}`, State `{st}`): {res['message']}")
             if len(accounts) > 1:
-                await asyncio.sleep(1.0)
+                await asyncio.sleep(2.5)
 
         embed = discord.Embed(
             title=f"🎁 Gift Code Redemption: `{clean_code}`",
@@ -2652,7 +2677,13 @@ async def prefix_codes(ctx, action: Optional[str] = None, arg1: Optional[str] = 
             st = int(arg2)
             cdk = extra.strip() if extra else (gift_codes[0]["code"] if gift_codes else "gogoWOS")
             res = await redeem_gift_code(pid, st, cdk)
-            registered_players.record_claim_for_account(ctx.author.id, pid, cdk, res["success"], res["message"])
+            if res.get("err_code") in [40004, 40002, 429] or "rate limit" in res.get("message", "").lower():
+                await asyncio.sleep(3.5)
+                res = await redeem_gift_code(pid, st, cdk)
+
+            registered_players.record_claim_for_account(
+                ctx.author.id, pid, cdk, res["success"], res["message"], res.get("err_code", 0)
+            )
             await ctx.send(f"🎁 **Redemption Result ({pid}):** {res['message']}")
             return
 
@@ -2668,11 +2699,17 @@ async def prefix_codes(ctx, action: Optional[str] = None, arg1: Optional[str] = 
             st = acc["state"]
             lbl = acc.get("label", "Account")
             res = await redeem_gift_code(pid, st, cdk)
-            registered_players.record_claim_for_account(ctx.author.id, pid, cdk, res["success"], res["message"])
+            if res.get("err_code") in [40004, 40002, 429] or "rate limit" in res.get("message", "").lower():
+                await asyncio.sleep(3.5)
+                res = await redeem_gift_code(pid, st, cdk)
+
+            registered_players.record_claim_for_account(
+                ctx.author.id, pid, cdk, res["success"], res["message"], res.get("err_code", 0)
+            )
             icon = "✅" if res["success"] else "ℹ️"
             results.append(f"{icon} **{lbl}** (`{pid}`): {res['message']}")
             if len(user_accounts) > 1:
-                await asyncio.sleep(1.0)
+                await asyncio.sleep(2.5)
 
         await ctx.send(f"🎁 **Claim Results for `{cdk}`:**\n" + "\n".join(results))
         return
