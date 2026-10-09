@@ -303,6 +303,11 @@
   ],
   "gift_codes": [
     {
+      "code": "HANGULDAY2026",
+      "status": "\ud83d\udfe2 Active & Verified (WoS HQ Live)",
+      "rewards": "Verified In-Game Rewards (Gems, Speedups, Gold Keys)"
+    },
+    {
       "code": "WOS1007",
       "status": "\ud83d\udfe2 Active & Verified (WoS HQ Live)",
       "rewards": "Verified In-Game Rewards (Gems, Speedups, Gold Keys)"
