@@ -303,6 +303,11 @@
   ],
   "gift_codes": [
     {
+      "code": "WOS1025",
+      "status": "\ud83d\udfe2 Active & Verified (WoS HQ Live)",
+      "rewards": "Verified In-Game Rewards (Gems, Speedups, Gold Keys)"
+    },
+    {
       "code": "INS400K",
       "status": "\ud83d\udfe2 Active & Verified (WoS HQ Live)",
       "rewards": "Verified In-Game Rewards (Gems, Speedups, Gold Keys)"
