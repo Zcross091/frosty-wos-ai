@@ -166,3 +166,4 @@ class WosIntelligenceClient:
 
 # Global singleton instance
 intelligence_client = WosIntelligenceClient()
+
