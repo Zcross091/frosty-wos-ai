@@ -11,6 +11,8 @@ import logging
 from typing import Dict, Any, Optional
 import asyncio
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 logger = logging.getLogger("WosGiftcodeApi")
 
@@ -23,6 +25,30 @@ COMMON_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
     "Content-Type": "application/x-www-form-urlencoded",
 }
+
+# --- Connection Pooling & Session Reuse (High Efficiency) ---
+_session: Optional[requests.Session] = None
+
+
+def get_http_session() -> requests.Session:
+    """
+    Returns a persistent HTTP session with connection pooling, keep-alive,
+    and automatic transient error retries to maximize throughput and minimize latency.
+    """
+    global _session
+    if _session is None:
+        _session = requests.Session()
+        _session.headers.update(COMMON_HEADERS)
+        retries = Retry(
+            total=2,
+            backoff_factor=0.5,
+            status_forcelist=[500, 502, 503, 504],
+            raise_on_status=False
+        )
+        adapter = HTTPAdapter(pool_connections=10, pool_maxsize=20, max_retries=retries)
+        _session.mount("https://", adapter)
+        _session.mount("http://", adapter)
+    return _session
 
 # Error code to human-readable message mapping
 ERROR_CODE_MESSAGES = {
@@ -88,9 +114,9 @@ def redeem_gift_code_sync(player_id: str, state: int, code: str, timeout: int = 
     signed_payload = sign_payload(payload)
 
     try:
-        resp = requests.post(
+        session = get_http_session()
+        resp = session.post(
             API_ENDPOINT,
-            headers=COMMON_HEADERS,
             data=signed_payload,
             timeout=timeout
         )

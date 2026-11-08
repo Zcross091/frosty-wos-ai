@@ -4,3 +4,5 @@ __pycache__/
 temp/
 .agents
 registered_players.json
+.gradle/
+**/android/.gradle/

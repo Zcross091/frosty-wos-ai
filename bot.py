@@ -26,6 +26,8 @@ from ingest import run_full_reindex
 from wos_giftcode_api import redeem_gift_code, ERROR_CODE_MESSAGES
 import registered_players
 from sync_data import scrape_online_gift_codes
+from wos_gateway_protocol import probe_all_gateways, probe_gateway_endpoint, DEFAULT_GATEWAYS
+from wos_intelligence import intelligence_client
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -389,6 +391,10 @@ async def slash_status(interaction: discord.Interaction):
     total_guilds = len(bot.guilds)
     total_members = sum(g.member_count for g in bot.guilds if g.member_count)
 
+    # Concurrently probe primary Century Games Cloudflare Edge socket
+    gw_probe = await probe_gateway_endpoint(DEFAULT_GATEWAYS[0], timeout=1.8)
+    gw_str = f"`{gw_probe.latency_ms:.1f}ms`" if gw_probe.online else "`Offline`"
+
     embed = discord.Embed(title="📊 Frosty AI — Live Analytics & Health", color=FROSTY_COLOR)
     embed.add_field(name="🌐 Discord Servers", value=f"**{total_guilds}** Active Guilds", inline=True)
     embed.add_field(name="👥 Total Chiefs Reached", value=f"**{total_members:,}** Members", inline=True)
@@ -396,7 +402,8 @@ async def slash_status(interaction: discord.Interaction):
     embed.add_field(name="📚 Database Chunks", value=f"`{knowledge_base.get_count()} chunks`", inline=True)
     embed.add_field(name="💾 Bot Memory", value=f"`{ram:.1f} MB`", inline=True)
     embed.add_field(name="⏱️ Uptime", value=f"`{hours}h {minutes}m {seconds}s`", inline=True)
-    embed.add_field(name="📡 Gateway Ping", value=f"`{bot.latency * 1000:.1f} ms`", inline=True)
+    embed.add_field(name="📡 Discord Ping", value=f"`{bot.latency * 1000:.1f} ms`", inline=True)
+    embed.add_field(name="❄️ Game Gateway Ping", value=gw_str, inline=True)
     embed.set_footer(text="Mobile & Web API: Check http://<server-ip>:8000/api/stats for active app users")
     await interaction.response.send_message(embed=embed)
 
@@ -2426,6 +2433,81 @@ async def slash_sendmessage(interaction: discord.Interaction, message: str):
 
 
 
+@bot.tree.command(name="gateways", description="Live status and latency of Century Games & Whiteout Survival server gateways.")
+async def slash_gateways(interaction: discord.Interaction):
+    await interaction.response.defer(thinking=True)
+    results = await probe_all_gateways()
+
+    embed = discord.Embed(
+        title="🌐 Whiteout Survival Gateway & Infrastructure Monitor",
+        description="Real-time latency and reachability of official Century Games game sockets, CDN edge nodes, and messaging frontgates.",
+        color=FROSTY_COLOR
+    )
+
+    online_count = sum(1 for r in results if r.online)
+    for r in results:
+        if r.online:
+            if r.latency_ms < 150:
+                status_icon = "🟢"
+                perf_tag = "Optimal"
+            elif r.latency_ms < 350:
+                status_icon = "🟡"
+                perf_tag = "Normal"
+            else:
+                status_icon = "🟠"
+                perf_tag = "High Latency"
+            val = f"`{r.latency_ms:.1f} ms` • **{perf_tag}**\n`{r.host}:{r.port}` • *{r.region}*"
+        else:
+            status_icon = "🔴"
+            val = f"**Unreachable / Blocked** ({r.error or 'Timeout'})\n`{r.host}:{r.port}`"
+
+        embed.add_field(name=f"{status_icon} {r.name} ({r.provider})", value=val, inline=False)
+
+    embed.set_footer(text=f"Gateways Online: {online_count}/{len(results)} • Powered by Frosty Network Telemetry")
+    await interaction.followup.send(embed=embed)
+
+
+@bot.tree.command(name="alliance", description="Query live alliance power, members, leader, and rankings via WhiteoutStats.")
+@app_commands.describe(
+    state="State number (e.g. 266)",
+    tag="Alliance tag (e.g. AVM, VIP, ICE)"
+)
+async def slash_alliance(interaction: discord.Interaction, state: int, tag: str):
+    await interaction.response.defer(thinking=True)
+    res = await intelligence_client.get_alliance_intel(state, tag)
+    clean_tag = tag.strip().upper()
+
+    if not res.get("success"):
+        embed = discord.Embed(
+            title=f"🛡️ Alliance Intel: [{clean_tag}] (State #{state})",
+            description=res.get("message", "Unable to retrieve alliance data."),
+            color=discord.Color.orange()
+        )
+        embed.set_footer(text="WhiteoutStats Intelligence Engine")
+        await interaction.followup.send(embed=embed)
+        return
+
+    data = res.get("data", {})
+    info = data.get("info", data)
+    power = info.get("power", "N/A")
+    leader = info.get("leader", "N/A")
+    members = info.get("member_count", info.get("members", "N/A"))
+    rank = info.get("rank", "N/A")
+
+    embed = discord.Embed(
+        title=f"🛡️ Alliance Intel: [{clean_tag}] — State #{state}",
+        description="Verified metrics retrieved from WhiteoutStats community intelligence registry.",
+        color=SUCCESS_COLOR
+    )
+    embed.add_field(name="👑 Alliance Leader", value=f"`{leader}`", inline=True)
+    embed.add_field(name="👥 Member Count", value=f"`{members}`", inline=True)
+    embed.add_field(name="🏆 State Rank", value=f"`#{rank}`", inline=True)
+    power_str = f"`{power:,}`" if isinstance(power, (int, float)) else f"`{power}`"
+    embed.add_field(name="⚡ Total Power", value=power_str, inline=True)
+    embed.set_footer(text=f"Data Source: WhiteoutStats API • Cache: {res.get('source', 'live')}")
+    await interaction.followup.send(embed=embed)
+
+
 @bot.tree.command(name="help", description="Show Frosty AI commands and strategic capabilities.")
 async def slash_help(interaction: discord.Interaction):
     embed = discord.Embed(
@@ -2440,6 +2522,8 @@ async def slash_help(interaction: discord.Interaction):
     embed.add_field(name="⏰ `/timer [set/list/delete]` or `!timer`", value="Set up to 5 UTC alliance countdowns (Foundry, Canyon, SvS, Bear, Fortress).", inline=True)
     embed.add_field(name="🚀 `/transfer [power]` or `!transfer`", value="State Transfer Pass calculator & eligibility rules.", inline=True)
     embed.add_field(name="🎁 `/codes` or `!codes`", value="Active Whiteout Survival gift codes & redemption portal.", inline=True)
+    embed.add_field(name="🌐 `/gateways` or `!gateways`", value="Century Games game gateway sockets, latency & chat frontgate health.", inline=True)
+    embed.add_field(name="🛡️ `/alliance [state] [tag]`", value="Live alliance power, ranking, and member count from WhiteoutStats.", inline=True)
     embed.add_field(name="⏱️ `/state [number]` or `!state`", value="Server age, unlocked features (FC, Pets, SvS), and milestones.", inline=True)
     embed.add_field(name="👑 `/hero [name]` or `!hero`", value="Hero skill breakdowns, exclusive gear, and tier evaluations.", inline=True)
     embed.add_field(name="🐻 `/bear` or `!bear`", value="Bear Trap rally leader setups & Jessie joiner damage buffs.", inline=True)
@@ -2853,6 +2937,54 @@ async def prefix_sendmessage(ctx, *, message: str):
             color=SUCCESS_COLOR
         )
         await ctx.send(embed=res_embed)
+
+
+@bot.command(name="gateways")
+async def prefix_gateways(ctx):
+    """Checks live reachability and latency of Century Games servers."""
+    async with ctx.typing():
+        results = await probe_all_gateways()
+        embed = discord.Embed(
+            title="🌐 Whiteout Survival Gateway & Infrastructure Monitor",
+            description="Real-time latency and reachability of official Century Games game sockets, CDN edge nodes, and messaging frontgates.",
+            color=FROSTY_COLOR
+        )
+        online_count = sum(1 for r in results if r.online)
+        for r in results:
+            if r.online:
+                status_icon = "🟢" if r.latency_ms < 150 else ("🟡" if r.latency_ms < 350 else "🟠")
+                val = f"`{r.latency_ms:.1f} ms`\n`{r.host}:{r.port}` • *{r.region}*"
+            else:
+                status_icon = "🔴"
+                val = f"**Unreachable** ({r.error or 'Timeout'})\n`{r.host}:{r.port}`"
+            embed.add_field(name=f"{status_icon} {r.name}", value=val, inline=False)
+        embed.set_footer(text=f"Gateways Online: {online_count}/{len(results)} • Powered by Frosty Network Telemetry")
+        await ctx.send(embed=embed)
+
+
+@bot.command(name="alliance")
+async def prefix_alliance(ctx, state: int = 266, tag: str = "AVM"):
+    """Queries live alliance intelligence via WhiteoutStats API."""
+    async with ctx.typing():
+        res = await intelligence_client.get_alliance_intel(state, tag)
+        clean_tag = tag.strip().upper()
+        if not res.get("success"):
+            await ctx.send(f"⚠️ **Alliance Intel [{clean_tag}] (State #{state}):** {res.get('message')}")
+            return
+        data = res.get("data", {})
+        info = data.get("info", data)
+        power = info.get("power", "N/A")
+        leader = info.get("leader", "N/A")
+        members = info.get("member_count", info.get("members", "N/A"))
+        rank = info.get("rank", "N/A")
+        power_str = f"{power:,}" if isinstance(power, (int, float)) else str(power)
+        await ctx.send(
+            f"🛡️ **Alliance Intel: [{clean_tag}] (State #{state})**\n"
+            f"• 👑 **Leader:** `{leader}`\n"
+            f"• 👥 **Members:** `{members}`\n"
+            f"• 🏆 **Rank:** `#{rank}`\n"
+            f"• ⚡ **Power:** `{power_str}`"
+        )
 
 
 
