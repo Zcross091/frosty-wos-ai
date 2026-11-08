@@ -49,7 +49,7 @@ AUTHORIZED_ADMIN_USERNAMES = [
 ]
 
 AUTHORIZED_ADMIN_IDS = [
-    # Optional: Put your numeric Discord User ID here (e.g. 123456789012345678)
+    930518448268804096,  # Supreme Commander / Bot Owner
 ]
 
 def is_authorized_admin(user: discord.User | discord.Member) -> bool:
@@ -2433,14 +2433,19 @@ async def slash_sendmessage(interaction: discord.Interaction, message: str):
 
 
 
-@bot.tree.command(name="gateways", description="Live status and latency of Century Games & Whiteout Survival server gateways.")
+@bot.tree.command(name="gateways", description="[Owner Only] Internal Whiteout Survival gateway diagnostic.")
 async def slash_gateways(interaction: discord.Interaction):
-    await interaction.response.defer(thinking=True)
+    # Strict Owner Lock: Exclusively restricted to Discord user 930518448268804096
+    if interaction.user.id != 930518448268804096:
+        await interaction.response.send_message("⛔ **Access Denied:** This diagnostic command is restricted to the Bot Owner (`930518448268804096`).", ephemeral=True)
+        return
+
+    await interaction.response.defer(ephemeral=True)
     results = await probe_all_gateways()
 
     embed = discord.Embed(
-        title="🌐 Whiteout Survival Gateway & Infrastructure Monitor",
-        description="Real-time latency and reachability of official Century Games game sockets, CDN edge nodes, and messaging frontgates.",
+        title="🔒 [Owner Diagnostic] Whiteout Survival Gateway Telemetry",
+        description="Confidential reachability and latency of official Century Games game sockets and CDN edge nodes.",
         color=FROSTY_COLOR
     )
 
@@ -2456,15 +2461,15 @@ async def slash_gateways(interaction: discord.Interaction):
             else:
                 status_icon = "🟠"
                 perf_tag = "High Latency"
-            val = f"`{r.latency_ms:.1f} ms` • **{perf_tag}**\n`{r.host}:{r.port}` • *{r.region}*"
+            val = f"`{r.latency_ms:.1f} ms` • **{perf_tag}**\n*{r.region}*"
         else:
             status_icon = "🔴"
-            val = f"**Unreachable / Blocked** ({r.error or 'Timeout'})\n`{r.host}:{r.port}`"
+            val = f"**Unreachable / Blocked** ({r.error or 'Timeout'})"
 
-        embed.add_field(name=f"{status_icon} {r.name} ({r.provider})", value=val, inline=False)
+        embed.add_field(name=f"{status_icon} {r.name}", value=val, inline=False)
 
-    embed.set_footer(text=f"Gateways Online: {online_count}/{len(results)} • Powered by Frosty Network Telemetry")
-    await interaction.followup.send(embed=embed)
+    embed.set_footer(text=f"Gateways Online: {online_count}/{len(results)} • Confidential Owner Telemetry")
+    await interaction.followup.send(embed=embed, ephemeral=True)
 
 
 @bot.tree.command(name="alliance", description="Query live alliance power, members, leader, and rankings via WhiteoutStats.")
@@ -2522,7 +2527,6 @@ async def slash_help(interaction: discord.Interaction):
     embed.add_field(name="⏰ `/timer [set/list/delete]` or `!timer`", value="Set up to 5 UTC alliance countdowns (Foundry, Canyon, SvS, Bear, Fortress).", inline=True)
     embed.add_field(name="🚀 `/transfer [power]` or `!transfer`", value="State Transfer Pass calculator & eligibility rules.", inline=True)
     embed.add_field(name="🎁 `/codes` or `!codes`", value="Active Whiteout Survival gift codes & redemption portal.", inline=True)
-    embed.add_field(name="🌐 `/gateways` or `!gateways`", value="Century Games game gateway sockets, latency & chat frontgate health.", inline=True)
     embed.add_field(name="🛡️ `/alliance [state] [tag]`", value="Live alliance power, ranking, and member count from WhiteoutStats.", inline=True)
     embed.add_field(name="⏱️ `/state [number]` or `!state`", value="Server age, unlocked features (FC, Pets, SvS), and milestones.", inline=True)
     embed.add_field(name="👑 `/hero [name]` or `!hero`", value="Hero skill breakdowns, exclusive gear, and tier evaluations.", inline=True)
@@ -2941,25 +2945,35 @@ async def prefix_sendmessage(ctx, *, message: str):
 
 @bot.command(name="gateways")
 async def prefix_gateways(ctx):
-    """Checks live reachability and latency of Century Games servers."""
-    async with ctx.typing():
-        results = await probe_all_gateways()
-        embed = discord.Embed(
-            title="🌐 Whiteout Survival Gateway & Infrastructure Monitor",
-            description="Real-time latency and reachability of official Century Games game sockets, CDN edge nodes, and messaging frontgates.",
-            color=FROSTY_COLOR
-        )
-        online_count = sum(1 for r in results if r.online)
-        for r in results:
-            if r.online:
-                status_icon = "🟢" if r.latency_ms < 150 else ("🟡" if r.latency_ms < 350 else "🟠")
-                val = f"`{r.latency_ms:.1f} ms`\n`{r.host}:{r.port}` • *{r.region}*"
-            else:
-                status_icon = "🔴"
-                val = f"**Unreachable** ({r.error or 'Timeout'})\n`{r.host}:{r.port}`"
-            embed.add_field(name=f"{status_icon} {r.name}", value=val, inline=False)
-        embed.set_footer(text=f"Gateways Online: {online_count}/{len(results)} • Powered by Frosty Network Telemetry")
-        await ctx.send(embed=embed)
+    """Owner-only: Checks live reachability and latency of Century Games servers."""
+    if ctx.author.id != 930518448268804096:
+        return
+
+    try:
+        await ctx.message.delete()
+    except Exception:
+        pass
+
+    results = await probe_all_gateways()
+    embed = discord.Embed(
+        title="🔒 [Owner Diagnostic] Whiteout Survival Gateway Telemetry",
+        description="Confidential reachability and latency of official Century Games game sockets and CDN edge nodes.",
+        color=FROSTY_COLOR
+    )
+    online_count = sum(1 for r in results if r.online)
+    for r in results:
+        if r.online:
+            status_icon = "🟢" if r.latency_ms < 150 else ("🟡" if r.latency_ms < 350 else "🟠")
+            val = f"`{r.latency_ms:.1f} ms` • *{r.region}*"
+        else:
+            status_icon = "🔴"
+            val = f"**Unreachable** ({r.error or 'Timeout'})"
+        embed.add_field(name=f"{status_icon} {r.name}", value=val, inline=False)
+    embed.set_footer(text=f"Gateways Online: {online_count}/{len(results)} • Confidential Owner Telemetry")
+    try:
+        await ctx.author.send(embed=embed)
+    except Exception:
+        pass
 
 
 @bot.command(name="alliance")
