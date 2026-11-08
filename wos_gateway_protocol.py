@@ -57,14 +57,24 @@ DEFAULT_GATEWAYS = [
         "priority": 4,
     },
     {
-        "id": "cgc_web_auth",
-        "name": "Century Games Web Auth",
-        "host": "auth.centurygame.com",
+        "id": "cgc_portal",
+        "name": "Century Games Portal",
+        "host": "wos-giftcode.centurygame.com",
         "port": 443,
         "protocol": "HTTPS",
         "provider": "Century Games",
-        "region": "Portal Authentication",
+        "region": "Official Redemption Portal",
         "priority": 5,
+    },
+    {
+        "id": "passport_apa",
+        "name": "Century Games Passport Auth",
+        "host": "passport-apa.centurygame.com",
+        "port": 443,
+        "protocol": "HTTPS",
+        "provider": "Century Games APAC",
+        "region": "Authentication & OAuth",
+        "priority": 6,
     },
 ]
 
