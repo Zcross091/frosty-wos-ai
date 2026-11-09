@@ -303,6 +303,11 @@
   ],
   "gift_codes": [
     {
+      "code": "DIWALI",
+      "status": "\ud83d\udfe2 Active & Verified (WoS HQ Live)",
+      "rewards": "Verified In-Game Rewards (Gems, Speedups, Gold Keys)"
+    },
+    {
       "code": "SPOOKYSEASON26",
       "status": "\ud83d\udfe2 Active & Verified (WoS HQ Live)",
       "rewards": "Verified In-Game Rewards (Gems, Speedups, Gold Keys)"
