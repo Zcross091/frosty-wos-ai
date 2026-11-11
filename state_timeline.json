@@ -99,6 +99,13 @@
   },
   {
     "day": 180,
+    "title": "Chief Gear T2 & Initial Legendary Charms",
+    "category": "Chief Gear",
+    "icon": "\ud83d\udee1\ufe0f",
+    "description": "Polish Chief Gear to T2 and unlock initial high-tier combat buffs."
+  },
+  {
+    "day": 195,
     "title": "Generation 4 Heroes",
     "category": "Heroes",
     "icon": "\ud83d\udc51",
@@ -119,7 +126,7 @@
     "description": "Unlocks War Academy research. Train elite Tier 11 Infantry, Lancers, and Marksmen."
   },
   {
-    "day": 250,
+    "day": 270,
     "title": "Generation 5 Heroes",
     "category": "Heroes",
     "icon": "\ud83d\udc51",
@@ -133,28 +140,28 @@
     "description": "Unlocks Iron Rhino (Defense surge) and Saber-tooth (Critical strike power)."
   },
   {
-    "day": 300,
+    "day": 315,
     "title": "Fire Crystal 6\u20138 Age",
     "category": "Fire Crystal",
     "icon": "\ud83d\udc8e",
     "description": "Upgrades structures and units to FC 6, FC 7, and FC 8. Massive health scaling."
   },
   {
-    "day": 320,
+    "day": 360,
     "title": "Generation 6 Heroes",
     "category": "Heroes",
     "icon": "\ud83d\udc51",
     "description": "Renee (Lucky Wheel marksman carry), Wayne (Garrison defender), Wu Ming (Lancer debuff)."
   },
   {
-    "day": 360,
-    "title": "Pet Generation 6",
+    "day": 370,
+    "title": "Mammoth Pet Update (Pet Gen 6)",
     "category": "Pets",
     "icon": "\ud83d\udc3e",
     "description": "Unlocks Titan Beaver (Rapid healing) and Gorgon Viper (Toxic rally debuffs)."
   },
   {
-    "day": 400,
+    "day": 440,
     "title": "Generation 7 Heroes",
     "category": "Heroes",
     "icon": "\ud83d\udc51",
@@ -168,18 +175,18 @@
     "description": "Apex Chief Gear tier granting massive squad Lethality and Damage Reduction."
   },
   {
-    "day": 480,
-    "title": "Generation 8 Heroes & Pet Gen 7",
-    "category": "Heroes / Pets",
-    "icon": "\ud83d\udc51",
-    "description": "Hendrik (Lucky Wheel), Gatot, Sonya + Frostscale Chameleon (Camouflage evasion shield)."
-  },
-  {
     "day": 500,
     "title": "Fire Crystal 9\u201310 Age",
     "category": "Fire Crystal",
     "icon": "\ud83d\udc8e",
     "description": "Refined Crystal economy expansion; structure and unit mastery for FC 9 and FC 10."
+  },
+  {
+    "day": 520,
+    "title": "Generation 8 Heroes & Pet Gen 7",
+    "category": "Heroes / Pets",
+    "icon": "\ud83d\udc51",
+    "description": "Hendrik (Lucky Wheel), Gatot (Hall of Heroes), Sonya + Frostscale Chameleon (Camouflage evasion shield)."
   },
   {
     "day": 600,
@@ -235,7 +242,7 @@
     "title": "Generation 15 Heroes",
     "category": "Heroes",
     "icon": "\ud83d\udc51",
-    "description": "Hank (Lucky Wheel tank), Viveca (Marksman), Estrella (Lancer)."
+    "description": "Viveca (Lucky Wheel burst), Hank (Hall of Heroes tank), Estrella (Lancer)."
   },
   {
     "day": 1220,

@@ -18,80 +18,37 @@ logger = logging.getLogger("FrostyDailySync")
 
 
 def sync_heroes_data(heroes_md_path: str = "./wos data/Heroes.md", output_path: str = "heroes_data.json") -> List[Dict]:
-    """Parses Heroes.md and updates heroes_data.json"""
-    if not os.path.exists(heroes_md_path):
-        logger.warning(f"File not found: {heroes_md_path}")
-        return []
-
+    """Generates an up-to-date heroes_data.json matching mobile app KnowledgeService and bot standards."""
     try:
-        with open(heroes_md_path, "r", encoding="utf-8", errors="replace") as f:
-            content = f.read()
+        from wos_state_timeline import HERO_GENERATIONS
 
-        hero_blocks = content.split("## ")
-        heroes = []
+        generation_entries = []
+        for g_num in sorted(HERO_GENERATIONS.keys(), reverse=True):
+            g_info = HERO_GENERATIONS[g_num]
+            inf_name = g_info["infantry"]["name"]
+            lan_name = g_info["lancer"]["name"]
+            mar_name = g_info["marksman"]["name"]
+            wheel = g_info.get("wheel_hero", f"{inf_name} (Infantry)")
+            advice = g_info.get("summary", f"Generation {g_num} core squad: {inf_name}, {lan_name}, {mar_name}.")
 
-        for block in hero_blocks:
-            lines = block.strip().split("\n")
-            header = lines[0].strip()
-
-            gen_match = re.search(r'Gen\s*(\d+)', header, re.IGNORECASE)
-            name_match = re.match(r'([A-Za-z0-9\s\-]+)', header)
-
-            if not name_match:
-                continue
-
-            hero_name = name_match.group(1).split("-")[0].replace("Gen", "").strip()
-            if not hero_name or hero_name.lower() in ["table of contents", "overview", "generations"]:
-                continue
-
-            gen_val = int(gen_match.group(1)) if gen_match else 0
-            if "jeronimo" in hero_name.lower() or "natalia" in hero_name.lower() or "jessie" in hero_name.lower():
-                gen_val = 0
-
-            # Troop type detection
-            troop_type = "infantry"
-            lower_b = block.lower()
-            if "lancer" in lower_b or "lancers" in lower_b:
-                troop_type = "lancer"
-            elif "marksman" in lower_b or "markswoman" in lower_b or "archer" in lower_b:
-                troop_type = "marksman"
-
-            # Rating / tier
-            tier = "S"
-            if "tier s+" in lower_b or "s-tier" in lower_b:
-                tier = "S+"
-            elif "tier s" in lower_b:
-                tier = "S"
-            elif "tier a" in lower_b or "a-tier" in lower_b:
-                tier = "A"
-
-            # Roles & summary
-            summary = lines[1].strip() if len(lines) > 1 and not lines[1].startswith("*") else (lines[2].strip() if len(lines) > 2 else "Elite Whiteout Survival Hero")
-            summary = re.sub(r'[*_`#]', '', summary).strip()
-
-            heroes.append({
-                "id": hero_name.lower().replace(" ", "_"),
-                "name": hero_name,
-                "generation": gen_val,
-                "troop_type": troop_type,
-                "tier": tier,
-                "summary": summary[:250],
-                "recommended_for": ["Exploration", "Expedition", "PvP"],
-                "f2p_friendly": gen_val <= 3 or "f2p" in lower_b
+            generation_entries.append({
+                "gen": g_num,
+                "label": f"Gen {g_num}",
+                "unlockDay": g_info["unlock_day"],
+                "infantry": inf_name,
+                "lancer": lan_name,
+                "marksman": mar_name,
+                "wheelHero": wheel,
+                "advice": advice
             })
 
-        if heroes:
-            # Deduplicate by name
-            unique_heroes = {h["name"].lower(): h for h in heroes}
-            final_list = list(unique_heroes.values())
-            final_list.sort(key=lambda h: (h["generation"], h["name"]))
-
+        if generation_entries:
             with open(output_path, "w", encoding="utf-8") as out:
-                json.dump(final_list, out, indent=2)
-            logger.info(f"✅ Synced {len(final_list)} heroes into {output_path} (Max Gen: {max(h['generation'] for h in final_list)})")
-            return final_list
+                json.dump(generation_entries, out, indent=2)
+            logger.info(f"✅ Synced {len(generation_entries)} hero generations into {output_path} (Max Gen: {max(g['gen'] for g in generation_entries)})")
+            return generation_entries
     except Exception as e:
-        logger.error(f"Error syncing heroes: {e}")
+        logger.error(f"Error syncing heroes data: {e}")
     return []
 
 

@@ -416,87 +416,43 @@ import json
 
 def auto_sync_heroes_data_json(heroes_md_path: str = "./wos data/Heroes.md", output_path: str = "heroes_data.json") -> List[Dict]:
     """
-    Parses Heroes.md and generates an up-to-date heroes_data.json file automatically.
+    Generates an up-to-date heroes_data.json file automatically.
     This guarantees the mobile app, Hero Codex, and web frontend stay 100% in sync
-    with every future generation and ingestion.
+    with every generation and ingestion.
     """
-    if not os.path.exists(heroes_md_path):
-        logger.warning(f"Heroes markdown not found at {heroes_md_path}")
-        return []
-
     try:
-        with open(heroes_md_path, "r", encoding="utf-8", errors="replace") as f:
-            content = f.read()
+        from wos_state_timeline import HERO_GENERATIONS
 
-        # Unlock day base references
-        unlock_days = {
-            1: 0, 2: 40, 3: 120, 4: 180, 5: 250, 6: 320, 7: 400,
-            8: 480, 9: 550, 10: 620, 11: 690, 12: 760, 13: 830,
-            14: 900, 15: 960, 16: 1160, 17: 1240
-        }
+        generation_entries = []
+        for g_num in sorted(HERO_GENERATIONS.keys(), reverse=True):
+            g_info = HERO_GENERATIONS[g_num]
+            inf_name = g_info["infantry"]["name"]
+            lan_name = g_info["lancer"]["name"]
+            mar_name = g_info["marksman"]["name"]
+            wheel = g_info.get("wheel_hero", f"{inf_name} (Infantry)")
+            advice = g_info.get("summary", f"Generation {g_num} core squad: {inf_name}, {lan_name}, {mar_name}.")
 
-        # Find all generation sections
-        gen_sections = re.findall(r'(#{2,4}\s*Gen\s*(\d+).*?)(?=(?:#{2,4}\s*Gen\s*\d+|\Z))', content, re.DOTALL | re.IGNORECASE)
-        
-        extracted_gens = {}
-        for full_sec, gen_num_str in gen_sections:
-            gen_num = int(gen_num_str)
-            if gen_num in extracted_gens:
-                continue
-
-            # Extract Infantry, Lancer, Marksman
-            inf_match = re.search(r'•\s*\*\*([A-Za-z0-9\s]+)\*\*.*?Infantry', full_sec, re.IGNORECASE) or \
-                        re.search(r'([A-Za-z0-9\s]+)\s*–\s*.*?(?:Infantry)', full_sec, re.IGNORECASE) or \
-                        re.search(r'🛡️\s*([A-Za-z0-9\s]+)', full_sec)
-            
-            lan_match = re.search(r'•\s*\*\*([A-Za-z0-9\s]+)\*\*.*?Lancer', full_sec, re.IGNORECASE) or \
-                        re.search(r'([A-Za-z0-9\s]+)\s*–\s*.*?(?:Lancer)', full_sec, re.IGNORECASE) or \
-                        re.search(r'🐎\s*([A-Za-z0-9\s]+)', full_sec)
-
-            mar_match = re.search(r'•\s*\*\*([A-Za-z0-9\s]+)\*\*.*?(?:Marksman|Sharpshooter)', full_sec, re.IGNORECASE) or \
-                        re.search(r'([A-Za-z0-9\s]+)\s*–\s*.*?(?:Marksman|Sharpshooter)', full_sec, re.IGNORECASE) or \
-                        re.search(r'🏹\s*([A-Za-z0-9\s]+)', full_sec)
-
-            inf_name = inf_match.group(1).strip() if inf_match else ""
-            lan_name = lan_match.group(1).strip() if lan_match else ""
-            mar_name = mar_match.group(1).strip() if mar_match else ""
-
-            # Clean hero names
-            inf_name = re.sub(r'[^a-zA-Z\s]', '', inf_name).split()[0].title() if inf_name else ""
-            lan_name = re.sub(r'[^a-zA-Z\s]', '', lan_name).split()[0].title() if lan_name else ""
-            mar_name = re.sub(r'[^a-zA-Z\s]', '', mar_name).split()[0].title() if mar_name else ""
-
-            # Compute unlock day
-            if gen_num in unlock_days:
-                day = unlock_days[gen_num]
-            else:
-                day = 1240 + (gen_num - 17) * 80
-
-            # Advice extraction
-            adv_match = re.search(r'(?:F2P vs P2W|Shard Advice|Recommended build order).*?:?\s*([^\n\r]+)', full_sec, re.IGNORECASE)
-            advice = adv_match.group(1).strip() if adv_match else f"Generation {gen_num} core lineup: {inf_name} (Infantry), {lan_name} (Lancer), {mar_name} (Marksman)."
-
-            extracted_gens[gen_num] = {
-                "gen": gen_num,
-                "label": f"Gen {gen_num}",
-                "unlockDay": day,
-                "infantry": inf_name or f"Hero-Inf-{gen_num}",
-                "lancer": lan_name or f"Hero-Lan-{gen_num}",
-                "marksman": mar_name or f"Hero-Mar-{gen_num}",
-                "wheelHero": f"{inf_name} (Infantry)" if inf_name else f"Gen {gen_num} Wheel",
+            generation_entries.append({
+                "gen": g_num,
+                "label": f"Gen {g_num}",
+                "unlockDay": g_info["unlock_day"],
+                "infantry": inf_name,
+                "lancer": lan_name,
+                "marksman": mar_name,
+                "wheelHero": wheel,
                 "advice": advice
-            }
+            })
 
-        # Sort descending by generation number (Gen 17 -> Gen 1)
-        sorted_gens = [extracted_gens[g] for g in sorted(extracted_gens.keys(), reverse=True)]
-
-        if sorted_gens:
+        if generation_entries:
             with open(output_path, "w", encoding="utf-8") as out:
-                json.dump(sorted_gens, out, indent=2)
-            logger.info(f"💾 Automatically synced {len(sorted_gens)} generations into {output_path}!")
-            return sorted_gens
+                json.dump(generation_entries, out, indent=2)
+            logger.info(f"💾 Automatically synced {len(generation_entries)} generations into {output_path}!")
+            return generation_entries
     except Exception as e:
         logger.warning(f"Error auto-syncing heroes_data.json: {e}")
+    return []
+
+
 def auto_sync_state_timeline_json(timeline_md_path: str = "./wos data/State_Timeline.md", output_path: str = "state_timeline.json") -> List[Dict]:
     """
     Parses State_Timeline.md and generates state_timeline.json automatically.

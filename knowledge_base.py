@@ -56,10 +56,10 @@ CORE_WOS_KNOWLEDGE = """
 
 6. STATE TIMELINE & SERVER AGE UNLOCK DOCTRINE:
    - Server progression is dictated by State Age (days elapsed since launch).
-   - Key Milestone Schedule:
+   - Calibrated Milestone Schedule:
      * Day 0: Gen 1 Heroes (Jeronimo, Natalia, Molly, Zinman).
      * Day 14: Tundra Territory Opens (Alliance L4 banners & tundra resource nodes).
-     * Day 40: Gen 2 Heroes (Flint on Lucky Wheel, Alonso in HoH/KoI).
+     * Day 40: Gen 2 Heroes (Flint on Lucky Wheel, Alonso in HoH/KoI, Philly in Packs).
      * Day 45: Chief Gear & Elemental Charms T1.
      * Day 53: First Sunfire Castle Battle (Alliance Presidency).
      * Day 54: Pet Gen 1 & Beast Cage (Cave Hyena, Arctic Wolf, Musk Ox at Furnace Lv 18).
@@ -67,40 +67,41 @@ CORE_WOS_KNOWLEDGE = """
      * Day 80: First State vs State (SvS) & King of Icefield (Prep + Battle phase).
      * Day 90: Pet Gen 2 (Titan Roc & Giant Tapir).
      * Day 100: State Transfer Phase 1.
-     * Day 120: Gen 3 Heroes (Mia on Lucky Wheel, Logan garrison tank).
+     * Day 120: Gen 3 Heroes (Mia on Lucky Wheel, Logan in HoH, Greg in Packs).
      * Day 140: Pet Gen 3 (Snow Leopard & Giant Elk).
      * Day 150: Fire Crystal 4–5 & Crystal Laboratory (Refined Crystals).
-     * Day 180: Gen 4 Heroes (Lynn on Lucky Wheel, Ahmose).
+     * Day 180: Chief Gear T2 & Initial Legendary Charms.
+     * Day 195: Gen 4 Heroes (Lynn on Lucky Wheel, Ahmose in HoH, Reina in Packs).
      * Day 200: Pet Gen 4 (Cave Lion & Snow Ape).
      * Day 220: Dawn / War Academy & T11 Troops.
-     * Day 250: Gen 5 Heroes (Hector on Lucky Wheel, Norah, Gwen).
+     * Day 270: Gen 5 Heroes (Hector on Lucky Wheel, Norah in HoH, Gwen in Packs).
      * Day 280: Pet Gen 5 (Iron Rhino & Saber-tooth).
-     * Day 300: Fire Crystal 6–8 Age.
-     * Day 320: Gen 6 Heroes (Renee on Lucky Wheel, Wayne).
-     * Day 360: Pet Gen 6 (Titan Beaver & Gorgon Viper).
-     * Day 400: Gen 7 Heroes (Bradley on Lucky Wheel, Edith).
+     * Day 315: Fire Crystal 6–8 Age.
+     * Day 360: Gen 6 Heroes (Renee on Lucky Wheel, Wayne in HoH, Wu Ming in Packs).
+     * Day 370: Mammoth Pet Update (Pet Gen 6).
+     * Day 440: Gen 7 Heroes (Bradley on Lucky Wheel, Edith in HoH, Gordon in Packs).
      * Day 450: Chief Gear T4 & Legendary Charms.
-     * Day 480: Gen 8 Heroes (Hendrik) & Pet Gen 7 (Frostscale Chameleon).
      * Day 500: Fire Crystal 9–10 Age.
-     * Day 550: Gen 9 Heroes (Magnus, Fred, Xura).
-     * Day 620: Gen 10 Heroes (Blanchette, Gregory, Freya).
-     * Day 690: Gen 11 Heroes (Eleonora, Lloyd, Rufus).
+     * Day 520: Gen 8 Heroes (Hendrik on Lucky Wheel, Gatot in HoH, Sonya in Packs).
+     * Day 600: Gen 9 Heroes (Magnus on Lucky Wheel, Fred in HoH, Xura in Packs).
+     * Day 700: Gen 10 Heroes (Blanchette on Lucky Wheel, Gregory in HoH, Freya in Packs).
      * Day 750: Fire Crystal 11–12 & T12 Troops.
-     * Day 760: Gen 12 Heroes (Ligeia, Hervor, Karol).
-     * Day 830: Gen 13 Heroes (Gisela, Flora, Vulcanus).
-     * Day 900: Gen 14 Heroes (Cara, Elif, Dominic).
-     * Day 960: Gen 15 Heroes (Hank, Estrella, Viveca).
-     * Day 1160: Gen 16 Heroes (Seigel, Ursar, Aisling).
-     * Day 1240+: Gen 17 Heroes (Aiden, Bertha, Eleanor).
+     * Day 800: Gen 11 Heroes (Eleonora on Lucky Wheel, Rufus in HoH, Lloyd in Packs).
+     * Day 870: Gen 12 Heroes (Ligeia on Lucky Wheel, Hervor in HoH, Karol in Packs).
+     * Day 951: Gen 13 Heroes (Gisela on Lucky Wheel, Vulcanus in HoH, Flora in Packs).
+     * Day 1030: Gen 14 Heroes (Cara on Lucky Wheel, Elif in HoH, Dominic in Packs).
+     * Day 1115: Gen 15 Heroes (Viveca on Lucky Wheel, Hank in HoH, Estrella in Packs).
+     * Day 1220: Gen 16 Heroes (Seigel on Lucky Wheel, Ursar in HoH, Aisling in Packs).
+     * Day 1280+: Gen 17 Heroes (Aiden on Lucky Wheel, Eleanor in HoH, Bertha in Packs).
    - Exact Day Check: Look up the "Kindling Embers" monument task in-game (matches Day 1 of server).
 """
 
-# Recognized Heroes across all Generations
+# Recognized Heroes across all Generations (Gen 0 to Gen 17)
 KNOWN_HEROES = [
-    # Rare
+    # Rare (Gen 0)
     "smith", "eugene", "charlie", "cloris",
-    # Epic
-    "jessie", "bahiti", "sergey", "gina", "patrick", "walis", "jasser", "ling",
+    # Epic (Gen 0)
+    "jessie", "bahiti", "sergey", "gina", "patrick", "walis", "jasser", "ling", "seo-yoon", "seoyoon", "lumak",
     # Gen 1
     "jeronimo", "natalia", "zinman", "molly",
     # Gen 2
@@ -108,33 +109,33 @@ KNOWN_HEROES = [
     # Gen 3
     "mia", "logan", "greg",
     # Gen 4
-    "lynn", "hector", "ahmose",
+    "lynn", "ahmose", "reina",
     # Gen 5
-    "gwen", "norah", "wayne",
+    "hector", "norah", "gwen",
     # Gen 6
-    "renee", "hendrik", "hendrick",
+    "renee", "wayne", "wu ming", "wuming",
     # Gen 7
     "bradley", "edith", "gordon",
     # Gen 8
-    "sonya", "reina", "gatot",
+    "hendrik", "gatot", "sonya",
     # Gen 9
-    "magnus", "blanche", "luke",
+    "magnus", "fred", "xura",
     # Gen 10
-    "xylona", "fred", "gregory",
+    "blanchette", "gregory", "freya",
     # Gen 11
-    "rufus", "nicole", "bern",
+    "eleonora", "rufus", "lloyd",
     # Gen 12
-    "anson", "eleanor", "lloyd",
+    "ligeia", "hervor", "karol",
     # Gen 13
-    "freyja", "eric", "morgan",
+    "gisela", "vulcanus", "flora",
     # Gen 14
-    "kai", "varg", "evelyn",
+    "cara", "elif", "dominic",
     # Gen 15
-    "alistair", "astrid", "cedric", "hank", "viveca", "estrella",
+    "viveca", "hank", "estrella",
     # Gen 16
-    "seigel", "aisling", "ursar", "gerald", "maeve", "rowen",
+    "seigel", "ursar", "aisling",
     # Gen 17
-    "aiden", "bertha", "eleanor"
+    "aiden", "eleanor", "bertha"
 ]
 
 KNOWN_EVENTS = [
@@ -230,6 +231,14 @@ class KnowledgeBase:
         if gen_matches:
             for g in gen_matches:
                 entities["generations"].append(f"Gen {g}")
+
+        # State / Kingdom / Server matching (e.g. State 266, S266, Server 266, Kingdom 266, State #266)
+        state_match = re.search(r'\b(?:state|server|kingdom|s)\s*#?\s*(\d{1,4})\b', q)
+        if state_match:
+            try:
+                entities["state_number"] = int(state_match.group(1))
+            except Exception:
+                pass
 
         return entities
 
@@ -343,6 +352,17 @@ class KnowledgeBase:
         entities = self.extract_entities(query)
         collected_documents = []
         seen_ids = set()
+
+        # 0. Direct State Telemetry & Hero Dossier if state mentioned
+        state_num = entities.get("state_number")
+        if state_num:
+            try:
+                from wos_state_timeline import format_state_ai_context
+                state_dossier = format_state_ai_context(state_num)
+                if state_dossier:
+                    collected_documents.append(state_dossier)
+            except Exception as e:
+                logger.debug(f"State dossier retrieval notice: {e}")
 
         # 1. Direct Hero profile if hero mentioned
         for hero in entities.get("heroes", []):
