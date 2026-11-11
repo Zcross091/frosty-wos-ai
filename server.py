@@ -267,11 +267,14 @@ class FrostyAPIHandler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, HEAD, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Frosty-App-Id, X-Frosty-Timestamp, X-Frosty-Signature")
         self.end_headers()
 
     def do_OPTIONS(self):
+        self._set_cors_headers(200)
+
+    def do_HEAD(self):
         self._set_cors_headers(200)
 
     def do_GET(self):
