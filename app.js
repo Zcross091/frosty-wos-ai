@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initFormationCalculator();
   initCopyButtons();
   initReleaseUpdatePopup();
+  initStateHub();
 });
 
 /* ==========================================================================
@@ -618,4 +619,22 @@ function initReleaseUpdatePopup() {
       });
     })
     .catch(() => {});
+}
+
+/* ==========================================================================
+   7. State Intelligence, Battle Matrix, & Transfer Radar
+   ========================================================================== */
+function initStateHub() {
+  if (typeof searchStateHub === 'function') {
+    searchStateHub('266');
+  }
+  if (typeof runStateComparison === 'function') {
+    runStateComparison();
+  }
+  if (typeof calculateTransferPasses === 'function') {
+    calculateTransferPasses();
+  }
+  if (typeof refreshGatewayPings === 'function') {
+    refreshGatewayPings();
+  }
 }

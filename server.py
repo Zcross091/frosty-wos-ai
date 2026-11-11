@@ -14,14 +14,19 @@ import hmac
 import hashlib
 import json
 import logging
-from typing import Tuple, Dict, List
+import mimetypes
+import asyncio
+import dataclasses
+from typing import Tuple, Dict, List, Any, Optional
 from collections import defaultdict
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 from dotenv import load_dotenv
+import requests
 
 from ai_engine import AIEngine
 from knowledge_base import KnowledgeBase
+from wos_gateway_protocol import probe_all_gateways, probe_gateway_endpoint, DEFAULT_GATEWAYS
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -31,9 +36,92 @@ PORT = int(os.getenv("PORT", "8000"))
 FROSTY_APP_SECRET = os.getenv("FROSTY_APP_SECRET", "frosty-wos-grandmaster-v2-secure-handshake").strip()
 APP_CLIENT_ID = "frosty-wos-official-client"
 ENFORCE_APP_HANDSHAKE = os.getenv("ENFORCE_APP_HANDSHAKE", "true").lower() in ["true", "1", "yes"]
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 ai_engine = AIEngine()
 knowledge_base = KnowledgeBase()
+
+# --- In-Memory Caching for External Intelligence ---
+_intel_cache: Dict[str, Tuple[float, Any]] = {}
+CACHE_TTL_SECONDS = 1800  # 30 minutes
+WOS_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+WOS_BASE_URL = "https://whiteoutstats.com"
+
+
+def get_cached_intel(cache_key: str) -> Optional[Any]:
+    if cache_key in _intel_cache:
+        ts, data = _intel_cache[cache_key]
+        if time.time() - ts < CACHE_TTL_SECONDS:
+            return data
+    return None
+
+
+def set_cached_intel(cache_key: str, data: Any):
+    _intel_cache[cache_key] = (time.time(), data)
+
+
+def fetch_whiteoutstats(endpoint_path: str, timeout: float = 8.0) -> Tuple[bool, Any, int]:
+    """
+    Safely fetches intelligence from WhiteoutStats with in-memory caching and browser headers.
+    Returns (success, json_data_or_error_dict, status_code).
+    """
+    cache_key = f"wos_intel:{endpoint_path}"
+    cached = get_cached_intel(cache_key)
+    if cached is not None:
+        return True, cached, 200
+
+    url = f"{WOS_BASE_URL}{endpoint_path}"
+    headers = {
+        "User-Agent": WOS_USER_AGENT,
+        "Accept": "application/json, text/plain, */*",
+        "Referer": "https://whiteoutstats.com/",
+    }
+
+    try:
+        resp = requests.get(url, headers=headers, timeout=timeout)
+        if resp.status_code == 200:
+            data = resp.json()
+            set_cached_intel(cache_key, data)
+            return True, data, 200
+        else:
+            return False, {"error": f"Upstream returned HTTP {resp.status_code}", "status": resp.status_code}, resp.status_code
+    except requests.Timeout:
+        return False, {"error": "Upstream intelligence timeout (>8s)", "status": 504}, 504
+    except Exception as e:
+        logger.error(f"Error fetching from WhiteoutStats ({url}): {e}")
+        return False, {"error": str(e), "status": 502}, 502
+
+
+def serve_static_file(handler, filepath: str, content_type: Optional[str] = None):
+    """Safely serves static assets avoiding directory traversal."""
+    real_path = os.path.abspath(filepath)
+    if not real_path.startswith(BASE_DIR):
+        handler._set_cors_headers(403)
+        handler.wfile.write(json.dumps({"error": "Forbidden"}).encode("utf-8"))
+        return
+
+    if not os.path.isfile(real_path):
+        handler._set_cors_headers(404)
+        handler.wfile.write(json.dumps({"error": "File not found"}).encode("utf-8"))
+        return
+
+    if not content_type:
+        content_type, _ = mimetypes.guess_type(real_path)
+        content_type = content_type or "application/octet-stream"
+
+    try:
+        with open(real_path, "rb") as f:
+            content = f.read()
+        handler.send_response(200)
+        handler.send_header("Content-Type", content_type)
+        handler.send_header("Content-Length", str(len(content)))
+        handler.send_header("Access-Control-Allow-Origin", "*")
+        handler.end_headers()
+        handler.wfile.write(content)
+    except Exception as e:
+        logger.error(f"Error serving file {real_path}: {e}")
+        handler._set_cors_headers(500)
+        handler.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
 
 # --- Rate Limiter & Active Users Storage ---
 SERVER_START_TIME = time.time()
@@ -188,7 +276,25 @@ class FrostyAPIHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
-        if parsed.path in ["/api/health", "/"]:
+        path = parsed.path.rstrip("/")
+        if not path:
+            path = "/"
+
+        # 1. Static Website Files
+        if path == "/":
+            index_path = os.path.join(BASE_DIR, "index.html")
+            serve_static_file(self, index_path, "text/html; charset=utf-8")
+            return
+
+        # Check for direct static assets (e.g. /style.css, /app.js, /heroes_data.json, /assets/...)
+        rel_path = parsed.path.lstrip("/")
+        potential_static = os.path.join(BASE_DIR, rel_path)
+        if os.path.isfile(potential_static) and os.path.abspath(potential_static).startswith(BASE_DIR):
+            serve_static_file(self, potential_static)
+            return
+
+        # 2. REST API: Health Check
+        if path == "/api/health":
             self._set_cors_headers(200)
             chunk_count = knowledge_base.collection.count() if knowledge_base.collection else 0
             response = {
@@ -199,7 +305,10 @@ class FrostyAPIHandler(BaseHTTPRequestHandler):
                 "knowledge_chunks": chunk_count
             }
             self.wfile.write(json.dumps(response).encode("utf-8"))
-        elif parsed.path in ["/api/stats", "/stats"]:
+            return
+
+        # 3. REST API: Active Users & Usage Telemetry
+        if path in ["/api/stats", "/stats"]:
             self._set_cors_headers(200)
             now = time.time()
             active_1h = sum(1 for t in active_devices.values() if (now - t) <= 3600)
@@ -223,9 +332,73 @@ class FrostyAPIHandler(BaseHTTPRequestHandler):
                 "knowledge_chunks": knowledge_base.collection.count() if knowledge_base.collection else 0
             }
             self.wfile.write(json.dumps(response, indent=2).encode("utf-8"))
-        else:
-            self._set_cors_headers(404)
-            self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
+            return
+
+        # 4. REST API: WOS Kingdom Intelligence (Real-time telemetry, Top Whales, Health Grade)
+        if path.startswith("/api/wos/kingdom/"):
+            kid_raw = path.split("/api/wos/kingdom/")[1].strip()
+            if not kid_raw.isdigit():
+                self._set_cors_headers(400)
+                self.wfile.write(json.dumps({"error": "Invalid kingdom ID (must be integer)"}).encode("utf-8"))
+                return
+
+            ok, data, status = fetch_whiteoutstats(f"/api/kingdoms/{kid_raw}")
+            self._set_cors_headers(status)
+            self.wfile.write(json.dumps(data).encode("utf-8"))
+            return
+
+        # 5. REST API: WOS Head-to-Head Compare Matrix
+        if path == "/api/wos/compare":
+            qs = parse_qs(parsed.query)
+            state_a = qs.get("a", ["266"])[0].strip()
+            state_b = qs.get("b", ["265"])[0].strip()
+            depth = qs.get("n", ["100"])[0].strip()
+
+            if not state_a.isdigit() or not state_b.isdigit():
+                self._set_cors_headers(400)
+                self.wfile.write(json.dumps({"error": "States 'a' and 'b' must be integers"}).encode("utf-8"))
+                return
+
+            ok, data, status = fetch_whiteoutstats(f"/api/compare?a={state_a}&b={state_b}&n={depth}")
+            self._set_cors_headers(status)
+            self.wfile.write(json.dumps(data).encode("utf-8"))
+            return
+
+        # 6. REST API: WOS Kingdom State Transfer Registry & Group Brackets
+        if path.startswith("/api/wos/transfers/"):
+            kid_raw = path.split("/api/wos/transfers/")[1].strip()
+            if not kid_raw.isdigit():
+                self._set_cors_headers(400)
+                self.wfile.write(json.dumps({"error": "Invalid kingdom ID (must be integer)"}).encode("utf-8"))
+                return
+
+            ok, data, status = fetch_whiteoutstats(f"/api/kingdoms/{kid_raw}/transfers")
+            self._set_cors_headers(status)
+            self.wfile.write(json.dumps(data).encode("utf-8"))
+            return
+
+        # 7. REST API: Century Games & iLiveData Direct Socket Gateway Health Probes
+        if path == "/api/wos/gateways":
+            try:
+                results = asyncio.run(probe_all_gateways(timeout=2.5))
+                self._set_cors_headers(200)
+                payload = {
+                    "ok": True,
+                    "timestamp": time.time(),
+                    "total_gateways": len(results),
+                    "online_gateways": sum(1 for r in results if r.online),
+                    "gateways": [dataclasses.asdict(r) for r in results]
+                }
+                self.wfile.write(json.dumps(payload).encode("utf-8"))
+            except Exception as e:
+                logger.error(f"Error probing gateways: {e}")
+                self._set_cors_headers(500)
+                self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
+            return
+
+        # Fallback 404
+        self._set_cors_headers(404)
+        self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
 
     def do_POST(self):
         global total_requests_served, total_guardrail_filtered
