@@ -1581,8 +1581,8 @@ class CodesActionView(discord.ui.View):
 
                 # Automatic backoff & retry if Century Games hits frequency rate limit
                 if res.get("err_code") in [40004, 40002, 429] or "rate limit" in res.get("message", "").lower():
-                    logger.warning(f"[Claim All] Rate limited on {pid} for code {cdk}. Waiting 3.5s cooldown before retrying...")
-                    await asyncio.sleep(3.5)
+                    logger.warning(f"[Claim All] Rate limited on {pid} for code {cdk}. Waiting 5.5s cooldown before retrying...")
+                    await asyncio.sleep(5.5)
                     res = await redeem_gift_code(pid, st, cdk)
 
                 registered_players.record_claim_for_account(
@@ -1765,8 +1765,8 @@ async def dispatch_auto_claim(code: str):
 
             # Automatic backoff & retry if Century Games hits frequency rate limit
             if res.get("err_code") in [40004, 40002, 429] or "rate limit" in res.get("message", "").lower():
-                logger.warning(f"[Auto-Claim] Rate limited on {pid} for code {clean_code}. Waiting 3.5s cooldown before retrying...")
-                await asyncio.sleep(3.5)
+                logger.warning(f"[Auto-Claim] Rate limited on {pid} for code {clean_code}. Waiting 5.5s cooldown before retrying...")
+                await asyncio.sleep(5.5)
                 res = await redeem_gift_code(pid, state, clean_code)
 
             is_success = res["success"]
@@ -1988,7 +1988,7 @@ async def slash_codes(
             lbl = acc.get("label", "Main")
             res = await redeem_gift_code(pid, st, clean_code)
             if res.get("err_code") in [40004, 40002, 429] or "rate limit" in res.get("message", "").lower():
-                await asyncio.sleep(3.5)
+                await asyncio.sleep(5.5)
                 res = await redeem_gift_code(pid, st, clean_code)
 
             registered_players.record_claim_for_account(

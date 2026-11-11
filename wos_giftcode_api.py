@@ -50,19 +50,32 @@ def get_http_session() -> requests.Session:
         _session.mount("http://", adapter)
     return _session
 
-# Error code to human-readable message mapping
+# Error code to human-readable message mapping based on verified Century Games responses:
+# 20000: Success
+# 40005: "USED." -> Already Claimed
+# 40007: "TIME ERROR." -> Expired (Time window ended)
+# 40008: "TIME ERROR." -> Expired
+# 40011: "SAME TYPE EXCHANGE." -> Already claimed code of same campaign type
+# 40014: "CDK NOT FOUND." -> Invalid or Non-existent code
+# 40004: "FREQUENCY OVER LIMIT." -> Rate limited / Cooldown
+# 40002: System busy / Rate limit
+# 40020: Player ID / State info incorrect
+# 40009: Level/Age requirements not met
+# 40100 / 40102: Captcha triggered
+# 429: HTTP 429 Too Many Requests
 ERROR_CODE_MESSAGES = {
     20000: "✅ Success! In-game rewards have been sent to your mailbox.",
-    40007: "⚠️ Already Claimed! This gift code was already claimed for your character.",
-    40008: "⌛ Expired! This gift code has expired and can no longer be redeemed.",
-    40005: "❌ Invalid Code! Gift code does not exist. Check case-sensitivity.",
+    40005: "⚠️ Already Claimed! This gift code was already claimed for your character.",
+    40007: "⌛ Expired! This gift code has expired and can no longer be redeemed.",
+    40008: "⌛ Expired! This gift code has expired.",
+    40011: "⚠️ Same Type Exchange! A code of this campaign type was already used.",
+    40014: "❌ Invalid Code! Gift code does not exist or has expired.",
+    40004: "⏱️ Rate Limited! Cooldown active on Century Games server.",
+    40002: "⏱️ Rate Limited! Frequency too high. Please try again later.",
     40020: "❌ Character Info Incorrect! Player ID and State number do not match or character was not found.",
     40009: "⛔ Requirements Not Met! Your character level/age does not meet the requirements for this code.",
     40100: "🤖 Captcha Triggered! Century Games security check required.",
     40102: "🤖 Captcha Verification Failed.",
-    40002: "⏱️ Rate Limited! Frequency too high. Please try again later.",
-    40004: "⏱️ Rate Limited! Cooldown active on Century Games server.",
-    40014: "⚠️ Same Type Exchange! A code of this campaign type was already used.",
     429: "⏱️ Too Many Requests (429)! Century Games rate limit reached.",
 }
 
@@ -142,16 +155,25 @@ def redeem_gift_code_sync(player_id: str, state: int, code: str, timeout: int = 
         # Success is either err_code == 20000 or (code == 0 and err_code == 0 and raw_msg == SUCCESS)
         is_success = (err_code == 20000) or (data.get("code") == 0 and err_code == 0 and raw_msg.upper() == "SUCCESS")
 
-        if err_code in ERROR_CODE_MESSAGES:
-            msg = ERROR_CODE_MESSAGES[err_code]
-        elif "SAME TYPE EXCHANGE" in raw_msg.upper():
+        # Century Games API sends raw_msg like 'USED.', 'RECEIVED.', 'TIME ERROR.', 'CDK NOT FOUND.', 'SAME TYPE EXCHANGE.'
+        if is_success:
+            msg = "✅ Success! In-game rewards have been sent to your mailbox."
+        elif "USED" in raw_msg.upper() or "RECEIVED" in raw_msg.upper() or err_code == 40008 or err_code == 40005:
+            msg = "⚠️ Already Claimed! This gift code was already claimed for your character."
+        elif "TIME ERROR" in raw_msg.upper() or err_code == 40007:
+            msg = "⌛ Expired! This gift code has expired and can no longer be redeemed."
+        elif "SAME TYPE EXCHANGE" in raw_msg.upper() or err_code == 40011:
             msg = "⚠️ Same Type Exchange! A gift code of this campaign type was already used."
-        elif raw_msg and raw_msg != str(err_code):
-            msg = raw_msg
+        elif "CDK NOT FOUND" in raw_msg.upper() or err_code == 40014:
+            msg = "❌ Invalid Code! Gift code does not exist or has expired."
+        elif err_code in ERROR_CODE_MESSAGES:
+            msg = ERROR_CODE_MESSAGES[err_code]
         elif err_code == 40004:
             msg = "⏱️ Rate Limited! Cooldown active on Century Games server."
+        elif raw_msg and raw_msg != str(err_code):
+            msg = f"{raw_msg} (Error {err_code})"
         else:
-            msg = f"Century Games response: {err_code or raw_msg or 'Unknown'}"
+            msg = f"Century Games response: {err_code or 'Unknown'}"
 
         return {
             "success": is_success,
